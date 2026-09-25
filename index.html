@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Velacookies — Homemade Cookies</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- =========================
+         NAVBAR
+         ========================= -->
+
+    <header class="navbar">
+
+        <a href="#home" class="brand">
+
+            <div class="brand-mark">
+                <img
+                    src="images/logo.jpeg"
+                    alt="Velacookies"
+                >
+            </div>
+
+            <div class="brand-text">
+                <span>VELA</span>
+                <strong>COOKIES</strong>
+            </div>
+
+        </a>
+
+
+        <nav class="nav-links">
+
+            <a href="#home">
+                Home
+            </a>
+
+            <a href="#cookies">
+                Our Cookies
+            </a>
+
+        </nav>
+
+
+       <button class="cart-button" aria-label="Keranjang Belanja">
+
+    <div class="cart-icon-wrapper">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+        </svg>
+    </div>
+
+    <span class="cart-label">Cart</span>
+
+    <span class="cart-count">0</span>
+
+</button>
+
+    </header>
+
+
+
+    <!-- =========================
+         HERO
+         ========================= -->
+
+    <main>
+
+        <section
+            class="hero"
+            id="home"
+        >
+
+            <div class="hero-content reveal">
+
+                <p class="eyebrow">
+                    HOMEMADE WITH LOVE
+                </p>
+
+                <h1>
+                    Cookies made
+                    <br>
+                    to make you smile.
+                </h1>
+
+                <p class="hero-description">
+                    Freshly baked cookies made with quality
+                    ingredients and a whole lot of love.
+                </p>
+
+                <a
+                    href="#cookies"
+                    class="hero-button"
+                >
+                    Order Sekarang
+                </a>
+
+            </div>
+
+
+
+            <!-- HERO IMAGE SLIDER -->
+
+            <div class="hero-image reveal">
+
+                <img
+                    id="hero-slider-image"
+                    src="images/scoopable.jpeg"
+                    alt="Scoopable Nutella Cookies"
+                >
+
+                <div
+                    class="hero-dots"
+                    id="hero-dots"
+                ></div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =========================
+             PO STATUS
+             ========================= -->
+
+        <section class="po-section">
+
+            <div class="po-status reveal">
+
+                <div class="po-indicator"></div>
+
+                <div>
+
+                    <span class="po-label">
+                        PRE-ORDER
+                    </span>
+
+                    <h2>
+                        PO Sedang Dibuka
+                    </h2>
+
+                    <p>
+                        Yuk amankan cookies favoritmu
+                        sebelum PO ditutup.
+                    </p>
+
+                </div>
+
+
+                <div class="po-countdown" id="po-countdown">
+
+                    <div class="time-box">
+                        <span id="cd-days">00</span>
+                        <small>Hari</small>
+                    </div>
+
+                    <span class="time-separator">:</span>
+
+                    <div class="time-box">
+                        <span id="cd-hours">00</span>
+                        <small>Jam</small>
+                    </div>
+
+                    <span class="time-separator">:</span>
+
+                    <div class="time-box">
+                        <span id="cd-minutes">00</span>
+                        <small>Menit</small>
+                    </div>
+
+                    <span class="time-separator">:</span>
+
+                    <div class="time-box">
+                        <span id="cd-seconds">00</span>
+                        <small>Detik</small>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =========================
+             PRODUCTS
+             ========================= -->
+
+        <section
+            class="products-section"
+            id="cookies"
+        >
+
+            <div class="section-heading reveal">
+
+                <p class="eyebrow">
+                    OUR COOKIES
+                </p>
+
+                <h2>
+                    Temukan favoritmu.
+                </h2>
+
+                <p>
+                    Pilih cookies favoritmu dan tambahkan
+                    ke keranjang.
+                </p>
+
+            </div>
+
+
+
+            <div class="product-grid">
+
+
+                <!-- PRODUCT 1 -->
+
+                <article class="product-card reveal" data-id="chocochip">
+
+                    <div class="product-image">
+
+                        <img
+                            src="images/chocochip.jpeg"
+                            alt="Velaclassic Chocochip"
+                        >
+
+                    </div>
+
+                    <div class="product-info">
+
+                        <p class="product-category">
+                            CLASSIC
+                        </p>
+
+                        <h3>
+                            Velaclassic Chocochip
+                        </h3>
+
+                        <div class="product-bottom">
+
+                            <strong>
+                                Rp12.000
+                            </strong>
+
+                            <button class="add-button">
+
+                                <span class="plus">
+                                    +
+                                </span>
+
+                                <span>
+                                    Add to Cart
+                                </span>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+
+
+                <!-- PRODUCT 2 -->
+
+                <article class="product-card reveal" data-id="biscoff">
+
+                    <div class="product-image">
+
+                        <img
+                            src="images/biscoff.jpeg"
+                            alt="Vela Lotus Biscoff"
+                        >
+
+                    </div>
+
+                    <div class="product-info">
+
+                        <p class="product-category">
+                            FAVORITE
+                        </p>
+
+                        <h3>
+                            Vela Lotus Biscoff
+                        </h3>
+
+                        <div class="product-bottom">
+
+                            <strong>
+                                Rp15.000
+                            </strong>
+
+                            <button class="add-button">
+
+                                <span class="plus">
+                                    +
+                                </span>
+
+                                <span>
+                                    Add to Cart
+                                </span>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+
+
+                <!-- PRODUCT 3 -->
+
+                <article class="product-card reveal" data-id="scoopable">
+
+                    <div class="product-image">
+
+                        <img
+                            src="images/scoopable.jpeg"
+                            alt="Scoopable Nutella Cookies"
+                        >
+
+                    </div>
+
+                    <div class="product-info">
+
+                        <p class="product-category">
+                            SPECIAL
+                        </p>
+
+                        <h3>
+                            Scoopable Nutella Cookies
+                        </h3>
+
+                        <div class="product-bottom">
+
+                            <strong>
+                                Rp28.000
+                            </strong>
+
+                            <button class="add-button">
+
+                                <span class="plus">
+                                    +
+                                </span>
+
+                                <span>
+                                    Add to Cart
+                                </span>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+
+
+                <!-- PRODUCT 4 -->
+
+                <article class="product-card reveal" data-id="nutella-tin">
+
+                    <div class="product-image">
+
+                        <img
+                            src="images/nutella-tin.jpeg"
+                            alt="Cookie Nutella Tin"
+                        >
+
+                    </div>
+
+                    <div class="product-info">
+
+                        <p class="product-category">
+                            PREMIUM
+                        </p>
+
+                        <h3>
+                            Cookie Nutella Tin
+                        </h3>
+
+                        <div class="product-bottom">
+
+                            <strong>
+                                Rp80.000
+                            </strong>
+
+                            <button class="add-button">
+
+                                <span class="plus">
+                                    +
+                                </span>
+
+                                <span>
+                                    Add to Cart
+                                </span>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+
+    <!-- =========================
+         FOOTER
+         ========================= -->
+
+    <footer class="footer">
+
+        <div class="footer-brand">
+
+            <div class="brand-text">
+
+                <span>VELA</span>
+
+                <strong>
+                    COOKIES
+                </strong>
+
+            </div>
+
+            <p>
+                Homemade cookies made with love.
+            </p>
+
+        </div>
+
+
+        <p class="copyright">
+            © 2026 Velacookies. All rights reserved.
+        </p>
+
+    </footer>
+
+
+
+    <!-- =========================
+         PRODUCT MODAL
+         ========================= -->
+
+    <div class="modal-overlay" id="product-modal">
+
+        <div class="modal-box">
+
+            <button class="modal-close" id="modal-close" aria-label="Tutup">
+                &times;
+            </button>
+
+            <div class="modal-image">
+                <img id="modal-img" src="" alt="">
+            </div>
+
+            <div class="modal-info">
+
+                <p class="product-category" id="modal-category"></p>
+
+                <h3 id="modal-name"></h3>
+                <p class="modal-description" id="modal-description"></p>
+                <p class="modal-price" id="modal-base-price"></p>
+
+                <div class="modal-addon" id="modal-addon-wrap" hidden>
+
+                    <label class="addon-toggle">
+                        <input type="checkbox" id="modal-addon-checkbox">
+                        <span>
+                            Strawberry + Extra Nutella
+                            (+<span id="modal-addon-price"></span>)
+                        </span>
+                    </label>
+
+                </div>
+
+                <div class="modal-qty">
+
+                    <span class="modal-qty-label">Jumlah</span>
+
+                    <div class="qty-control">
+                        <button type="button" id="qty-minus" aria-label="Kurangi">-</button>
+                        <span id="qty-value">1</span>
+                        <button type="button" id="qty-plus" aria-label="Tambah">+</button>
+                    </div>
+
+                </div>
+
+                <div class="modal-subtotal">
+                    <span>Subtotal</span>
+                    <strong id="modal-subtotal">Rp0</strong>
+                </div>
+
+                <button class="modal-add-btn" id="modal-add-to-cart">
+                    Add to Cart
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================
+         CART DRAWER
+         ========================= -->
+
+    <div class="cart-overlay" id="cart-overlay"></div>
+
+    <aside class="cart-drawer" id="cart-drawer">
+
+        <div class="cart-drawer-header">
+            <h3>Keranjang Kamu</h3>
+            <button id="cart-close" aria-label="Tutup Keranjang">&times;</button>
+        </div>
+
+        <div class="cart-items" id="cart-items">
+            <p class="cart-empty" id="cart-empty">
+                Keranjang masih kosong. Yuk pilih cookies favoritmu!
+            </p>
+        </div>
+
+        <div class="cart-footer">
+
+            <div class="cart-total-row">
+                <span>Total</span>
+                <strong id="cart-total">Rp0</strong>
+            </div>
+
+            <button class="checkout-btn" id="checkout-btn" disabled>
+                Checkout
+            </button>
+
+            <p class="cart-note" id="cart-note"></p>
+
+        </div>
+
+    </aside>
+
+
+
+    <!-- =========================
+         CHECKOUT MODAL
+         ========================= -->
+
+    <div class="modal-overlay" id="checkout-modal">
+
+        <div class="modal-box checkout-box">
+
+            <button class="modal-close" id="checkout-modal-close" aria-label="Tutup">
+                &times;
+            </button>
+
+            <div class="modal-info">
+
+                <h3>Checkout</h3>
+
+                <div class="checkout-summary">
+                    <div class="checkout-summary-items" id="checkout-summary-items"></div>
+
+                    <div class="checkout-summary-total">
+                        <span>Total</span>
+                        <strong id="checkout-summary-total">Rp0</strong>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="checkout-name">Nama</label>
+                    <input
+                        type="text"
+                        id="checkout-name"
+                        class="form-input"
+                        placeholder="Nama kamu"
+                    >
+                    <span class="form-error" id="checkout-name-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="checkout-wa">No. WhatsApp</label>
+                    <input
+                        type="tel"
+                        id="checkout-wa"
+                        class="form-input"
+                        placeholder="08xxxxxxxxxx"
+                    >
+                    <span class="form-error" id="checkout-wa-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="checkout-note">Catatan (opsional)</label>
+                    <textarea
+                        id="checkout-note"
+                        class="form-textarea"
+                        rows="2"
+                        placeholder="Contoh: tolong dibungkus terpisah"
+                    ></textarea>
+                </div>
+
+                <button class="modal-add-btn" id="checkout-submit">
+                    Kirim Pesanan
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================
+         ORDER CONFIRMATION MODAL
+         ========================= -->
+
+    <div class="modal-overlay" id="confirmation-modal">
+
+        <div class="modal-box confirmation-box">
+
+            <div class="modal-info confirmation-info">
+
+                <div class="confirmation-check">✓</div>
+
+                <h3>Pesanan Berhasil Dibuat!</h3>
+
+                <p class="confirmation-order-id" id="confirmation-order-id"></p>
+
+                <p class="confirmation-customer" id="confirmation-customer"></p>
+
+                <div class="checkout-summary">
+                    <div class="checkout-summary-items" id="confirmation-items"></div>
+
+                    <div class="checkout-summary-total">
+                        <span>Total</span>
+                        <strong id="confirmation-total">Rp0</strong>
+                    </div>
+                </div>
+
+                <button class="modal-add-btn" id="confirmation-done">
+                    Pesan Lagi
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================
+         FLOATING CART
+         ========================= -->
+
+    <button class="floating-cart" id="floating-cart" aria-label="Buka Keranjang">
+
+        <div class="floating-cart-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+        </div>
+
+        <div class="floating-cart-info">
+            <span class="floating-cart-count" id="floating-cart-count">0 items</span>
+            <strong class="floating-cart-total" id="floating-cart-total">Rp0</strong>
+        </div>
+
+    </button>
+
+
+
+    <script src="script.js"></script>
+
+</body>
+</html>
