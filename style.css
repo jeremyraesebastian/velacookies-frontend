@@ -350,12 +350,17 @@ button {
 
     display: grid;
     grid-template-columns: 1fr 0.9fr;
-    align-items: center;
+    align-items: stretch;              /* ← kolom kanan ngikut tinggi kolom kiri */
     gap: 70px;
 }
 
 .hero-content {
     max-width: 620px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;           /* konten tetap center vertikal */
+    align-self: stretch;
 }
 
 .eyebrow {
@@ -413,6 +418,8 @@ button {
         transform  0.2s ease,
         background 0.2s ease,
         box-shadow 0.2s ease;
+
+    align-self: flex-start;            /* biar tombol gak melebar */
 }
 
 .hero-button:hover {
@@ -435,14 +442,15 @@ button {
 }
 
 
-/* --- Hero Image — rasio 3:4 --- */
+/* --- Hero Image — tinggi mengikuti konten --- */
 
 .hero-image {
     position: relative;
 
     width: 100%;
     max-width: 460px;
-    aspect-ratio: 3 / 4;
+
+    height: 100%;                      /* ← ngisi tinggi kolom */
 
     margin-left: auto;
 
@@ -1741,18 +1749,28 @@ button {
         gap: 40px;
 
         padding: 55px 5% 65px;
+
+        align-items: center;            /* balik ke center di mobile */
     }
 
     .hero-content {
         max-width: 100%;
+        align-self: auto;
+    }
+
+    .hero-button {
+        align-self: flex-start;
     }
 
     .hero h1 {
         font-size: clamp(46px, 12vw, 70px);
     }
 
+    /* Hero image balik pakai aspect-ratio di mobile */
     .hero-image {
         max-width: 400px;
+        height: auto;
+        aspect-ratio: 1 / 1;
         margin: 0 auto;
     }
 
@@ -1844,6 +1862,7 @@ button {
 
     .hero-image {
         max-width: 320px;
+        aspect-ratio: 1 / 1;
     }
 
     .product-grid {

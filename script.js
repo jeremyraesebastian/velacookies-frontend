@@ -6,20 +6,28 @@ console.log("Velacookies website loaded!");
 
 const heroImages = [
     {
-        src: "images/chocochip.jpeg",
-        alt: "Velaclassic Chocochip"
-    },
-    {
-        src: "images/biscoff.jpeg",
+        src: "images/lotushero.jpeg",
         alt: "Vela Lotus Biscoff"
     },
     {
-        src: "images/scoopable.jpeg",
-        alt: "Scoopable Nutella Cookies"
+        src: "images/strawhero.jpeg",
+        alt: "Scoopable Strawberry Nutella"
     },
     {
-        src: "images/nutella-tin.jpeg",
-        alt: "Cookie Nutella Tin"
+        src: "images/butterhero.jpeg",
+        alt: "Butter Cookies"
+    },
+    {
+        src: "images/nutthero.jpeg",
+        alt: "Nutella Cookies"
+    },
+    {
+        src: "images/chocohero.jpeg",
+        alt: "Velaclassic Chocochip"
+    },
+       {
+        src: "images/lotuscream.jpeg",
+        alt: "Lotus Cream Cookies"
     }
 ];
 
@@ -323,7 +331,7 @@ const PRODUCTS = {
         category: "FAVORITE",
         price: 15000,
         image: "images/biscoff.jpeg",
-        description:"nanti di isi",
+        description: "nanti di isi",
         hasAddon: false
     },
     "scoopable": {
@@ -331,7 +339,7 @@ const PRODUCTS = {
         category: "SPECIAL",
         price: 28000,
         image: "images/scoopable.jpeg",
-        description:"nanti di isi",
+        description: "nanti di isi",
         hasAddon: true,
         addonName: "Strawberry + Extra Nutella",
         addonPrice: 8000
@@ -341,7 +349,7 @@ const PRODUCTS = {
         category: "PREMIUM",
         price: 80000,
         image: "images/nutella-tin.jpeg",
-        description:"nanti di isi",
+        description: "nanti di isi",
         hasAddon: true,
         addonName: "Strawberry + Extra Nutella",
         addonPrice: 15000
