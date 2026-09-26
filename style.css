@@ -2020,3 +2020,29 @@ button {
         stroke-width: 1.6;
     }
 }
+/* =========================
+HILANGKAN HIGHLIGHT BIRU
+========================= */
+
+/* Hilangkan highlight biru di mobile (Safari & Chrome) */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Hilangkan outline biru di desktop saat tombol di-klik */
+button,
+a,
+input,
+textarea,
+select {
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+}
+
+/* Opsional: kasih focus style custom yang lebih elegan
+   (biar tetap aksesibel buat keyboard user) */
+button:focus-visible,
+a:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+}
