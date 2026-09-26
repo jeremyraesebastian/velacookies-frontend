@@ -323,7 +323,7 @@ const PRODUCTS = {
         category: "CLASSIC",
         price: 12000,
         image: "images/chocochip.jpeg",
-        description: "nanti di isi",
+        description: "Klasik, lembut, penuh choco chip — teman ngemil yang nggak pernah gagal.",
         hasAddon: false
     },
     "biscoff": {
@@ -331,7 +331,7 @@ const PRODUCTS = {
         category: "FAVORITE",
         price: 15000,
         image: "images/biscoff.jpeg",
-        description: "nanti di isi",
+        description: "Lelehan Lotus Biscoff, crunchy biscuit, sejuta candu dalam satu gigitan.",
         hasAddon: false
     },
     "scoopable": {
@@ -339,7 +339,7 @@ const PRODUCTS = {
         category: "SPECIAL",
         price: 28000,
         image: "images/scoopable.jpeg",
-        description: "nanti di isi",
+        description: "Nutella lumer, strawberry segar, tinggal scoop — momen self-reward kamu.",
         hasAddon: true,
         addonName: "Strawberry + Extra Nutella",
         addonPrice: 8000
@@ -349,7 +349,7 @@ const PRODUCTS = {
         category: "PREMIUM",
         price: 80000,
         image: "images/nutella-tin.jpeg",
-        description: "nanti di isi",
+        description: "Giant cookie gold, jaring Nutella & strawberry — favorit untuk dinikmati bersama.",
         hasAddon: true,
         addonName: "Strawberry + Extra Nutella",
         addonPrice: 15000
@@ -1143,3 +1143,25 @@ updateFloatingCart();
 
 /* Init PO Status */
 updatePOStatusUI();
+/* =========================
+   SCROLLBAR AUTO-HIDE
+   ========================= */
+
+function attachScrollbarAutoHide(el) {
+    if (!el) return;
+
+    let hideTimeout;
+
+    el.addEventListener("scroll", () => {
+        el.classList.add("is-scrolling");
+
+        clearTimeout(hideTimeout);
+        hideTimeout = setTimeout(() => {
+            el.classList.remove("is-scrolling");
+        }, 800);           /* ← lama scrollbar stay setelah berhenti scroll */
+    }, { passive: true });
+}
+
+document
+    .querySelectorAll(".modal-box, .cart-items, .checkout-summary-items")
+    .forEach(attachScrollbarAutoHide);

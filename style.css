@@ -2065,3 +2065,111 @@ a:focus-visible {
     outline: 2px solid var(--gold);
     outline-offset: 2px;
 }
+/* =========================
+CUSTOM SCROLLBAR
+========================= */
+
+/* --- Chrome, Edge, Safari --- */
+
+/* Lebar scrollbar */
+.modal-box::-webkit-scrollbar,
+.cart-items::-webkit-scrollbar,
+.checkout-summary-items::-webkit-scrollbar {
+    width: 6px;
+}
+
+/* Track (jalur) — transparan */
+.modal-box::-webkit-scrollbar-track,
+.cart-items::-webkit-scrollbar-track,
+.checkout-summary-items::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 8px 0;
+}
+
+/* Thumb (yang digeser) — gold lembut, rounded */
+.modal-box::-webkit-scrollbar-thumb,
+.cart-items::-webkit-scrollbar-thumb,
+.checkout-summary-items::-webkit-scrollbar-thumb {
+    background: rgba(168, 118, 28, 0.35);
+    border-radius: 999px;
+    transition: background 0.2s ease;
+}
+
+/* Thumb saat hover — lebih tegas */
+.modal-box::-webkit-scrollbar-thumb:hover,
+.cart-items::-webkit-scrollbar-thumb:hover,
+.checkout-summary-items::-webkit-scrollbar-thumb:hover {
+    background: rgba(168, 118, 28, 0.65);
+}
+
+/* Sudut bawah kanan (kalau ada dua scrollbar) */
+.modal-box::-webkit-scrollbar-corner,
+.cart-items::-webkit-scrollbar-corner,
+.checkout-summary-items::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+
+/* --- Firefox --- */
+
+.modal-box,
+.cart-items,
+.checkout-summary-items {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(168, 118, 28, 0.35) transparent;
+}
+/* =========================
+SCROLLBAR AUTO-HIDE (smooth)
+========================= */
+
+/* Lebar scrollbar SELALU 6px — biar gak ada reflow */
+
+.modal-box::-webkit-scrollbar,
+.cart-items::-webkit-scrollbar,
+.checkout-summary-items::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-box::-webkit-scrollbar-track,
+.cart-items::-webkit-scrollbar-track,
+.checkout-summary-items::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* Thumb transparan waktu idle */
+.modal-box::-webkit-scrollbar-thumb,
+.cart-items::-webkit-scrollbar-thumb,
+.checkout-summary-items::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 999px;
+    transition: background 0.3s ease;
+}
+
+/* Thumb muncul waktu scroll */
+.modal-box.is-scrolling::-webkit-scrollbar-thumb,
+.cart-items.is-scrolling::-webkit-scrollbar-thumb,
+.checkout-summary-items.is-scrolling::-webkit-scrollbar-thumb {
+    background: rgba(168, 118, 28, 0.5);
+}
+
+/* Thumb hover — lebih tegas */
+.modal-box::-webkit-scrollbar-thumb:hover,
+.cart-items::-webkit-scrollbar-thumb:hover,
+.checkout-summary-items::-webkit-scrollbar-thumb:hover {
+    background: rgba(168, 118, 28, 0.75);
+}
+
+/* Firefox */
+.modal-box,
+.cart-items,
+.checkout-summary-items {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color 0.3s ease;
+}
+
+.modal-box.is-scrolling,
+.cart-items.is-scrolling,
+.checkout-summary-items.is-scrolling {
+    scrollbar-color: rgba(168, 118, 28, 0.5) transparent;
+}
