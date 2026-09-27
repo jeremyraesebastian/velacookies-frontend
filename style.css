@@ -32,7 +32,7 @@
 
     --error:         #c0392b;
 
-    --navbar-overlay: rgba(30, 15, 16, 0.55);
+    --navbar-overlay: rgba(30, 15, 16, 0.32);
 }
 
 
@@ -161,14 +161,22 @@ button {
     object-fit: contain;
     object-position: left center;
 
-    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+    /* Shadow berlapis: hitam tebal + glow putih tipis */
+    filter:
+        drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6))
+        drop-shadow(0 4px 16px rgba(0, 0, 0, 0.75))
+        drop-shadow(0 0 24px rgba(255, 255, 255, 0.12));
 
     transition: filter 0.3s ease, transform 0.3s ease;
 }
 
 .brand:hover .brand-logo {
     transform: scale(1.05);
-    filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.65));
+
+    filter:
+        drop-shadow(0 3px 6px rgba(0, 0, 0, 0.7))
+        drop-shadow(0 6px 22px rgba(0, 0, 0, 0.85))
+        drop-shadow(0 0 32px rgba(255, 255, 255, 0.2));
 }
 
 
@@ -188,24 +196,38 @@ button {
 .nav-links a {
     position: relative;
 
-    color: rgba(250, 246, 239, 0.9);
+    padding: 8px 16px;
+
+    color: #FAF6EF;
     font-size: 16px;
-    font-weight: 500;
+    font-weight: 600;
+    letter-spacing: 0.3px;
 
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    /* Shadow berlapis biar teks tegas di atas gambar apapun */
+    text-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.85),
+        0 2px 10px rgba(0, 0, 0, 0.7),
+        0 0 20px rgba(0, 0, 0, 0.4);
 
-    transition: color 0.2s ease;
+    border-radius: 999px;
+
+    transition:
+        color 0.2s ease,
+        background 0.25s ease,
+        text-shadow 0.2s ease;
 }
 
 .nav-links a::after {
     content: "";
 
     position: absolute;
-    left: 0;
-    bottom: -6px;
+    left: 50%;
+    bottom: 2px;
+
+    transform: translateX(-50%);
 
     width: 0;
-    height: 1px;
+    height: 2px;
 
     background: var(--gold-light);
 
@@ -214,10 +236,15 @@ button {
 
 .nav-links a:hover {
     color: #ffffff;
+    background: rgba(250, 246, 239, 0.12);
+    text-shadow:
+        0 1px 4px rgba(0, 0, 0, 0.9),
+        0 2px 12px rgba(0, 0, 0, 0.75),
+        0 0 24px rgba(168, 118, 28, 0.4);
 }
 
 .nav-links a:hover::after {
-    width: 100%;
+    width: 40%;
 }
 
 
@@ -386,10 +413,10 @@ button {
 .custom-l {
     display: inline-block;
 
-    height: 2em;                 /* L 2x tinggi text */
-    width: 1.84em;               /* ← FIX: eksplisit (2 × 560/610), biar gak nge-100% di HP */
+    height: 2em;
+    width: 1.84em;
 
-    vertical-align: baseline;    /* bottom L = baseline OVE */
+    vertical-align: baseline;
 
     margin-right: -0.05em;
 
@@ -715,9 +742,11 @@ button {
 }
 
 .section-heading h2 {
-    font-family: Georgia, "Times New Roman", serif;
+    font-family: "Helvetica Hebrew", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 700;
     font-size: clamp(38px, 5vw, 58px);
     line-height: 1;
+    letter-spacing: -2px;
 
     color: var(--text);
     margin-bottom: 14px;
@@ -1751,7 +1780,98 @@ button {
 
 
 /* =========================================================
-   14. RESPONSIVE — TABLET (≤ 900px)
+   14. CART ICON — CIRCLE WITH BORDER (HIGHLIGHTED)
+   ========================================================= */
+
+.navbar-inner > .cart-button {
+    position: absolute;
+    top: 33px;
+    right: 3%;
+    z-index: 5;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 46px;
+    height: 46px;
+    padding: 0;
+
+    border: 2px solid rgba(250, 246, 239, 0.95);
+    border-radius: 50%;
+    background: rgba(30, 15, 16, 0.35);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+
+    /* Shadow berlapis biar icon bener-bener "pop" */
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.5),
+        0 0 24px rgba(250, 246, 239, 0.25),
+        0 0 48px rgba(168, 118, 28, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5),
+        inset 0 -2px 6px rgba(0, 0, 0, 0.2);
+
+    color: #FAF6EF;
+    cursor: pointer;
+
+    transition:
+        background   0.3s ease,
+        border-color 0.3s ease,
+        box-shadow   0.3s ease,
+        transform    0.3s ease;
+}
+
+.navbar-inner > .cart-button .cart-label,
+.navbar-inner > .cart-button .cart-count {
+    display: none !important;
+}
+
+.navbar-inner > .cart-button .cart-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: auto;
+    height: auto;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+}
+
+.navbar-inner > .cart-button:hover .cart-icon-wrapper {
+    background: transparent;
+    color: inherit;
+    transform: none;
+}
+
+.navbar-inner > .cart-button svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
+}
+
+.navbar-inner > .cart-button:hover {
+    background: rgba(168, 118, 28, 0.85);
+    border-color: #ffffff;
+    box-shadow:
+        0 6px 24px rgba(0, 0, 0, 0.55),
+        0 0 32px rgba(250, 246, 239, 0.4),
+        0 0 56px rgba(168, 118, 28, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transform: translateY(-1px) scale(1.05);
+}
+
+.navbar-inner > .cart-button:active {
+    transform: translateY(0) scale(0.96);
+}
+
+
+/* =========================================================
+   15. RESPONSIVE — TABLET (≤ 900px)
    ========================================================= */
 
 @media (max-width: 900px) {
@@ -1857,11 +1977,25 @@ button {
         align-items: flex-start;
         padding: 40px 5% 30px;
     }
+
+    /* Cart icon di navbar — tablet */
+    .navbar-inner > .cart-button {
+        top: 26px;
+        right: 4%;
+        width: 42px;
+        height: 42px;
+    }
+
+    .navbar-inner > .cart-button svg {
+        width: 18px;
+        height: 18px;
+        stroke-width: 1.8;
+    }
 }
 
 
 /* =========================================================
-   15. RESPONSIVE — SMALL MOBILE (≤ 520px)
+   16. RESPONSIVE — SMALL MOBILE (≤ 520px)
    ========================================================= */
 
 @media (max-width: 520px) {
@@ -1946,11 +2080,26 @@ button {
         content: " ·";
         margin-left: 2px;
     }
+
+    /* Cart icon di navbar — HP */
+    .navbar-inner > .cart-button {
+        top: 22px;
+        right: 4%;
+        width: 38px;
+        height: 38px;
+        border-width: 1.5px;
+    }
+
+    .navbar-inner > .cart-button svg {
+        width: 16px;
+        height: 16px;
+        stroke-width: 1.8;
+    }
 }
 
 
 /* =========================================================
-   16. REDUCED MOTION
+   17. REDUCED MOTION
    ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
@@ -1961,113 +2110,6 @@ button {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
-    }
-}
-
-
-/* =========================================================
-   17. CART ICON — CIRCLE WITH BORDER
-   ========================================================= */
-
-.navbar-inner > .cart-button {
-    position: absolute;
-    top: 33px;
-    right: 3%;
-    z-index: 5;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    width: 46px;
-    height: 46px;
-    padding: 0;
-
-    border: 1.5px solid rgba(250, 246, 239, 0.55);
-    border-radius: 50%;
-    background: rgba(250, 246, 239, 0.08);
-    backdrop-filter: blur(8px);
-    box-shadow: none;
-
-    color: #FAF6EF;
-    cursor: pointer;
-
-    transition:
-        background   0.3s ease,
-        border-color 0.3s ease,
-        transform    0.3s ease;
-}
-
-.navbar-inner > .cart-button .cart-label,
-.navbar-inner > .cart-button .cart-count {
-    display: none !important;
-}
-
-.navbar-inner > .cart-button .cart-icon-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    width: auto;
-    height: auto;
-    padding: 0;
-    border: none;
-    border-radius: 0;
-    background: transparent;
-    color: inherit;
-}
-
-.navbar-inner > .cart-button:hover .cart-icon-wrapper {
-    background: transparent;
-    color: inherit;
-    transform: none;
-}
-
-.navbar-inner > .cart-button svg {
-    width: 20px;
-    height: 20px;
-    stroke: currentColor;
-    stroke-width: 1.6;
-}
-
-.navbar-inner > .cart-button:hover {
-    background: rgba(250, 246, 239, 0.18);
-    border-color: rgba(250, 246, 239, 0.85);
-    transform: translateY(-1px);
-}
-
-.navbar-inner > .cart-button:active {
-    transform: translateY(0) scale(0.96);
-}
-
-@media (max-width: 900px) {
-    .navbar-inner > .cart-button {
-        top: 26px;
-        right: 4%;
-        width: 40px;
-        height: 40px;
-    }
-
-    .navbar-inner > .cart-button svg {
-        width: 18px;
-        height: 18px;
-        stroke-width: 1.6;
-    }
-}
-
-@media (max-width: 520px) {
-    .navbar-inner > .cart-button {
-        top: 22px;
-        right: 4%;
-        width: 36px;
-        height: 36px;
-        border-width: 1.2px;
-    }
-
-    .navbar-inner > .cart-button svg {
-        width: 16px;
-        height: 16px;
-        stroke-width: 1.6;
     }
 }
 
@@ -2093,51 +2135,6 @@ button:focus-visible,
 a:focus-visible {
     outline: 2px solid var(--gold);
     outline-offset: 2px;
-}
-
-
-/* =========================
-CUSTOM SCROLLBAR
-========================= */
-
-.modal-box::-webkit-scrollbar,
-.cart-items::-webkit-scrollbar,
-.checkout-summary-items::-webkit-scrollbar {
-    width: 6px;
-}
-
-.modal-box::-webkit-scrollbar-track,
-.cart-items::-webkit-scrollbar-track,
-.checkout-summary-items::-webkit-scrollbar-track {
-    background: transparent;
-    margin: 8px 0;
-}
-
-.modal-box::-webkit-scrollbar-thumb,
-.cart-items::-webkit-scrollbar-thumb,
-.checkout-summary-items::-webkit-scrollbar-thumb {
-    background: rgba(168, 118, 28, 0.35);
-    border-radius: 999px;
-    transition: background 0.2s ease;
-}
-
-.modal-box::-webkit-scrollbar-thumb:hover,
-.cart-items::-webkit-scrollbar-thumb:hover,
-.checkout-summary-items::-webkit-scrollbar-thumb:hover {
-    background: rgba(168, 118, 28, 0.65);
-}
-
-.modal-box::-webkit-scrollbar-corner,
-.cart-items::-webkit-scrollbar-corner,
-.checkout-summary-items::-webkit-scrollbar-corner {
-    background: transparent;
-}
-
-.modal-box,
-.cart-items,
-.checkout-summary-items {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(168, 118, 28, 0.35) transparent;
 }
 
 
