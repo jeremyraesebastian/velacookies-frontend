@@ -350,7 +350,7 @@ button {
 
     display: grid;
     grid-template-columns: 1fr 0.9fr;
-    align-items: stretch;              /* ← kolom kanan ngikut tinggi kolom kiri */
+    align-items: stretch;
     gap: 70px;
 }
 
@@ -359,7 +359,7 @@ button {
 
     display: flex;
     flex-direction: column;
-    justify-content: center;           /* konten tetap center vertikal */
+    justify-content: center;
     align-self: stretch;
 }
 
@@ -372,16 +372,30 @@ button {
 }
 
 .hero h1 {
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: clamp(48px, 6vw, 82px);
-    line-height: 0.98;
-    letter-spacing: -2px;
-
+    font-family: "Helvetica Hebrew", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 700;
+    font-size: clamp(32px, 4.2vw, 58px);
+    line-height: 1.05;
+    letter-spacing: -1.8px;
     color: var(--text);
-
     margin-bottom: 25px;
-}
 
+    overflow: visible;            /* ← penting, biar L yang lebih tinggi gak kepotong */
+}        /* clearfix biar h1 tetap bungkus float */
+.custom-l {
+    display: inline-block;
+
+    height: 2em;                 /* L lebih gede, 2x tinggi text */
+    width: auto;
+
+    vertical-align: baseline;    /* bottom L = baseline OVE */
+
+    margin-right: -0.05em;       /* jarak normal ke O */
+
+    fill: currentColor;
+
+    overflow: visible;
+}
 .hero-description {
     max-width: 500px;
     color: var(--text-soft);
@@ -419,7 +433,7 @@ button {
         background 0.2s ease,
         box-shadow 0.2s ease;
 
-    align-self: flex-start;            /* biar tombol gak melebar */
+    align-self: flex-start;
 }
 
 .hero-button:hover {
@@ -450,7 +464,7 @@ button {
     width: 100%;
     max-width: 460px;
 
-    height: 100%;                      /* ← ngisi tinggi kolom */
+    height: 100%;
 
     margin-left: auto;
 
@@ -502,27 +516,30 @@ button {
     transform: translateX(-50%);
 
     display: flex;
-    gap: 7px;
+    gap: 10px;
 
-    padding: 8px 11px;
-    border-radius: 999px;
+    /* Wrapper transparan — cuma titik aja */
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    backdrop-filter: none;
 
-    background: rgba(250, 246, 239, 0.85);
-    border: 1px solid var(--border);
-    backdrop-filter: blur(6px);
+    /* Shadow biar titik tetap keliatan di atas gambar terang */
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55));
 
     z-index: 2;
 }
 
 .hero-dot {
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     padding: 0;
 
     border: none;
     border-radius: 50%;
 
-    background: rgba(42, 20, 22, 0.25);
+    background: rgba(255, 255, 255, 0.5);
     cursor: pointer;
 
     transition:
@@ -531,15 +548,14 @@ button {
 }
 
 .hero-dot:hover {
-    transform: scale(1.25);
+    transform: scale(1.3);
+    background: rgba(255, 255, 255, 0.8);
 }
 
 .hero-dot.active {
-    background: var(--gold);
-    transform: scale(1.2);
+    background: #ffffff;
+    transform: scale(1.3);
 }
-
-
 /* =========================================================
    5. PO SECTION
    ========================================================= */
@@ -816,7 +832,7 @@ button {
 }
 
 
-/* --- Add Button --- */
+/* --- Add Button — minimalist circular (ivory + red plus) --- */
 
 .add-button {
     border: none;
@@ -824,47 +840,67 @@ button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 7px;
 
-    padding: 9px 12px;
-    border-radius: 999px;
-
-    background: var(--text);
-    color: #FAF6EF;
-
-    font-size: 12px;
-    font-weight: bold;
-    white-space: nowrap;
-
-    transition:
-        transform  0.18s ease,
-        background 0.18s ease;
-}
-
-.add-button:hover {
-    transform: translateY(-2px);
-    background: #1a0a0c;
-}
-
-.add-button:active {
-    transform: translateY(1px) scale(0.98);
-}
-
-.plus {
-    width: 18px;
-    height: 18px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
 
     border-radius: 50%;
 
-    background: linear-gradient(135deg, var(--green-dark), var(--green-mid));
+    background: #FAF6EF;
+    color: #a83024;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 2px 8px rgba(42, 20, 22, 0.1),
+        0 0 0 1px rgba(168, 48, 36, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+
+    transition:
+        transform   0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+        background  0.22s ease,
+        color       0.22s ease,
+        box-shadow  0.22s ease;
+}
+
+.add-button:hover {
+    transform: translateY(-2px) scale(1.06);
+
+    background: #a83024;
     color: #FAF6EF;
 
-    font-size: 15px;
+    box-shadow:
+        0 6px 18px rgba(168, 48, 36, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.add-button:active {
+    transform: translateY(0) scale(0.95);
+}
+
+/* Sembunyikan teks "Add to Cart", sisakan plus aja */
+.add-button > span:last-child {
+    display: none;
+}
+
+/* Plus sign — merah, clean */
+.add-button .plus {
+    width: auto;
+    height: auto;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: transparent;
+    color: inherit;
+
+    font-size: 24px;
+    font-weight: 300;
     line-height: 1;
+
+    transform: translateY(-1px);
 }
 
 
@@ -1750,7 +1786,7 @@ button {
 
         padding: 55px 5% 65px;
 
-        align-items: center;            /* balik ke center di mobile */
+        align-items: center;
     }
 
     .hero-content {
@@ -1766,7 +1802,6 @@ button {
         font-size: clamp(46px, 12vw, 70px);
     }
 
-    /* Hero image balik pakai aspect-ratio di mobile */
     .hero-image {
         max-width: 400px;
         height: auto;
@@ -1812,8 +1847,10 @@ button {
         gap: 10px;
     }
 
+    /* Add button tetap bulat 40x40 di tablet */
     .add-button {
-        width: 100%;
+        width: 40px;
+        height: 40px;
     }
 
     .footer {
@@ -1878,8 +1915,10 @@ button {
         align-items: center;
     }
 
+    /* Add button tetap bulat 40x40 di HP */
     .add-button {
-        width: auto;
+        width: 40px;
+        height: 40px;
     }
 
     .cart-drawer {
@@ -1934,7 +1973,7 @@ button {
 
 .navbar-inner > .cart-button {
     position: absolute;
-    top: 33px;                 /* center sejajar logo */
+    top: 33px;
     right: 3%;
     z-index: 5;
 
@@ -1961,13 +2000,11 @@ button {
         transform    0.3s ease;
 }
 
-/* Sembunyikan label & count */
 .navbar-inner > .cart-button .cart-label,
 .navbar-inner > .cart-button .cart-count {
     display: none !important;
 }
 
-/* Wrapper transparan */
 .navbar-inner > .cart-button .cart-icon-wrapper {
     display: flex;
     align-items: center;
@@ -1988,7 +2025,6 @@ button {
     transform: none;
 }
 
-/* SVG — tipis, elegan */
 .navbar-inner > .cart-button svg {
     width: 20px;
     height: 20px;
@@ -1996,7 +2032,6 @@ button {
     stroke-width: 1.6;
 }
 
-/* Hover — subtle */
 .navbar-inner > .cart-button:hover {
     background: rgba(250, 246, 239, 0.18);
     border-color: rgba(250, 246, 239, 0.85);
@@ -2007,7 +2042,6 @@ button {
     transform: translateY(0) scale(0.96);
 }
 
-/* Tablet */
 @media (max-width: 900px) {
     .navbar-inner > .cart-button {
         top: 26px;
@@ -2023,7 +2057,6 @@ button {
     }
 }
 
-/* HP */
 @media (max-width: 520px) {
     .navbar-inner > .cart-button {
         top: 22px;
@@ -2039,16 +2072,16 @@ button {
         stroke-width: 1.6;
     }
 }
+
+
 /* =========================
 HILANGKAN HIGHLIGHT BIRU
 ========================= */
 
-/* Hilangkan highlight biru di mobile (Safari & Chrome) */
 * {
     -webkit-tap-highlight-color: transparent;
 }
 
-/* Hilangkan outline biru di desktop saat tombol di-klik */
 button,
 a,
 input,
@@ -2058,27 +2091,23 @@ select {
     outline: none;
 }
 
-/* Opsional: kasih focus style custom yang lebih elegan
-   (biar tetap aksesibel buat keyboard user) */
 button:focus-visible,
 a:focus-visible {
     outline: 2px solid var(--gold);
     outline-offset: 2px;
 }
+
+
 /* =========================
 CUSTOM SCROLLBAR
 ========================= */
 
-/* --- Chrome, Edge, Safari --- */
-
-/* Lebar scrollbar */
 .modal-box::-webkit-scrollbar,
 .cart-items::-webkit-scrollbar,
 .checkout-summary-items::-webkit-scrollbar {
     width: 6px;
 }
 
-/* Track (jalur) — transparan */
 .modal-box::-webkit-scrollbar-track,
 .cart-items::-webkit-scrollbar-track,
 .checkout-summary-items::-webkit-scrollbar-track {
@@ -2086,7 +2115,6 @@ CUSTOM SCROLLBAR
     margin: 8px 0;
 }
 
-/* Thumb (yang digeser) — gold lembut, rounded */
 .modal-box::-webkit-scrollbar-thumb,
 .cart-items::-webkit-scrollbar-thumb,
 .checkout-summary-items::-webkit-scrollbar-thumb {
@@ -2095,22 +2123,17 @@ CUSTOM SCROLLBAR
     transition: background 0.2s ease;
 }
 
-/* Thumb saat hover — lebih tegas */
 .modal-box::-webkit-scrollbar-thumb:hover,
 .cart-items::-webkit-scrollbar-thumb:hover,
 .checkout-summary-items::-webkit-scrollbar-thumb:hover {
     background: rgba(168, 118, 28, 0.65);
 }
 
-/* Sudut bawah kanan (kalau ada dua scrollbar) */
 .modal-box::-webkit-scrollbar-corner,
 .cart-items::-webkit-scrollbar-corner,
 .checkout-summary-items::-webkit-scrollbar-corner {
     background: transparent;
 }
-
-
-/* --- Firefox --- */
 
 .modal-box,
 .cart-items,
@@ -2118,11 +2141,11 @@ CUSTOM SCROLLBAR
     scrollbar-width: thin;
     scrollbar-color: rgba(168, 118, 28, 0.35) transparent;
 }
+
+
 /* =========================
 SCROLLBAR AUTO-HIDE (smooth)
 ========================= */
-
-/* Lebar scrollbar SELALU 6px — biar gak ada reflow */
 
 .modal-box::-webkit-scrollbar,
 .cart-items::-webkit-scrollbar,
@@ -2136,7 +2159,6 @@ SCROLLBAR AUTO-HIDE (smooth)
     background: transparent;
 }
 
-/* Thumb transparan waktu idle */
 .modal-box::-webkit-scrollbar-thumb,
 .cart-items::-webkit-scrollbar-thumb,
 .checkout-summary-items::-webkit-scrollbar-thumb {
@@ -2145,21 +2167,18 @@ SCROLLBAR AUTO-HIDE (smooth)
     transition: background 0.3s ease;
 }
 
-/* Thumb muncul waktu scroll */
 .modal-box.is-scrolling::-webkit-scrollbar-thumb,
 .cart-items.is-scrolling::-webkit-scrollbar-thumb,
 .checkout-summary-items.is-scrolling::-webkit-scrollbar-thumb {
     background: rgba(168, 118, 28, 0.5);
 }
 
-/* Thumb hover — lebih tegas */
 .modal-box::-webkit-scrollbar-thumb:hover,
 .cart-items::-webkit-scrollbar-thumb:hover,
 .checkout-summary-items::-webkit-scrollbar-thumb:hover {
     background: rgba(168, 118, 28, 0.75);
 }
 
-/* Firefox */
 .modal-box,
 .cart-items,
 .checkout-summary-items {
