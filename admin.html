@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel — Velacookies</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+
+<body class="admin-body">
+
+    <!-- LOGIN VIEW -->
+    <div class="login-view" id="login-view">
+        <div class="login-card">
+            <div class="login-brand">
+                <span>VELA</span>
+                <strong>COOKIES</strong>
+            </div>
+            <h1>Admin Panel</h1>
+            <p class="login-sub">Masuk untuk melihat daftar pesanan.</p>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label class="form-label" for="login-username">Username</label>
+                    <input type="text" id="login-username" class="form-input" autocomplete="username" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="login-password">Password</label>
+                    <input type="password" id="login-password" class="form-input" autocomplete="current-password" required>
+                </div>
+                <p class="login-error" id="login-error"></p>
+                <button type="submit" class="btn-primary" id="login-submit">Masuk</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- DASHBOARD VIEW -->
+    <div class="dashboard-view" id="dashboard-view" hidden>
+        <header class="admin-header">
+            <div class="admin-brand">
+                <span>VELA</span>
+                <strong>COOKIES</strong>
+                <small>Admin</small>
+            </div>
+            <div class="admin-header-actions">
+                <a href="index.html" class="btn-ghost">← Lihat Website</a>
+                <button class="btn-ghost" id="logout-btn">Logout</button>
+            </div>
+        </header>
+
+        <main class="admin-main">
+            <div class="admin-summary">
+                <div class="summary-card">
+                    <span class="summary-label">Total Pesanan</span>
+                    <strong class="summary-value" id="summary-total-orders">—</strong>
+                </div>
+                <div class="summary-card">
+                    <span class="summary-label">Total Pendapatan</span>
+                    <strong class="summary-value" id="summary-total-revenue">—</strong>
+                </div>
+                <div class="summary-card">
+                    <span class="summary-label">Pesanan Hari Ini</span>
+                    <strong class="summary-value" id="summary-today-orders">—</strong>
+                </div>
+            </div>
+
+            <div class="admin-toolbar">
+                <input type="search" id="search-input" class="search-input" placeholder="Cari nama, order ID, atau WhatsApp...">
+                <button class="btn-ghost" id="refresh-btn">Refresh</button>
+            </div>
+
+            <div class="admin-table-wrap">
+                <table class="admin-table" id="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Tanggal</th>
+                            <th>Nama</th>
+                            <th>WhatsApp</th>
+                            <th>Total</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-tbody"></tbody>
+                </table>
+                <p class="table-empty" id="table-empty" hidden>Belum ada pesanan.</p>
+                <p class="table-loading" id="table-loading">Memuat pesanan...</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- ORDER DETAIL MODAL -->
+    <div class="admin-modal-overlay" id="order-modal">
+        <div class="admin-modal">
+            <button class="admin-modal-close" id="order-modal-close" aria-label="Tutup">&times;</button>
+            <div class="admin-modal-body" id="order-modal-body"></div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
