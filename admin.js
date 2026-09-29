@@ -5,7 +5,10 @@
 const API_BASE = "https://velacookies-production.up.railway.app";
 const TOKEN_KEY = "velacookies_admin_token";
 
-/* DOM */
+/* =========================
+   DOM REFERENCES
+   ========================= */
+
 const loginView = document.getElementById("login-view");
 const dashboardView = document.getElementById("dashboard-view");
 const loginForm = document.getElementById("login-form");
@@ -14,6 +17,12 @@ const loginPassword = document.getElementById("login-password");
 const loginError = document.getElementById("login-error");
 const loginSubmit = document.getElementById("login-submit");
 const logoutBtn = document.getElementById("logout-btn");
+
+/* Tab navigation */
+const adminTabs = document.querySelectorAll(".admin-tab");
+const tabContents = document.querySelectorAll(".tab-content");
+
+/* Orders tab DOM */
 const refreshBtn = document.getElementById("refresh-btn");
 const searchInput = document.getElementById("search-input");
 const locationFilter = document.getElementById("location-filter");
@@ -47,8 +56,70 @@ const orderModal = document.getElementById("order-modal");
 const orderModalBody = document.getElementById("order-modal-body");
 const orderModalClose = document.getElementById("order-modal-close");
 
-/* STATE */
+/* Finance tab DOM */
+const financeMonthInput = document.getElementById("finance-month");
+const financeRefreshBtn = document.getElementById("finance-refresh");
+
+const finRevenue = document.getElementById("fin-revenue");
+const finPeriodStatus = document.getElementById("fin-period-status");
+
+const finHppPct = document.getElementById("fin-hpp-pct");
+const finHppAllocated = document.getElementById("fin-hpp-allocated");
+const finHppSpent = document.getElementById("fin-hpp-spent");
+const finHppRemaining = document.getElementById("fin-hpp-remaining");
+const finHppBar = document.getElementById("fin-hpp-bar");
+
+const finCashflowPct = document.getElementById("fin-cashflow-pct");
+const finCashflowAllocated = document.getElementById("fin-cashflow-allocated");
+const finCashflowSpent = document.getElementById("fin-cashflow-spent");
+const finCashflowRemaining = document.getElementById("fin-cashflow-remaining");
+const finCashflowBar = document.getElementById("fin-cashflow-bar");
+
+const finProfitPct = document.getElementById("fin-profit-pct");
+const finProfitAllocated = document.getElementById("fin-profit-allocated");
+const finProfitDetail = document.getElementById("fin-profit-detail");
+const finProfitFinal = document.getElementById("fin-profit-final");
+
+/* Finance input tabs */
+const financeTabs = document.querySelectorAll(".finance-tab");
+const financeFormPanels = document.querySelectorAll(".finance-form-panel");
+
+/* HPP form */
+const hppForm = document.getElementById("hpp-form");
+const hppDate = document.getElementById("hpp-date");
+const hppItem = document.getElementById("hpp-item");
+const hppQty = document.getElementById("hpp-qty");
+const hppUnit = document.getElementById("hpp-unit");
+const hppAmount = document.getElementById("hpp-amount");
+const hppNote = document.getElementById("hpp-note");
+const hppSubmit = document.getElementById("hpp-submit");
+
+/* Cashflow form */
+const cashflowForm = document.getElementById("cashflow-form");
+const cfDate = document.getElementById("cf-date");
+const cfCategory = document.getElementById("cf-category");
+const cfDesc = document.getElementById("cf-desc");
+const cfAmount = document.getElementById("cf-amount");
+const cfNote = document.getElementById("cf-note");
+const cfSubmit = document.getElementById("cf-submit");
+
+/* History */
+const hppHistoryTbody = document.getElementById("hpp-history-tbody");
+const hppHistoryEmpty = document.getElementById("hpp-history-empty");
+const hppHistoryMonth = document.getElementById("hpp-history-month");
+const cfHistoryTbody = document.getElementById("cf-history-tbody");
+const cfHistoryEmpty = document.getElementById("cf-history-empty");
+const cfHistoryMonth = document.getElementById("cf-history-month");
+
+
+/* =========================
+   STATE
+   ========================= */
+
 let allOrders = [];
+let currentFinanceMonth = "";
+let currentFinanceSummary = null;
+let cashflowCategories = [];
 
 /* =========================
    HELPERS
@@ -67,6 +138,16 @@ function formatDate(isoString) {
         year: "numeric",
         hour: "2-digit",
         minute: "2-digit"
+    });
+}
+
+function formatDateShort(isoDate) {
+    if (!isoDate) return "-";
+    const date = new Date(isoDate + "T00:00:00");
+    return date.toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
     });
 }
 
@@ -133,19 +214,13 @@ function getDateStringOffset(dateString, dayOffset) {
 function getMetrics(orders) {
     let totalItems = 0;
     let totalRevenue = 0;
-
     orders.forEach((order) => {
         totalRevenue += order.total || 0;
         (order.items || []).forEach((item) => {
             totalItems += item.quantity;
         });
     });
-
-    return {
-        orders: orders.length,
-        items: totalItems,
-        revenue: totalRevenue
-    };
+    return { orders: orders.length, items: totalItems, revenue: totalRevenue };
 }
 
 function normalizeWA(wa) {
@@ -167,98 +242,33 @@ function escapeHtml(text) {
         .replace(/'/g, "&#039;");
 }
 
-/* =========================
-   CUSTOMER TYPE (NEW)
-   ========================= */
-
 function getCustomerType(order) {
     const wa = normalizeWA(order.whatsapp);
     if (!wa) return "baru";
-
     const orderDate = new Date(order.createdAt).getTime();
-
     const previousOrders = allOrders.filter((o) => {
         if (normalizeWA(o.whatsapp) !== wa) return false;
         const otherDate = new Date(o.createdAt).getTime();
         return otherDate < orderDate;
     });
-
     return previousOrders.length > 0 ? "lama" : "baru";
 }
 
-
-/* =========================
-   CUSTOMER INSIGHTS
-   ========================= */
-
-function renderCustomerInsights() {
-    if (!insightTotalCustomers) return;
-
-    const customerMap = {};
-
-    allOrders.forEach((order) => {
-        const wa = normalizeWA(order.whatsapp);
-        if (!wa) return;
-
-        if (!customerMap[wa]) {
-            customerMap[wa] = {
-                whatsapp: wa,
-                orderCount: 0,
-                totalSpent: 0
-            };
-        }
-
-        customerMap[wa].orderCount += 1;
-        customerMap[wa].totalSpent += order.total || 0;
-    });
-
-    const customers = Object.values(customerMap);
-    const totalCustomers = customers.length;
-
-    const repeatCustomers = customers.filter((c) => c.orderCount > 1).length;
-    const repeatRate =
-        totalCustomers > 0
-            ? Math.round((repeatCustomers / totalCustomers) * 100)
-            : 0;
-
-    let newOrdersCount = 0;
-    let oldOrdersCount = 0;
-
-    allOrders.forEach((order) => {
-        const type = getCustomerType(order);
-        if (type === "baru") {
-            newOrdersCount += 1;
-        } else {
-            oldOrdersCount += 1;
-        }
-    });
-
-    const totalOrdersCount = newOrdersCount + oldOrdersCount;
-    const newPercent =
-        totalOrdersCount > 0
-            ? Math.round((newOrdersCount / totalOrdersCount) * 100)
-            : 0;
-    const oldPercent = totalOrdersCount > 0 ? 100 - newPercent : 0;
-
-    insightTotalCustomers.innerText = totalCustomers;
-    insightRepeatRate.innerText = repeatRate + "%";
-
-    if (totalCustomers === 0) {
-        insightRepeatDetail.innerText = "Belum ada data";
-    } else {
-        insightRepeatDetail.innerHTML =
-            `<strong>${repeatCustomers}</strong> dari ${totalCustomers} customer order >1x`;
-    }
-
-    insightNewOldRatio.innerText = `${newPercent}% / ${oldPercent}%`;
-
-    if (totalOrdersCount === 0) {
-        insightNewOldDetail.innerText = "Belum ada data";
-    } else {
-        insightNewOldDetail.innerHTML =
-            `<strong>${newOrdersCount}</strong> baru · <strong>${oldOrdersCount}</strong> lama`;
-    }
+function getCurrentMonthString() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    return `${year}-${month}`;
 }
+
+function getTodayDateString() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
 
 /* =========================
    VIEW SWITCH
@@ -277,6 +287,32 @@ function showDashboardView() {
     dashboardView.hidden = false;
 }
 
+
+/* =========================
+   TAB NAVIGATION (ORDERS / FINANCE)
+   ========================= */
+
+adminTabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+        const targetTab = tab.dataset.tab;
+
+        adminTabs.forEach((t) => t.classList.remove("active"));
+        tab.classList.add("active");
+
+        tabContents.forEach((content) => {
+            const isActive = content.dataset.tabContent === targetTab;
+            content.classList.toggle("active", isActive);
+            content.hidden = !isActive;
+        });
+
+        // Load data sesuai tab yang dibuka
+        if (targetTab === "finance") {
+            loadFinance();
+        }
+    });
+});
+
+
 /* =========================
    LOGIN
    ========================= */
@@ -284,7 +320,6 @@ function showDashboardView() {
 if (loginForm) {
     loginForm.addEventListener("submit", async (e) => {
         e.preventDefault();
-
         loginError.innerText = "";
         loginSubmit.disabled = true;
         loginSubmit.innerText = "Memproses...";
@@ -320,6 +355,7 @@ if (loginForm) {
     });
 }
 
+
 /* =========================
    LOGOUT
    ========================= */
@@ -328,6 +364,7 @@ if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
         clearToken();
         allOrders = [];
+        currentFinanceSummary = null;
         showLoginView();
     });
 }
@@ -361,7 +398,7 @@ async function loadOrders() {
             return;
         }
 
-                allOrders = result.orders || [];
+        allOrders = result.orders || [];
         renderSummary();
         renderCustomerInsights();
         applyFilters();
@@ -375,14 +412,14 @@ async function loadOrders() {
     }
 }
 
+
 /* =========================
-   SUMMARY
+   SUMMARY (ORDERS)
    ========================= */
 
 function renderSummary() {
     const totalOrders = allOrders.length;
 
-    // Revenue cuma hitung order status "success"
     const totalRevenue = allOrders
         .filter((o) => (o.status || "pending") === "success")
         .reduce((sum, o) => sum + (o.total || 0), 0);
@@ -397,8 +434,70 @@ function renderSummary() {
     summaryTotalRevenue.innerText = formatRupiah(totalRevenue);
     summaryTodayOrders.innerText = todayOrders;
 }
+
+
 /* =========================
-   FILTER (search + location)
+   CUSTOMER INSIGHTS
+   ========================= */
+
+function renderCustomerInsights() {
+    if (!insightTotalCustomers) return;
+
+    const customerMap = {};
+    allOrders.forEach((order) => {
+        const wa = normalizeWA(order.whatsapp);
+        if (!wa) return;
+        if (!customerMap[wa]) {
+            customerMap[wa] = { orderCount: 0, totalSpent: 0 };
+        }
+        customerMap[wa].orderCount += 1;
+        customerMap[wa].totalSpent += order.total || 0;
+    });
+
+    const customers = Object.values(customerMap);
+    const totalCustomers = customers.length;
+    const repeatCustomers = customers.filter((c) => c.orderCount > 1).length;
+    const repeatRate = totalCustomers > 0
+        ? Math.round((repeatCustomers / totalCustomers) * 100)
+        : 0;
+
+    let newOrdersCount = 0;
+    let oldOrdersCount = 0;
+    allOrders.forEach((order) => {
+        const type = getCustomerType(order);
+        if (type === "baru") newOrdersCount += 1;
+        else oldOrdersCount += 1;
+    });
+
+    const totalOrdersCount = newOrdersCount + oldOrdersCount;
+    const newPercent = totalOrdersCount > 0
+        ? Math.round((newOrdersCount / totalOrdersCount) * 100)
+        : 0;
+    const oldPercent = totalOrdersCount > 0 ? 100 - newPercent : 0;
+
+    insightTotalCustomers.innerText = totalCustomers;
+    insightRepeatRate.innerText = repeatRate + "%";
+
+    if (totalCustomers === 0) {
+        insightRepeatDetail.innerText = "Belum ada data";
+    } else {
+        insightRepeatDetail.innerHTML =
+            `<strong>${repeatCustomers}</strong> dari ${totalCustomers} customer order >1x`;
+    }
+
+    insightNewOldRatio.innerText = `${newPercent}% / ${oldPercent}%`;
+
+    if (totalOrdersCount === 0) {
+        insightNewOldDetail.innerText = "Belum ada data";
+    } else {
+        insightNewOldDetail.innerHTML =
+            `<strong>${newOrdersCount}</strong> baru · <strong>${oldOrdersCount}</strong> lama`;
+    }
+}
+
+
+/* =========================
+   FILTERS
    ========================= */
 
 function applyFilters() {
@@ -430,8 +529,15 @@ function applyFilters() {
 
     renderOrders(filtered);
 }
+
+if (searchInput) searchInput.addEventListener("input", applyFilters);
+if (locationFilter) locationFilter.addEventListener("change", applyFilters);
+if (statusFilter) statusFilter.addEventListener("change", applyFilters);
+if (refreshBtn) refreshBtn.addEventListener("click", () => loadOrders());
+
+
 /* =========================
-   RENDER TABLE
+   RENDER ORDERS TABLE
    ========================= */
 
 function renderOrders(orders) {
@@ -451,7 +557,7 @@ function renderOrders(orders) {
         const waLink = `https://wa.me/${normalizeWA(order.whatsapp)}`;
         const locLabel = getLocationLabel(order.location);
         const locClass = getLocationClass(order.location);
-                const custType = getCustomerType(order);
+        const custType = getCustomerType(order);
         const statusVal = order.status || "pending";
         const statusClass = getStatusClass(statusVal);
         const statusLabel = getStatusLabel(statusVal);
@@ -501,27 +607,6 @@ function renderOrders(orders) {
     });
 }
 
-/* =========================
-   SEARCH + FILTER EVENT
-   ========================= */
-
-if (searchInput) {
-    searchInput.addEventListener("input", applyFilters);
-}
-
-if (locationFilter) {
-    locationFilter.addEventListener("change", applyFilters);
-}
-if (statusFilter) {
-    statusFilter.addEventListener("change", applyFilters);
-}
-/* =========================
-   REFRESH
-   ========================= */
-
-if (refreshBtn) {
-    refreshBtn.addEventListener("click", () => loadOrders());
-}
 
 /* =========================
    ORDER DETAIL MODAL
@@ -531,7 +616,6 @@ function openOrderModal(order) {
     if (!order) return;
 
     let itemsHtml = "";
-
     (order.items || []).forEach((item) => {
         itemsHtml += `
             <div class="detail-item">
@@ -553,6 +637,7 @@ function openOrderModal(order) {
     const statusVal = order.status || "pending";
     const statusClass = getStatusClass(statusVal);
     const statusLabel = getStatusLabel(statusVal);
+
     const locDetail = order.locationDetail
         ? `<div class="detail-row">
                <span class="label">Alamat</span>
@@ -567,6 +652,13 @@ function openOrderModal(order) {
         </div>
 
         <div class="detail-row">
+            <span class="label">Status</span>
+            <span class="value">
+                <span class="status-badge ${statusClass}">${statusLabel}</span>
+            </span>
+        </div>
+
+        <div class="detail-row">
             <span class="label">Nama</span>
             <span class="value">
                 <div class="cell-customer">
@@ -578,12 +670,6 @@ function openOrderModal(order) {
 
         <div class="detail-row">
             <span class="label">Lokasi</span>
-                    <div class="detail-row">
-            <span class="label">Status</span>
-            <span class="value">
-                <span class="status-badge ${statusClass}">${statusLabel}</span>
-            </span>
-        </div>
             <span class="value">
                 <span class="location-badge ${locClass}">${escapeHtml(locLabel)}</span>
             </span>
@@ -610,7 +696,7 @@ function openOrderModal(order) {
             ${itemsHtml || "<p style='color:var(--cream-soft);font-size:13px;'>-</p>"}
         </div>
 
-                <div class="detail-total">
+        <div class="detail-total">
             <span>Total</span>
             <strong>${formatRupiah(order.total || 0)}</strong>
         </div>
@@ -618,23 +704,17 @@ function openOrderModal(order) {
         <div class="modal-actions">
             <p class="modal-actions-label">Ubah Status</p>
 
-            ${
-                statusVal !== "success"
-                    ? `<button class="action-btn success" data-action="success" data-order-id="${order.orderId}">✓ Tandai Sukses</button>`
-                    : ""
-            }
+            ${statusVal !== "success"
+                ? `<button class="action-btn success" data-action="success" data-order-id="${order.orderId}">✓ Tandai Sukses</button>`
+                : ""}
 
-            ${
-                statusVal !== "pending"
-                    ? `<button class="action-btn pending" data-action="pending" data-order-id="${order.orderId}">⏳ Tandai Pending</button>`
-                    : ""
-            }
+            ${statusVal !== "pending"
+                ? `<button class="action-btn pending" data-action="pending" data-order-id="${order.orderId}">⏳ Tandai Pending</button>`
+                : ""}
 
-            ${
-                statusVal !== "expired"
-                    ? `<button class="action-btn expired" data-action="expired" data-order-id="${order.orderId}">× Tandai Expired</button>`
-                    : ""
-            }
+            ${statusVal !== "expired"
+                ? `<button class="action-btn expired" data-action="expired" data-order-id="${order.orderId}">× Tandai Expired</button>`
+                : ""}
         </div>
     `;
 
@@ -644,16 +724,29 @@ function openOrderModal(order) {
         btn.addEventListener("click", () => {
             const action = btn.dataset.action;
             const orderId = btn.dataset.orderId;
-
             if (action && orderId) {
                 updateOrderStatus(orderId, action, btn);
             }
         });
     });
 }
+
 function closeOrderModal() {
     orderModal.classList.remove("active");
 }
+
+if (orderModalClose) orderModalClose.addEventListener("click", closeOrderModal);
+if (orderModal) {
+    orderModal.addEventListener("click", (e) => {
+        if (e.target === orderModal) closeOrderModal();
+    });
+}
+
+
+/* =========================
+   UPDATE ORDER STATUS
+   ========================= */
+
 async function updateOrderStatus(orderId, newStatus, btnEl) {
     if (!orderId || !newStatus) return;
 
@@ -696,6 +789,7 @@ async function updateOrderStatus(orderId, newStatus, btnEl) {
 
         applyFilters();
         renderSummary();
+        renderCustomerInsights();
 
         btnEl.innerText = "✓ Berhasil";
         setTimeout(() => {
@@ -709,43 +803,25 @@ async function updateOrderStatus(orderId, newStatus, btnEl) {
         btnEl.innerText = originalText;
     }
 }
-if (orderModalClose) {
-    orderModalClose.addEventListener("click", closeOrderModal);
-}
 
-if (orderModal) {
-    orderModal.addEventListener("click", (e) => {
-        if (e.target === orderModal) closeOrderModal();
-    });
-}
 
 /* =========================
-   DAILY REPORT — SETUP
+   DAILY REPORT
    ========================= */
 
 function setReportDateToToday() {
     if (!reportDateInput) return;
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
-    reportDateInput.value = `${year}-${month}-${day}`;
+    reportDateInput.value = getTodayDateString();
 }
-
-/* =========================
-   REPORT — DELTA
-   ========================= */
 
 function renderDelta(element, current, previous) {
     if (!element) return;
-
     element.classList.remove("up", "down", "neutral");
 
     if (previous === 0 && current === 0) {
         element.innerText = "";
         return;
     }
-
     if (previous === 0) {
         element.innerText = "Baru hari ini";
         element.classList.add("up");
@@ -766,10 +842,6 @@ function renderDelta(element, current, previous) {
         element.classList.add("down");
     }
 }
-
-/* =========================
-   REPORT — RENDER
-   ========================= */
 
 function renderDailyReport() {
     if (!reportDateInput) return;
@@ -793,14 +865,14 @@ function renderDailyReport() {
         return;
     }
 
-    const dayOrders = allOrders.filter((order) => {
-        return getLocalDateString(order.createdAt) === selectedDate;
-    });
+    const dayOrders = allOrders.filter(
+        (order) => getLocalDateString(order.createdAt) === selectedDate
+    );
 
     const previousDate = getDateStringOffset(selectedDate, -1);
-    const previousOrders = allOrders.filter((order) => {
-        return getLocalDateString(order.createdAt) === previousDate;
-    });
+    const previousOrders = allOrders.filter(
+        (order) => getLocalDateString(order.createdAt) === previousDate
+    );
 
     const currentMetrics = getMetrics(dayOrders);
     const previousMetrics = getMetrics(previousOrders);
@@ -839,18 +911,11 @@ function renderDailyReport() {
 
         (order.items || []).forEach((item) => {
             const key = item.productId || item.name;
-
             if (!variantMap[key]) {
-                variantMap[key] = {
-                    name: item.name,
-                    qty: 0,
-                    subtotal: 0
-                };
+                variantMap[key] = { name: item.name, qty: 0, subtotal: 0 };
             }
-
             variantMap[key].qty += item.quantity;
-            variantMap[key].subtotal +=
-                item.subtotal || (item.price * item.quantity);
+            variantMap[key].subtotal += item.subtotal || (item.price * item.quantity);
         });
     });
 
@@ -858,10 +923,7 @@ function renderDailyReport() {
     reportTotalItems.innerText = currentMetrics.items;
     reportTotalRevenue.innerText = formatRupiah(currentMetrics.revenue);
 
-    const variants = Object.values(variantMap).sort(
-        (a, b) => b.qty - a.qty
-    );
-
+    const variants = Object.values(variantMap).sort((a, b) => b.qty - a.qty);
     let html = "";
     variants.forEach((v) => {
         html += `
@@ -875,7 +937,6 @@ function renderDailyReport() {
     reportTbody.innerHTML = html;
 
     const locOrder = { "sman1": 1, "sman5": 2, "others": 3, "unknown": 99 };
-
     const locations = Object.entries(locationMap)
         .map(([key, val]) => ({
             key,
@@ -900,6 +961,7 @@ function renderDailyReport() {
     render7DayChart();
 }
 
+
 /* =========================
    7-DAY CHART
    ========================= */
@@ -909,37 +971,24 @@ function render7DayChart() {
 
     const baseDate = reportDateInput && reportDateInput.value
         ? reportDateInput.value
-        : (() => {
-            const t = new Date();
-            const y = t.getFullYear();
-            const m = String(t.getMonth() + 1).padStart(2, "0");
-            const d = String(t.getDate()).padStart(2, "0");
-            return `${y}-${m}-${d}`;
-        })();
+        : getTodayDateString();
 
     const days = [];
     for (let i = 6; i >= 0; i--) {
         const dateStr = getDateStringOffset(baseDate, -i);
-        const orders = allOrders.filter((order) => {
-            return getLocalDateString(order.createdAt) === dateStr;
-        });
-
+        const orders = allOrders.filter(
+            (order) => getLocalDateString(order.createdAt) === dateStr
+        );
         const revenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
-
-        days.push({
-            date: dateStr,
-            count: orders.length,
-            revenue
-        });
+        days.push({ date: dateStr, count: orders.length, revenue });
     }
 
     const maxCount = Math.max(...days.map((d) => d.count), 1);
-
     let html = "";
+
     days.forEach((day) => {
         const heightPercent = (day.count / maxCount) * 100;
         const isActive = day.date === baseDate;
-
         const d = new Date(day.date + "T00:00:00");
         const dayNum = String(d.getDate()).padStart(2, "0");
         const monthNum = String(d.getMonth() + 1).padStart(2, "0");
@@ -957,14 +1006,14 @@ function render7DayChart() {
 
     chart7Day.querySelectorAll(".chart-bar-wrap").forEach((bar) => {
         bar.addEventListener("click", () => {
-            const dateStr = bar.dataset.date;
             if (reportDateInput) {
-                reportDateInput.value = dateStr;
+                reportDateInput.value = bar.dataset.date;
                 renderDailyReport();
             }
         });
     });
 }
+
 
 /* =========================
    EXPORT CSV
@@ -977,10 +1026,9 @@ function exportDailyCSV() {
     }
 
     const selectedDate = reportDateInput.value;
-
-    const dayOrders = allOrders.filter((order) => {
-        return getLocalDateString(order.createdAt) === selectedDate;
-    });
+    const dayOrders = allOrders.filter(
+        (order) => getLocalDateString(order.createdAt) === selectedDate
+    );
 
     if (dayOrders.length === 0) {
         alert("Belum ada order di tanggal ini.");
@@ -994,16 +1042,8 @@ function exportDailyCSV() {
     }
 
     const headers = [
-        "Order ID",
-        "Tanggal",
-        "Nama",
-        "Tipe Customer",
-        "WhatsApp",
-        "Lokasi",
-        "Alamat",
-        "Catatan",
-        "Produk",
-        "Total"
+        "Order ID", "Tanggal", "Nama", "Tipe Customer", "WhatsApp",
+        "Lokasi", "Alamat", "Catatan", "Produk", "Total", "Status"
     ];
 
     const rows = [headers.map(csvCell).join(",")];
@@ -1017,6 +1057,7 @@ function exportDailyCSV() {
             .join("; ");
 
         const custType = getCustomerType(order);
+        const statusVal = order.status || "pending";
 
         const row = [
             order.orderId || "",
@@ -1028,7 +1069,8 @@ function exportDailyCSV() {
             order.locationDetail || "",
             order.note || "",
             itemsText,
-            order.total || 0
+            order.total || 0,
+            statusVal
         ];
 
         rows.push(row.map(csvCell).join(","));
@@ -1050,13 +1092,7 @@ function exportDailyCSV() {
     URL.revokeObjectURL(url);
 }
 
-if (reportExportBtn) {
-    reportExportBtn.addEventListener("click", exportDailyCSV);
-}
-
-/* =========================
-   REPORT — EVENT LISTENERS
-   ========================= */
+if (reportExportBtn) reportExportBtn.addEventListener("click", exportDailyCSV);
 
 if (reportDateInput) {
     reportDateInput.addEventListener("change", renderDailyReport);
@@ -1071,13 +1107,521 @@ if (reportTodayBtn) {
     });
 }
 
+
+/* =========================
+   FINANCE — LOAD DATA
+   ========================= */
+
+async function loadFinance() {
+    if (!financeMonthInput) return;
+
+    currentFinanceMonth = financeMonthInput.value || getCurrentMonthString();
+    financeMonthInput.value = currentFinanceMonth;
+
+    await Promise.all([
+        loadFinanceSummary(),
+        loadHppHistory(),
+        loadCashflowHistory(),
+        loadCategories()
+    ]);
+}
+
+async function loadFinanceSummary() {
+    try {
+        const response = await fetch(
+            `${API_BASE}/api/admin/finance/summary?month=${currentFinanceMonth}`,
+            { headers: { "Authorization": `Bearer ${getToken()}` } }
+        );
+
+        if (response.status === 401) {
+            clearToken();
+            showLoginView();
+            return;
+        }
+
+        const result = await response.json();
+        if (!response.ok || !result.success) return;
+
+        currentFinanceSummary = result.summary;
+        renderFinanceSummary(result.summary);
+
+    } catch (error) {
+        console.error("Load finance summary error:", error);
+    }
+}
+
+async function loadCategories() {
+    if (!cfCategory) return;
+
+    if (cashflowCategories.length > 0) {
+        populateCategorySelect();
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            `${API_BASE}/api/admin/finance/cashflow-categories`,
+            { headers: { "Authorization": `Bearer ${getToken()}` } }
+        );
+
+        const result = await response.json();
+        if (!response.ok || !result.success) return;
+
+        cashflowCategories = result.categories || [];
+        populateCategorySelect();
+
+    } catch (error) {
+        console.error("Load categories error:", error);
+    }
+}
+
+function populateCategorySelect() {
+    if (!cfCategory) return;
+
+    const currentVal = cfCategory.value;
+    let html = '<option value="">— Pilih kategori —</option>';
+
+    cashflowCategories.forEach((c) => {
+        html += `<option value="${c.id}">${escapeHtml(c.name)}</option>`;
+    });
+
+    cfCategory.innerHTML = html;
+    if (currentVal) cfCategory.value = currentVal;
+}
+
+
+/* =========================
+   FINANCE — RENDER SUMMARY
+   ========================= */
+
+function renderFinanceSummary(s) {
+    if (!s) return;
+
+    /* Hero: revenue + period status */
+    finRevenue.innerText = formatRupiah(s.revenue);
+
+    const statusMap = {
+        "open": "Periode masih berjalan",
+        "reviewed": "Periode sedang direview",
+        "closed": "Periode sudah ditutup"
+    };
+    finPeriodStatus.innerText = statusMap[s.periodStatus] || "—";
+
+    /* HPP bucket */
+    finHppPct.innerText = s.hppPct + "%";
+    finHppAllocated.innerText = formatRupiah(s.hppAllocated);
+    finHppSpent.innerText = formatRupiah(s.hppSpent);
+    finHppRemaining.innerText = formatRupiah(s.hppRemaining);
+    updateProgressBar(finHppBar, s.hppSpent, s.hppAllocated);
+
+    /* Cashflow bucket */
+    finCashflowPct.innerText = s.cashflowPct + "%";
+    finCashflowAllocated.innerText = formatRupiah(s.cashflowAllocated);
+    finCashflowSpent.innerText = formatRupiah(s.cashflowSpent);
+    finCashflowRemaining.innerText = formatRupiah(s.cashflowRemaining);
+    updateProgressBar(finCashflowBar, s.cashflowSpent, s.cashflowAllocated);
+
+    /* Profit bucket */
+    finProfitPct.innerText = s.profitPct + "%";
+    finProfitAllocated.innerText = formatRupiah(s.profitAllocated);
+
+    const spent = (s.hppSpent || 0) + (s.cashflowSpent || 0);
+    finProfitDetail.innerText = `−${formatRupiah(spent)}`;
+    finProfitFinal.innerText = formatRupiah(s.profitFinal);
+}
+
+function updateProgressBar(el, spent, allocated) {
+    if (!el) return;
+    if (allocated <= 0) {
+        el.style.width = "0%";
+        el.classList.remove("over");
+        return;
+    }
+    const pct = Math.min((spent / allocated) * 100, 100);
+    el.style.width = pct + "%";
+    el.classList.toggle("over", spent > allocated);
+}
+
+
+/* =========================
+   FINANCE — HISTORY: HPP
+   ========================= */
+
+async function loadHppHistory() {
+    if (!hppHistoryTbody) return;
+
+    hppHistoryMonth.innerText = currentFinanceMonth;
+
+    try {
+        const response = await fetch(
+            `${API_BASE}/api/admin/finance/hpp-purchases?month=${currentFinanceMonth}`,
+            { headers: { "Authorization": `Bearer ${getToken()}` } }
+        );
+
+        const result = await response.json();
+        if (!response.ok || !result.success) return;
+
+        const items = result.items || [];
+
+        if (items.length === 0) {
+            hppHistoryTbody.innerHTML = "";
+            hppHistoryEmpty.hidden = false;
+            return;
+        }
+
+        hppHistoryEmpty.hidden = true;
+        let html = "";
+        items.forEach((item) => {
+            const qtyText = item.quantity
+                ? `${item.quantity}${item.unit ? " " + item.unit : ""}`
+                : "-";
+
+            html += `
+                <tr>
+                    <td>${formatDateShort(item.purchaseDate)}</td>
+                    <td>${escapeHtml(item.itemName)}</td>
+                    <td>${escapeHtml(qtyText)}</td>
+                    <td class="align-right cell-amount">${formatRupiah(item.amount)}</td>
+                    <td>
+                        <button class="btn-delete-small" data-hpp-id="${item.id}">Hapus</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        hppHistoryTbody.innerHTML = html;
+
+        hppHistoryTbody.querySelectorAll(".btn-delete-small").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                deleteHppPurchase(Number(btn.dataset.hppId));
+            });
+        });
+
+    } catch (error) {
+        console.error("Load HPP history error:", error);
+    }
+}
+
+
+/* =========================
+   FINANCE — HISTORY: CASHFLOW
+   ========================= */
+
+async function loadCashflowHistory() {
+    if (!cfHistoryTbody) return;
+
+    cfHistoryMonth.innerText = currentFinanceMonth;
+
+    try {
+        const response = await fetch(
+            `${API_BASE}/api/admin/finance/cashflow-transactions?month=${currentFinanceMonth}`,
+            { headers: { "Authorization": `Bearer ${getToken()}` } }
+        );
+
+        const result = await response.json();
+        if (!response.ok || !result.success) return;
+
+        const items = result.items || [];
+
+        if (items.length === 0) {
+            cfHistoryTbody.innerHTML = "";
+            cfHistoryEmpty.hidden = false;
+            return;
+        }
+
+        cfHistoryEmpty.hidden = true;
+        let html = "";
+        items.forEach((item) => {
+            html += `
+                <tr>
+                    <td>${formatDateShort(item.transactionDate)}</td>
+                    <td>${escapeHtml(item.categoryName || "-")}</td>
+                    <td>${escapeHtml(item.description)}</td>
+                    <td class="align-right cell-amount">${formatRupiah(item.amount)}</td>
+                    <td>
+                        <button class="btn-delete-small" data-cf-id="${item.id}">Hapus</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        cfHistoryTbody.innerHTML = html;
+
+        cfHistoryTbody.querySelectorAll(".btn-delete-small").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                deleteCashflowTransaction(Number(btn.dataset.cfId));
+            });
+        });
+
+    } catch (error) {
+        console.error("Load cashflow history error:", error);
+    }
+}
+
+
+/* =========================
+   FINANCE — FORM: HPP
+   ========================= */
+
+if (hppForm) {
+    hppForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const purchaseDate = hppDate.value;
+        const itemName = hppItem.value.trim();
+        const quantity = hppQty.value ? parseFloat(hppQty.value) : null;
+        const unit = hppUnit.value.trim() || null;
+        const amount = parseInt(hppAmount.value, 10);
+        const note = hppNote.value.trim() || null;
+
+        if (!purchaseDate || !itemName || !amount) {
+            alert("Tanggal, nama item, dan harga wajib diisi.");
+            return;
+        }
+
+        const originalText = hppSubmit.innerText;
+        hppSubmit.disabled = true;
+        hppSubmit.innerText = "Menyimpan...";
+
+        try {
+            const response = await fetch(
+                `${API_BASE}/api/admin/finance/hpp-purchases`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify({
+                        purchaseDate,
+                        itemName,
+                        quantity,
+                        unit,
+                        amount,
+                        note
+                    })
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                alert(result.message || "Gagal menyimpan.");
+                return;
+            }
+
+            // Reset form
+            hppForm.reset();
+            hppDate.value = getTodayDateString();
+
+            // Refresh summary + history
+            await Promise.all([
+                loadFinanceSummary(),
+                loadHppHistory()
+            ]);
+
+            hppSubmit.innerText = "✓ Tersimpan";
+            setTimeout(() => {
+                hppSubmit.innerText = originalText;
+            }, 1500);
+
+        } catch (error) {
+            console.error("Save HPP error:", error);
+            alert("Gagal terhubung ke server.");
+        } finally {
+            hppSubmit.disabled = false;
+            if (hppSubmit.innerText === "Menyimpan...") {
+                hppSubmit.innerText = originalText;
+            }
+        }
+    });
+}
+
+
+/* =========================
+   FINANCE — FORM: CASHFLOW
+   ========================= */
+
+if (cashflowForm) {
+    cashflowForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const transactionDate = cfDate.value;
+        const categoryId = cfCategory.value ? parseInt(cfCategory.value, 10) : null;
+        const description = cfDesc.value.trim();
+        const amount = parseInt(cfAmount.value, 10);
+        const note = cfNote.value.trim() || null;
+
+        if (!transactionDate || !description || !amount) {
+            alert("Tanggal, deskripsi, dan jumlah wajib diisi.");
+            return;
+        }
+
+        const originalText = cfSubmit.innerText;
+        cfSubmit.disabled = true;
+        cfSubmit.innerText = "Menyimpan...";
+
+        try {
+            const response = await fetch(
+                `${API_BASE}/api/admin/finance/cashflow-transactions`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify({
+                        transactionDate,
+                        categoryId,
+                        description,
+                        amount,
+                        note
+                    })
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                alert(result.message || "Gagal menyimpan.");
+                return;
+            }
+
+            cashflowForm.reset();
+            cfDate.value = getTodayDateString();
+
+            await Promise.all([
+                loadFinanceSummary(),
+                loadCashflowHistory()
+            ]);
+
+            cfSubmit.innerText = "✓ Tersimpan";
+            setTimeout(() => {
+                cfSubmit.innerText = originalText;
+            }, 1500);
+
+        } catch (error) {
+            console.error("Save cashflow error:", error);
+            alert("Gagal terhubung ke server.");
+        } finally {
+            cfSubmit.disabled = false;
+            if (cfSubmit.innerText === "Menyimpan...") {
+                cfSubmit.innerText = originalText;
+            }
+        }
+    });
+}
+
+
+/* =========================
+   FINANCE — DELETE
+   ========================= */
+
+async function deleteHppPurchase(id) {
+    if (!confirm("Hapus pembelian ini?")) return;
+
+    try {
+        const response = await fetch(
+            `${API_BASE}/api/admin/finance/hpp-purchases/${id}`,
+            {
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${getToken()}` }
+            }
+        );
+
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+            alert(result.message || "Gagal menghapus.");
+            return;
+        }
+
+        await Promise.all([
+            loadFinanceSummary(),
+            loadHppHistory()
+        ]);
+
+    } catch (error) {
+        console.error("Delete HPP error:", error);
+        alert("Gagal terhubung ke server.");
+    }
+}
+
+async function deleteCashflowTransaction(id) {
+    if (!confirm("Hapus transaksi ini?")) return;
+
+    try {
+        const response = await fetch(
+            `${API_BASE}/api/admin/finance/cashflow-transactions/${id}`,
+            {
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${getToken()}` }
+            }
+        );
+
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+            alert(result.message || "Gagal menghapus.");
+            return;
+        }
+
+        await Promise.all([
+            loadFinanceSummary(),
+            loadCashflowHistory()
+        ]);
+
+    } catch (error) {
+        console.error("Delete cashflow error:", error);
+        alert("Gagal terhubung ke server.");
+    }
+}
+
+
+/* =========================
+   FINANCE — INPUT TABS
+   ========================= */
+
+financeTabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+        const target = tab.dataset.financeTab;
+
+        financeTabs.forEach((t) => t.classList.remove("active"));
+        tab.classList.add("active");
+
+        financeFormPanels.forEach((panel) => {
+            const isActive = panel.dataset.financeContent === target;
+            panel.hidden = !isActive;
+        });
+    });
+});
+
+
+/* =========================
+   FINANCE — EVENT LISTENERS
+   ========================= */
+
+if (financeMonthInput) {
+    financeMonthInput.value = getCurrentMonthString();
+    financeMonthInput.addEventListener("change", () => {
+        currentFinanceMonth = financeMonthInput.value;
+        loadFinance();
+    });
+}
+
+if (financeRefreshBtn) {
+    financeRefreshBtn.addEventListener("click", () => loadFinance());
+}
+
+
 /* =========================
    INIT
    ========================= */
 
 (async function init() {
-    const token = getToken();
+    // Set default tanggal untuk form finance
+    if (hppDate) hppDate.value = getTodayDateString();
+    if (cfDate) cfDate.value = getTodayDateString();
 
+    const token = getToken();
     if (!token) {
         showLoginView();
         return;
