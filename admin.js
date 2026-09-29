@@ -142,6 +142,25 @@ function escapeHtml(text) {
 }
 
 /* =========================
+   CUSTOMER TYPE (NEW)
+   ========================= */
+
+function getCustomerType(order) {
+    const wa = normalizeWA(order.whatsapp);
+    if (!wa) return "baru";
+
+    const orderDate = new Date(order.createdAt).getTime();
+
+    const previousOrders = allOrders.filter((o) => {
+        if (normalizeWA(o.whatsapp) !== wa) return false;
+        const otherDate = new Date(o.createdAt).getTime();
+        return otherDate < orderDate;
+    });
+
+    return previousOrders.length > 0 ? "lama" : "baru";
+}
+
+/* =========================
    VIEW SWITCH
    ========================= */
 
@@ -320,12 +339,20 @@ function renderOrders(orders) {
         const waLink = `https://wa.me/${normalizeWA(order.whatsapp)}`;
         const locLabel = getLocationLabel(order.location);
         const locClass = getLocationClass(order.location);
+        const custType = getCustomerType(order);
 
         html += `
             <tr>
                 <td class="cell-order-id">${order.orderId || "-"}</td>
                 <td>${formatDate(order.createdAt)}</td>
-                <td>${escapeHtml(order.customerName || "-")}</td>
+                <td>
+                    <div class="cell-customer">
+                        <span class="customer-name">${escapeHtml(order.customerName || "-")}</span>
+                        <span class="customer-badge ${custType}">
+                            ${custType === "baru" ? "Baru" : "Lama"}
+                        </span>
+                    </div>
+                </td>
                 <td>
                     <span class="location-badge ${locClass}">
                         ${escapeHtml(locLabel)}
@@ -399,6 +426,9 @@ function openOrderModal(order) {
 
     const locLabel = getLocationLabel(order.location);
     const locClass = getLocationClass(order.location);
+    const custType = getCustomerType(order);
+    const custLabel = custType === "baru" ? "Customer Baru" : "Customer Lama";
+
     const locDetail = order.locationDetail
         ? `<div class="detail-row">
                <span class="label">Alamat</span>
@@ -414,7 +444,12 @@ function openOrderModal(order) {
 
         <div class="detail-row">
             <span class="label">Nama</span>
-            <span class="value">${escapeHtml(order.customerName || "-")}</span>
+            <span class="value">
+                <div class="cell-customer">
+                    <span class="customer-name">${escapeHtml(order.customerName || "-")}</span>
+                    <span class="customer-badge ${custType}">${custLabel}</span>
+                </div>
+            </span>
         </div>
 
         <div class="detail-row">
@@ -546,7 +581,6 @@ function renderDailyReport() {
         return getLocalDateString(order.createdAt) === selectedDate;
     });
 
-    // Metrics untuk perbandingan
     const previousDate = getDateStringOffset(selectedDate, -1);
     const previousOrders = allOrders.filter((order) => {
         return getLocalDateString(order.createdAt) === previousDate;
@@ -555,7 +589,6 @@ function renderDailyReport() {
     const currentMetrics = getMetrics(dayOrders);
     const previousMetrics = getMetrics(previousOrders);
 
-    // Delta calculation
     renderDelta(reportDeltaOrders, currentMetrics.orders, previousMetrics.orders);
     renderDelta(reportDeltaItems, currentMetrics.items, previousMetrics.items);
     renderDelta(reportDeltaRevenue, currentMetrics.revenue, previousMetrics.revenue);
@@ -748,6 +781,7 @@ function exportDailyCSV() {
         "Order ID",
         "Tanggal",
         "Nama",
+        "Tipe Customer",
         "WhatsApp",
         "Lokasi",
         "Alamat",
@@ -766,10 +800,13 @@ function exportDailyCSV() {
             })
             .join("; ");
 
+        const custType = getCustomerType(order);
+
         const row = [
             order.orderId || "",
             formatDate(order.createdAt),
             order.customerName || "",
+            custType === "baru" ? "Baru" : "Lama",
             order.whatsapp || "",
             getLocationLabel(order.location),
             order.locationDetail || "",
