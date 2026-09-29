@@ -550,3 +550,164 @@ ADMIN PANEL — VELACOOKIES
 [hidden] {
     display: none !important;
 }
+/* =========================
+DAILY REPORT
+========================= */
+
+.admin-report {
+    margin-bottom: 24px;
+    padding: 22px 24px;
+    border-radius: 16px;
+    background: var(--maroon-card);
+    border: 1px solid rgba(216, 168, 78, 0.18);
+}
+
+.report-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.report-title {
+    font-size: 17px;
+    font-family: Georgia, serif;
+    color: var(--white);
+    font-weight: normal;
+}
+
+.report-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.date-input {
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(216, 168, 78, 0.3);
+    background: rgba(8, 6, 5, 0.4);
+    color: var(--cream);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.date-input:focus {
+    outline: none;
+    border-color: var(--gold);
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+    filter: invert(0.8);
+    cursor: pointer;
+}
+
+.report-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.report-card {
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: rgba(8, 28, 20, 0.4);
+    border: 1px solid rgba(216, 168, 78, 0.12);
+}
+
+.report-label {
+    display: block;
+    font-size: 10.5px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--cream-soft);
+    margin-bottom: 6px;
+}
+
+.report-value {
+    font-size: 20px;
+    color: var(--gold);
+    font-family: Georgia, serif;
+    font-weight: normal;
+}
+
+.report-breakdown {
+    border-top: 1px solid rgba(216, 168, 78, 0.12);
+    padding-top: 18px;
+}
+
+.report-subtitle {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--gold);
+    margin-bottom: 12px;
+    font-weight: bold;
+}
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.report-table th {
+    text-align: left;
+    padding: 10px 0;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--cream-soft);
+    border-bottom: 1px solid rgba(216, 168, 78, 0.15);
+    font-weight: bold;
+}
+
+.report-table th.align-right,
+.report-table td.align-right {
+    text-align: right;
+}
+
+.report-table td {
+    padding: 11px 0;
+    font-size: 13.5px;
+    color: var(--cream);
+    border-bottom: 1px solid rgba(216, 168, 78, 0.06);
+}
+
+.report-table tr:last-child td {
+    border-bottom: none;
+}
+
+.report-table td.align-right {
+    color: var(--gold);
+    font-weight: bold;
+}
+
+.report-table td.align-right:last-child {
+    font-weight: normal;
+}
+
+.report-empty {
+    padding: 20px 0;
+    text-align: center;
+    color: var(--cream-soft);
+    font-size: 13px;
+}
+
+@media (max-width: 720px) {
+    .report-summary {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .report-value {
+        font-size: 18px;
+    }
+
+    .admin-report {
+        padding: 18px 18px;
+    }
+}

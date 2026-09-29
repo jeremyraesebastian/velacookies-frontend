@@ -22,6 +22,13 @@ const tableLoading = document.getElementById("table-loading");
 const summaryTotalOrders = document.getElementById("summary-total-orders");
 const summaryTotalRevenue = document.getElementById("summary-total-revenue");
 const summaryTodayOrders = document.getElementById("summary-today-orders");
+const reportDateInput = document.getElementById("report-date");
+const reportTodayBtn = document.getElementById("report-today");
+const reportTotalOrders = document.getElementById("report-total-orders");
+const reportTotalItems = document.getElementById("report-total-items");
+const reportTotalRevenue = document.getElementById("report-total-revenue");
+const reportTbody = document.getElementById("report-tbody");
+const reportEmpty = document.getElementById("report-empty");
 const orderModal = document.getElementById("order-modal");
 const orderModalBody = document.getElementById("order-modal-body");
 const orderModalClose = document.getElementById("order-modal-close");
@@ -142,6 +149,7 @@ async function loadOrders() {
         allOrders = result.orders || [];
         renderSummary();
         renderOrders(allOrders);
+        renderDailyReport();
 
     } catch (error) {
         console.error("Load orders error:", error);
@@ -328,6 +336,127 @@ function escapeHtml(text) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+/* =========================
+   DAILY REPORT
+   ========================= */
+
+function getLocalDateString(isoString) {
+    if (!isoString) return "";
+    const d = new Date(isoString);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
+function setReportDateToToday() {
+    if (!reportDateInput) return;
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    reportDateInput.value = `${year}-${month}-${day}`;
+}
+
+function renderDailyReport() {
+    if (!reportDateInput) return;
+
+    const selectedDate = reportDateInput.value;
+
+    if (!selectedDate) {
+        reportTotalOrders.innerText = "—";
+        reportTotalItems.innerText = "—";
+        reportTotalRevenue.innerText = "—";
+        reportTbody.innerHTML = "";
+        reportEmpty.hidden = false;
+        reportEmpty.innerText = "Pilih tanggal untuk melihat laporan.";
+        return;
+    }
+
+    const dayOrders = allOrders.filter((order) => {
+        return getLocalDateString(order.createdAt) === selectedDate;
+    });
+
+    if (dayOrders.length === 0) {
+        reportTotalOrders.innerText = "0";
+        reportTotalItems.innerText = "0";
+        reportTotalRevenue.innerText = formatRupiah(0);
+        reportTbody.innerHTML = "";
+        reportEmpty.hidden = false;
+        reportEmpty.innerText = "Belum ada order di tanggal ini.";
+        return;
+    }
+
+    reportEmpty.hidden = true;
+
+    // Agregasi per varian
+    const variantMap = {};
+
+    let totalItems = 0;
+    let totalRevenue = 0;
+
+    dayOrders.forEach((order) => {
+        totalRevenue += order.total || 0;
+
+        (order.items || []).forEach((item) => {
+            const key = item.productId || item.name;
+
+            if (!variantMap[key]) {
+                variantMap[key] = {
+                    name: item.name,
+                    qty: 0,
+                    subtotal: 0
+                };
+            }
+
+            variantMap[key].qty += item.quantity;
+            variantMap[key].subtotal +=
+                item.subtotal || (item.price * item.quantity);
+
+            totalItems += item.quantity;
+        });
+    });
+
+    // Update summary
+    reportTotalOrders.innerText = dayOrders.length;
+    reportTotalItems.innerText = totalItems;
+    reportTotalRevenue.innerText = formatRupiah(totalRevenue);
+
+    // Sort by jumlah terbanyak
+    const variants = Object.values(variantMap).sort(
+        (a, b) => b.qty - a.qty
+    );
+
+    let html = "";
+
+    variants.forEach((v) => {
+        html += `
+            <tr>
+                <td>${escapeHtml(v.name)}</td>
+                <td class="align-right">${v.qty}</td>
+                <td class="align-right">${formatRupiah(v.subtotal)}</td>
+            </tr>
+        `;
+    });
+
+    reportTbody.innerHTML = html;
+}
+
+/* Event Listeners */
+if (reportDateInput) {
+    reportDateInput.addEventListener("change", renderDailyReport);
+
+    // Set default ke hari ini saat pertama load
+    setReportDateToToday();
+}
+
+if (reportTodayBtn) {
+    reportTodayBtn.addEventListener("click", () => {
+        setReportDateToToday();
+        renderDailyReport();
+    });
 }
 
 /* INIT */

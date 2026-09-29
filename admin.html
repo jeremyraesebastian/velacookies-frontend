@@ -63,7 +63,47 @@
                     <strong class="summary-value" id="summary-today-orders">—</strong>
                 </div>
             </div>
+            <div class="admin-report">
+                <div class="report-header">
+                    <h2 class="report-title">Laporan Harian</h2>
+                    <div class="report-controls">
+                        <input type="date" id="report-date" class="date-input">
+                        <button class="btn-ghost" id="report-today">Hari Ini</button>
+                    </div>
+                </div>
 
+                <div class="report-summary">
+                    <div class="report-card">
+                        <span class="report-label">Total Order</span>
+                        <strong class="report-value" id="report-total-orders">—</strong>
+                    </div>
+                    <div class="report-card">
+                        <span class="report-label">Total Item Terjual</span>
+                        <strong class="report-value" id="report-total-items">—</strong>
+                    </div>
+                    <div class="report-card">
+                        <span class="report-label">Pendapatan</span>
+                        <strong class="report-value" id="report-total-revenue">—</strong>
+                    </div>
+                </div>
+
+                <div class="report-breakdown">
+                    <h3 class="report-subtitle">Breakdown per Varian</h3>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Varian</th>
+                                <th class="align-right">Jumlah</th>
+                                <th class="align-right">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="report-tbody"></tbody>
+                    </table>
+                    <p class="report-empty" id="report-empty" hidden>
+                        Belum ada order di tanggal ini.
+                    </p>
+                </div>
+            </div>
             <div class="admin-toolbar">
                 <input type="search" id="search-input" class="search-input" placeholder="Cari nama, order ID, atau WhatsApp...">
                 <button class="btn-ghost" id="refresh-btn">Refresh</button>
