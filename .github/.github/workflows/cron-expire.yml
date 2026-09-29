@@ -1,0 +1,20 @@
+name: Expire Pending Orders
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  expire-pending:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call expire-pending endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl --silent --show-error --fail-with-body \
+            --max-time 60 --retry 2 --retry-delay 10 \
+            -X POST \
+            -H "X-Cron-Secret: $CRON_SECRET" \
+            https://velacookies-production.up.railway.app/api/cron/expire-pending
