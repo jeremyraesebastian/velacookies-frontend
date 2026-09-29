@@ -1680,3 +1680,24 @@ FINANCE — RESPONSIVE
         align-items: stretch;
     }
 }
+/* =========================
+EXPORT EXCEL BUTTON
+========================= */
+
+#finance-export {
+    background: linear-gradient(135deg, rgba(36, 107, 73, 0.25) 0%, rgba(24, 84, 58, 0.4) 100%);
+    border-color: rgba(139, 210, 139, 0.5);
+    color: #8bd28b;
+    font-weight: 600;
+}
+
+#finance-export:hover {
+    background: linear-gradient(135deg, rgba(36, 107, 73, 0.5) 0%, rgba(24, 84, 58, 0.6) 100%);
+    color: #ffffff;
+    border-color: #8bd28b;
+}
+
+#finance-export:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

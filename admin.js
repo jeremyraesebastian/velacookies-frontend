@@ -1611,6 +1611,190 @@ if (financeRefreshBtn) {
     financeRefreshBtn.addEventListener("click", () => loadFinance());
 }
 
+/* =========================
+   FINANCE — EXPORT EXCEL
+   ========================= */
+
+const financeExportBtn = document.getElementById("finance-export");
+
+async function exportFinanceExcel() {
+    if (typeof XLSX === "undefined") {
+        alert("Library Excel belum ke-load. Coba refresh halaman.");
+        return;
+    }
+
+    if (!currentFinanceMonth) {
+        alert("Pilih bulan dulu.");
+        return;
+    }
+
+    const originalText = financeExportBtn.innerText;
+    financeExportBtn.disabled = true;
+    financeExportBtn.innerText = "Menyiapkan...";
+
+    try {
+        // Fetch ulang data biar fresh
+        const [summaryRes, hppRes, cfRes] = await Promise.all([
+            fetch(`${API_BASE}/api/admin/finance/summary?month=${currentFinanceMonth}`, {
+                headers: { "Authorization": `Bearer ${getToken()}` }
+            }),
+            fetch(`${API_BASE}/api/admin/finance/hpp-purchases?month=${currentFinanceMonth}`, {
+                headers: { "Authorization": `Bearer ${getToken()}` }
+            }),
+            fetch(`${API_BASE}/api/admin/finance/cashflow-transactions?month=${currentFinanceMonth}`, {
+                headers: { "Authorization": `Bearer ${getToken()}` }
+            })
+        ]);
+
+        const summaryData = await summaryRes.json();
+        const hppData = await hppRes.json();
+        const cfData = await cfRes.json();
+
+        if (!summaryData.success || !hppData.success || !cfData.success) {
+            alert("Gagal mengambil data finance.");
+            return;
+        }
+
+        const summary = summaryData.summary;
+        const hppItems = hppData.items || [];
+        const cfItems = cfData.items || [];
+
+        /* =========================
+           SHEET 1: SUMMARY
+           ========================= */
+        const summaryRows = [
+            ["LAPORAN KEUANGAN VELACOOKIES"],
+            ["Periode", currentFinanceMonth],
+            ["Dibuat", new Date().toLocaleString("id-ID")],
+            [],
+            ["RINGKASAN"],
+            ["Omzet", summary.revenue],
+            [],
+            ["Bucket", "Persentase", "Alokasi", "Terpakai", "Sisa"],
+            [
+                "HPP (Bahan Baku)",
+                summary.hppPct + "%",
+                summary.hppAllocated,
+                summary.hppSpent,
+                summary.hppRemaining
+            ],
+            [
+                "Cash Flow (Operasional)",
+                summary.cashflowPct + "%",
+                summary.cashflowAllocated,
+                summary.cashflowSpent,
+                summary.cashflowRemaining
+            ],
+            [
+                "Profit (Laba)",
+                summary.profitPct + "%",
+                summary.profitAllocated,
+                "-",
+                summary.profitFinal
+            ],
+            [],
+            ["Total Pengeluaran", summary.hppSpent + summary.cashflowSpent],
+            ["Laba Final", summary.profitFinal]
+        ];
+
+        /* =========================
+           SHEET 2: HPP PURCHASES
+           ========================= */
+        const hppRows = [
+            ["Tanggal", "Item", "Quantity", "Unit", "Harga", "Catatan"]
+        ];
+
+        let totalHpp = 0;
+        hppItems.forEach((item) => {
+            hppRows.push([
+                item.purchaseDate || "-",
+                item.itemName || "-",
+                item.quantity != null ? item.quantity : "-",
+                item.unit || "-",
+                item.amount || 0,
+                item.note || "-"
+            ]);
+            totalHpp += item.amount || 0;
+        });
+
+        hppRows.push([]);
+        hppRows.push(["", "", "", "", "TOTAL", totalHpp]);
+
+        /* =========================
+           SHEET 3: CASHFLOW
+           ========================= */
+        const cfRows = [
+            ["Tanggal", "Kategori", "Deskripsi", "Jumlah", "Catatan"]
+        ];
+
+        let totalCf = 0;
+        cfItems.forEach((item) => {
+            cfRows.push([
+                item.transactionDate || "-",
+                item.categoryName || "-",
+                item.description || "-",
+                item.amount || 0,
+                item.note || "-"
+            ]);
+            totalCf += item.amount || 0;
+        });
+
+        cfRows.push([]);
+        cfRows.push(["", "", "", "TOTAL", totalCf]);
+
+        /* =========================
+           BUILD WORKBOOK
+           ========================= */
+        const wb = XLSX.utils.book_new();
+
+        const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+        const wsHpp = XLSX.utils.aoa_to_sheet(hppRows);
+        const wsCf = XLSX.utils.aoa_to_sheet(cfRows);
+
+        // Set column widths biar rapi
+        wsSummary["!cols"] = [
+            { wch: 25 }, // A
+            { wch: 15 }, // B
+            { wch: 15 }, // C
+            { wch: 15 }, // D
+            { wch: 15 }  // E
+        ];
+        wsHpp["!cols"] = [
+            { wch: 14 },
+            { wch: 28 },
+            { wch: 10 },
+            { wch: 10 },
+            { wch: 14 },
+            { wch: 30 }
+        ];
+        wsCf["!cols"] = [
+            { wch: 14 },
+            { wch: 18 },
+            { wch: 32 },
+            { wch: 14 },
+            { wch: 30 }
+        ];
+
+        XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
+        XLSX.utils.book_append_sheet(wb, wsHpp, "HPP");
+        XLSX.utils.book_append_sheet(wb, wsCf, "Cashflow");
+
+        // Generate & download
+        const filename = `velacookies-keuangan-${currentFinanceMonth}.xlsx`;
+        XLSX.writeFile(wb, filename);
+
+    } catch (error) {
+        console.error("Export Excel error:", error);
+        alert("Gagal export Excel.");
+    } finally {
+        financeExportBtn.disabled = false;
+        financeExportBtn.innerText = originalText;
+    }
+}
+
+if (financeExportBtn) {
+    financeExportBtn.addEventListener("click", exportFinanceExcel);
+}
 
 /* =========================
    INIT
