@@ -711,3 +711,75 @@ DAILY REPORT
         padding: 18px 18px;
     }
 }
+/* =========================
+LOCATION BADGE + FILTER + REPORT
+========================= */
+
+.filter-select {
+    padding: 11px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(216, 168, 78, 0.25);
+    background: rgba(8, 6, 5, 0.4);
+    color: var(--cream);
+    font-size: 13.5px;
+    font-family: inherit;
+    cursor: pointer;
+    min-width: 180px;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--gold);
+}
+
+.filter-select option {
+    background: var(--maroon-card);
+    color: var(--cream);
+}
+
+/* Location badge */
+.location-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+.location-badge.loc-sman1 {
+    background: rgba(36, 107, 73, 0.25);
+    color: #8bd28b;
+    border: 1px solid rgba(139, 210, 139, 0.35);
+}
+
+.location-badge.loc-sman5 {
+    background: rgba(216, 168, 78, 0.2);
+    color: var(--gold-light);
+    border: 1px solid rgba(216, 168, 78, 0.4);
+}
+
+.location-badge.loc-others {
+    background: rgba(226, 114, 91, 0.15);
+    color: #e2a37a;
+    border: 1px solid rgba(226, 114, 91, 0.3);
+}
+
+/* Report breakdown lokasi */
+#report-location-tbody td.align-right {
+    color: var(--gold);
+    font-weight: bold;
+}
+
+#report-location-tbody td.align-right:last-child {
+    font-weight: normal;
+}
+
+/* Responsive filter */
+@media (max-width: 720px) {
+    .filter-select {
+        width: 100%;
+        min-width: 0;
+    }
+}

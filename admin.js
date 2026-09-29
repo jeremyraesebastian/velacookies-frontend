@@ -16,6 +16,7 @@ const loginSubmit = document.getElementById("login-submit");
 const logoutBtn = document.getElementById("logout-btn");
 const refreshBtn = document.getElementById("refresh-btn");
 const searchInput = document.getElementById("search-input");
+const locationFilter = document.getElementById("location-filter");
 const ordersTbody = document.getElementById("orders-tbody");
 const tableEmpty = document.getElementById("table-empty");
 const tableLoading = document.getElementById("table-loading");
@@ -29,6 +30,8 @@ const reportTotalItems = document.getElementById("report-total-items");
 const reportTotalRevenue = document.getElementById("report-total-revenue");
 const reportTbody = document.getElementById("report-tbody");
 const reportEmpty = document.getElementById("report-empty");
+const reportLocationTbody = document.getElementById("report-location-tbody");
+const reportLocationEmpty = document.getElementById("report-location-empty");
 const orderModal = document.getElementById("order-modal");
 const orderModalBody = document.getElementById("order-modal-body");
 const orderModalClose = document.getElementById("order-modal-close");
@@ -56,6 +59,24 @@ function formatDate(isoString) {
 function getToken() { return localStorage.getItem(TOKEN_KEY); }
 function setToken(token) { localStorage.setItem(TOKEN_KEY, token); }
 function clearToken() { localStorage.removeItem(TOKEN_KEY); }
+
+function getLocationLabel(location) {
+    const map = {
+        "sman1": "SMAN 1 Karawang",
+        "sman5": "SMAN 5 Karawang",
+        "others": "Lainnya"
+    };
+    return map[location] || "-";
+}
+
+function getLocationClass(location) {
+    const map = {
+        "sman1": "loc-sman1",
+        "sman5": "loc-sman5",
+        "others": "loc-others"
+    };
+    return map[location] || "";
+}
 
 /* VIEW SWITCH */
 function showLoginView() {
@@ -148,7 +169,7 @@ async function loadOrders() {
 
         allOrders = result.orders || [];
         renderSummary();
-        renderOrders(allOrders);
+        applyFilters();
         renderDailyReport();
 
     } catch (error) {
@@ -174,6 +195,29 @@ function renderSummary() {
     summaryTodayOrders.innerText = todayOrders;
 }
 
+/* FILTER (search + location) */
+function applyFilters() {
+    const query = (searchInput?.value || "").trim().toLowerCase();
+    const locFilter = locationFilter?.value || "all";
+
+    let filtered = allOrders;
+
+    if (locFilter !== "all") {
+        filtered = filtered.filter((o) => o.location === locFilter);
+    }
+
+    if (query) {
+        filtered = filtered.filter((order) => {
+            const name = (order.customerName || "").toLowerCase();
+            const wa = (order.whatsapp || "").toLowerCase();
+            const orderId = (order.orderId || "").toLowerCase();
+            return name.includes(query) || wa.includes(query) || orderId.includes(query);
+        });
+    }
+
+    renderOrders(filtered);
+}
+
 /* RENDER TABLE */
 function renderOrders(orders) {
     tableLoading.hidden = true;
@@ -190,12 +234,19 @@ function renderOrders(orders) {
 
     orders.forEach((order, index) => {
         const waLink = `https://wa.me/${normalizeWA(order.whatsapp)}`;
+        const locLabel = getLocationLabel(order.location);
+        const locClass = getLocationClass(order.location);
 
         html += `
             <tr>
                 <td class="cell-order-id">${order.orderId || "-"}</td>
                 <td>${formatDate(order.createdAt)}</td>
                 <td>${escapeHtml(order.customerName || "-")}</td>
+                <td>
+                    <span class="location-badge ${locClass}">
+                        ${escapeHtml(locLabel)}
+                    </span>
+                </td>
                 <td class="cell-wa">
                     <a href="${waLink}" target="_blank" rel="noopener">
                         ${escapeHtml(order.whatsapp || "-")}
@@ -219,25 +270,13 @@ function renderOrders(orders) {
     });
 }
 
-/* SEARCH */
+/* SEARCH + FILTER EVENT */
 if (searchInput) {
-    searchInput.addEventListener("input", () => {
-        const query = searchInput.value.trim().toLowerCase();
+    searchInput.addEventListener("input", applyFilters);
+}
 
-        if (!query) {
-            renderOrders(allOrders);
-            return;
-        }
-
-        const filtered = allOrders.filter((order) => {
-            const name = (order.customerName || "").toLowerCase();
-            const wa = (order.whatsapp || "").toLowerCase();
-            const orderId = (order.orderId || "").toLowerCase();
-            return name.includes(query) || wa.includes(query) || orderId.includes(query);
-        });
-
-        renderOrders(filtered);
-    });
+if (locationFilter) {
+    locationFilter.addEventListener("change", applyFilters);
 }
 
 /* REFRESH */
@@ -265,6 +304,15 @@ function openOrderModal(order) {
         `;
     });
 
+    const locLabel = getLocationLabel(order.location);
+    const locClass = getLocationClass(order.location);
+    const locDetail = order.locationDetail
+        ? `<div class="detail-row">
+               <span class="label">Alamat</span>
+               <span class="value">${escapeHtml(order.locationDetail)}</span>
+           </div>`
+        : "";
+
     orderModalBody.innerHTML = `
         <div class="detail-header">
             <div class="detail-order-id">${order.orderId || "-"}</div>
@@ -275,6 +323,15 @@ function openOrderModal(order) {
             <span class="label">Nama</span>
             <span class="value">${escapeHtml(order.customerName || "-")}</span>
         </div>
+
+        <div class="detail-row">
+            <span class="label">Lokasi</span>
+            <span class="value">
+                <span class="location-badge ${locClass}">${escapeHtml(locLabel)}</span>
+            </span>
+        </div>
+
+        ${locDetail}
 
         <div class="detail-row">
             <span class="label">WhatsApp</span>
@@ -370,8 +427,11 @@ function renderDailyReport() {
         reportTotalItems.innerText = "—";
         reportTotalRevenue.innerText = "—";
         reportTbody.innerHTML = "";
+        reportLocationTbody.innerHTML = "";
         reportEmpty.hidden = false;
+        reportLocationEmpty.hidden = false;
         reportEmpty.innerText = "Pilih tanggal untuk melihat laporan.";
+        reportLocationEmpty.innerText = "Pilih tanggal untuk melihat laporan.";
         return;
     }
 
@@ -384,21 +444,35 @@ function renderDailyReport() {
         reportTotalItems.innerText = "0";
         reportTotalRevenue.innerText = formatRupiah(0);
         reportTbody.innerHTML = "";
+        reportLocationTbody.innerHTML = "";
         reportEmpty.hidden = false;
+        reportLocationEmpty.hidden = false;
         reportEmpty.innerText = "Belum ada order di tanggal ini.";
+        reportLocationEmpty.innerText = "Belum ada order di tanggal ini.";
         return;
     }
 
     reportEmpty.hidden = true;
+    reportLocationEmpty.hidden = true;
 
-    // Agregasi per varian
     const variantMap = {};
+    const locationMap = {};
 
     let totalItems = 0;
     let totalRevenue = 0;
 
     dayOrders.forEach((order) => {
         totalRevenue += order.total || 0;
+
+        const locKey = order.location || "unknown";
+        if (!locationMap[locKey]) {
+            locationMap[locKey] = {
+                count: 0,
+                subtotal: 0
+            };
+        }
+        locationMap[locKey].count += 1;
+        locationMap[locKey].subtotal += order.total || 0;
 
         (order.items || []).forEach((item) => {
             const key = item.productId || item.name;
@@ -419,12 +493,10 @@ function renderDailyReport() {
         });
     });
 
-    // Update summary
     reportTotalOrders.innerText = dayOrders.length;
     reportTotalItems.innerText = totalItems;
     reportTotalRevenue.innerText = formatRupiah(totalRevenue);
 
-    // Sort by jumlah terbanyak
     const variants = Object.values(variantMap).sort(
         (a, b) => b.qty - a.qty
     );
@@ -442,13 +514,35 @@ function renderDailyReport() {
     });
 
     reportTbody.innerHTML = html;
+
+    const locOrder = { "sman1": 1, "sman5": 2, "others": 3, "unknown": 99 };
+
+    const locations = Object.entries(locationMap)
+        .map(([key, val]) => ({
+            key,
+            label: getLocationLabel(key),
+            count: val.count,
+            subtotal: val.subtotal
+        }))
+        .sort((a, b) => (locOrder[a.key] || 50) - (locOrder[b.key] || 50));
+
+    let locHtml = "";
+
+    locations.forEach((loc) => {
+        locHtml += `
+            <tr>
+                <td>${escapeHtml(loc.label)}</td>
+                <td class="align-right">${loc.count}</td>
+                <td class="align-right">${formatRupiah(loc.subtotal)}</td>
+            </tr>
+        `;
+    });
+
+    reportLocationTbody.innerHTML = locHtml;
 }
 
-/* Event Listeners */
 if (reportDateInput) {
     reportDateInput.addEventListener("change", renderDailyReport);
-
-    // Set default ke hari ini saat pertama load
     setReportDateToToday();
 }
 

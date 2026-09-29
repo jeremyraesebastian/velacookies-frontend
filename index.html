@@ -616,6 +616,42 @@
                 </div>
 
                 <div class="form-group">
+                    <label class="form-label">Lokasi Pengiriman</label>
+
+                    <div class="location-options">
+
+                        <label class="location-option">
+                            <input type="radio" name="checkout-location" value="sman1">
+                            <span class="location-label">SMAN 1 Karawang</span>
+                        </label>
+
+                        <label class="location-option">
+                            <input type="radio" name="checkout-location" value="sman5">
+                            <span class="location-label">SMAN 5 Karawang</span>
+                        </label>
+
+                        <label class="location-option">
+                            <input type="radio" name="checkout-location" value="others">
+                            <span class="location-label">Lainnya</span>
+                        </label>
+
+                    </div>
+
+                    <span class="form-error" id="checkout-location-error"></span>
+                </div>
+
+                <div class="form-group" id="checkout-location-detail-group" hidden>
+                    <label class="form-label" for="checkout-location-detail">Alamat Lengkap</label>
+                    <textarea
+                        id="checkout-location-detail"
+                        class="form-textarea"
+                        rows="2"
+                        placeholder="Contoh: Jl. Ahmad Yani No. 5, Karawang Barat"
+                    ></textarea>
+                    <span class="form-error" id="checkout-location-detail-error"></span>
+                </div>
+
+                <div class="form-group">
                     <label class="form-label" for="checkout-note">Catatan (opsional)</label>
                     <textarea
                         id="checkout-note"

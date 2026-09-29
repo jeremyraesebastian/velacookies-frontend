@@ -2187,3 +2187,56 @@ SCROLLBAR AUTO-HIDE (smooth)
 .checkout-summary-items.is-scrolling {
     scrollbar-color: rgba(168, 118, 28, 0.5) transparent;
 }
+/* =========================
+LOCATION OPTIONS (CHECKOUT)
+========================= */
+
+.location-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.location-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 10px 14px;
+
+    border-radius: 10px;
+    border: 1px solid var(--border-strong);
+    background: var(--bg);
+
+    cursor: pointer;
+    transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.location-option:hover {
+    border-color: rgba(168, 118, 28, 0.5);
+    background: var(--bg-alt);
+}
+
+.location-option input[type="radio"] {
+    accent-color: var(--gold);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.location-label {
+    font-size: 13.5px;
+    color: var(--text);
+}
+
+.location-option:has(input:checked) {
+    border-color: var(--gold);
+    background: rgba(168, 118, 28, 0.08);
+}
+
+.location-option:has(input:checked) .location-label {
+    color: var(--text);
+    font-weight: 600;
+}
