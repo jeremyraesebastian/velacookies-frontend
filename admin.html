@@ -48,153 +48,385 @@
             </div>
         </header>
 
+        <!-- TAB NAVIGATION -->
+        <nav class="admin-tabs">
+            <button class="admin-tab active" data-tab="orders">Pesanan</button>
+            <button class="admin-tab" data-tab="finance">Keuangan</button>
+        </nav>
+
         <main class="admin-main">
-            <div class="admin-summary">
-                <div class="summary-card">
-                    <span class="summary-label">Total Pesanan</span>
-                    <strong class="summary-value" id="summary-total-orders">—</strong>
-                </div>
-                <div class="summary-card">
-                    <span class="summary-label">Total Pendapatan</span>
-                    <strong class="summary-value" id="summary-total-revenue">—</strong>
-                </div>
-                <div class="summary-card">
-                    <span class="summary-label">Pesanan Hari Ini</span>
-                    <strong class="summary-value" id="summary-today-orders">—</strong>
-                </div>
-            </div>
 
-            <div class="customer-insights">
-                <div class="customer-insights-header">
-                    <h2 class="customer-insights-title">Customer Insights</h2>
-                </div>
+            <!-- ============================================
+                 TAB: PESANAN
+                 ============================================ -->
+            <div class="tab-content active" data-tab-content="orders">
 
-                <div class="customer-insights-grid">
-                    <div class="insight-card">
-                        <span class="insight-label">Total Customer</span>
-                        <strong class="insight-value" id="insight-total-customers">—</strong>
-                        <span class="insight-sub">Nomor WA unik</span>
+                <div class="admin-summary">
+                    <div class="summary-card">
+                        <span class="summary-label">Total Pesanan</span>
+                        <strong class="summary-value" id="summary-total-orders">—</strong>
                     </div>
-
-                    <div class="insight-card">
-                        <span class="insight-label">Repeat Rate</span>
-                        <strong class="insight-value" id="insight-repeat-rate">—</strong>
-                        <span class="insight-sub" id="insight-repeat-detail">—</span>
+                    <div class="summary-card">
+                        <span class="summary-label">Total Pendapatan</span>
+                        <strong class="summary-value" id="summary-total-revenue">—</strong>
                     </div>
-
-                    <div class="insight-card">
-                        <span class="insight-label">Order Baru vs Lama</span>
-                        <strong class="insight-value" id="insight-new-old-ratio">—</strong>
-                        <span class="insight-sub" id="insight-new-old-detail">—</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="admin-report">
-                <div class="report-header">
-                    <h2 class="report-title">Laporan Harian</h2>
-                    <div class="report-controls">
-                        <input type="date" id="report-date" class="date-input">
-                        <button class="btn-ghost" id="report-today">Hari Ini</button>
-                        <button class="btn-ghost" id="report-export">Export CSV</button>
+                    <div class="summary-card">
+                        <span class="summary-label">Pesanan Hari Ini</span>
+                        <strong class="summary-value" id="summary-today-orders">—</strong>
                     </div>
                 </div>
 
-                <div class="report-summary">
-                    <div class="report-card">
-                        <span class="report-label">Total Order</span>
-                        <strong class="report-value" id="report-total-orders">—</strong>
-                        <span class="report-delta" id="report-delta-orders"></span>
+                <div class="customer-insights">
+                    <div class="customer-insights-header">
+                        <h2 class="customer-insights-title">Customer Insights</h2>
                     </div>
-                    <div class="report-card">
-                        <span class="report-label">Total Item Terjual</span>
-                        <strong class="report-value" id="report-total-items">—</strong>
-                        <span class="report-delta" id="report-delta-items"></span>
-                    </div>
-                    <div class="report-card">
-                        <span class="report-label">Pendapatan</span>
-                        <strong class="report-value" id="report-total-revenue">—</strong>
-                        <span class="report-delta" id="report-delta-revenue"></span>
+
+                    <div class="customer-insights-grid">
+                        <div class="insight-card">
+                            <span class="insight-label">Total Customer</span>
+                            <strong class="insight-value" id="insight-total-customers">—</strong>
+                            <span class="insight-sub">Nomor WA unik</span>
+                        </div>
+
+                        <div class="insight-card">
+                            <span class="insight-label">Repeat Rate</span>
+                            <strong class="insight-value" id="insight-repeat-rate">—</strong>
+                            <span class="insight-sub" id="insight-repeat-detail">—</span>
+                        </div>
+
+                        <div class="insight-card">
+                            <span class="insight-label">Order Baru vs Lama</span>
+                            <strong class="insight-value" id="insight-new-old-ratio">—</strong>
+                            <span class="insight-sub" id="insight-new-old-detail">—</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="report-breakdown">
-                    <h3 class="report-subtitle">Breakdown per Varian</h3>
-                    <table class="report-table">
+                <div class="admin-report">
+                    <div class="report-header">
+                        <h2 class="report-title">Laporan Harian</h2>
+                        <div class="report-controls">
+                            <input type="date" id="report-date" class="date-input">
+                            <button class="btn-ghost" id="report-today">Hari Ini</button>
+                            <button class="btn-ghost" id="report-export">Export CSV</button>
+                        </div>
+                    </div>
+
+                    <div class="report-summary">
+                        <div class="report-card">
+                            <span class="report-label">Total Order</span>
+                            <strong class="report-value" id="report-total-orders">—</strong>
+                            <span class="report-delta" id="report-delta-orders"></span>
+                        </div>
+                        <div class="report-card">
+                            <span class="report-label">Total Item Terjual</span>
+                            <strong class="report-value" id="report-total-items">—</strong>
+                            <span class="report-delta" id="report-delta-items"></span>
+                        </div>
+                        <div class="report-card">
+                            <span class="report-label">Pendapatan</span>
+                            <strong class="report-value" id="report-total-revenue">—</strong>
+                            <span class="report-delta" id="report-delta-revenue"></span>
+                        </div>
+                    </div>
+
+                    <div class="report-breakdown">
+                        <h3 class="report-subtitle">Breakdown per Varian</h3>
+                        <table class="report-table">
+                            <thead>
+                                <tr>
+                                    <th>Varian</th>
+                                    <th class="align-right">Jumlah</th>
+                                    <th class="align-right">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="report-tbody"></tbody>
+                        </table>
+                        <p class="report-empty" id="report-empty" hidden>
+                            Belum ada order di tanggal ini.
+                        </p>
+                    </div>
+
+                    <div class="report-breakdown">
+                        <h3 class="report-subtitle">Breakdown per Lokasi</h3>
+                        <table class="report-table">
+                            <thead>
+                                <tr>
+                                    <th>Lokasi</th>
+                                    <th class="align-right">Jumlah Order</th>
+                                    <th class="align-right">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="report-location-tbody"></tbody>
+                        </table>
+                        <p class="report-empty" id="report-location-empty" hidden>
+                            Belum ada order di tanggal ini.
+                        </p>
+                    </div>
+
+                    <div class="report-breakdown">
+                        <h3 class="report-subtitle">7 Hari Terakhir</h3>
+                        <div class="chart-7day" id="chart-7day"></div>
+                    </div>
+                </div>
+
+                <div class="admin-toolbar">
+                    <input type="search" id="search-input" class="search-input" placeholder="Cari nama, order ID, atau WhatsApp...">
+                    <select id="location-filter" class="filter-select">
+                        <option value="all">Semua Lokasi</option>
+                        <option value="sman1">SMAN 1 Karawang</option>
+                        <option value="sman5">SMAN 5 Karawang</option>
+                        <option value="others">Lainnya</option>
+                    </select>
+                    <select id="status-filter" class="filter-select">
+                        <option value="all">Semua Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="success">Success</option>
+                        <option value="expired">Expired</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                    <button class="btn-ghost" id="refresh-btn">Refresh</button>
+                </div>
+
+                <div class="admin-table-wrap">
+                    <table class="admin-table" id="orders-table">
                         <thead>
                             <tr>
-                                <th>Varian</th>
-                                <th class="align-right">Jumlah</th>
-                                <th class="align-right">Subtotal</th>
-                            </tr>
-                        </thead>
-                        <tbody id="report-tbody"></tbody>
-                    </table>
-                    <p class="report-empty" id="report-empty" hidden>
-                        Belum ada order di tanggal ini.
-                    </p>
-                </div>
-
-                <div class="report-breakdown">
-                    <h3 class="report-subtitle">Breakdown per Lokasi</h3>
-                    <table class="report-table">
-                        <thead>
-                            <tr>
+                                <th>Order ID</th>
+                                <th>Tanggal</th>
+                                <th>Nama</th>
                                 <th>Lokasi</th>
-                                <th class="align-right">Jumlah Order</th>
-                                <th class="align-right">Subtotal</th>
+                                <th>Status</th>
+                                <th>WhatsApp</th>
+                                <th>Total</th>
+                                <th></th>
                             </tr>
                         </thead>
-                        <tbody id="report-location-tbody"></tbody>
+                        <tbody id="orders-tbody"></tbody>
                     </table>
-                    <p class="report-empty" id="report-location-empty" hidden>
-                        Belum ada order di tanggal ini.
-                    </p>
+                    <p class="table-empty" id="table-empty" hidden>Belum ada pesanan.</p>
+                    <p class="table-loading" id="table-loading">Memuat pesanan...</p>
                 </div>
 
-                <div class="report-breakdown">
-                    <h3 class="report-subtitle">7 Hari Terakhir</h3>
-                    <div class="chart-7day" id="chart-7day"></div>
+            </div>
+
+
+            <!-- ============================================
+                 TAB: KEUANGAN
+                 ============================================ -->
+            <div class="tab-content" data-tab-content="finance" hidden>
+
+                <!-- Filter Bulan -->
+                <div class="finance-toolbar">
+                    <label class="finance-toolbar-label">Periode:</label>
+                    <input type="month" id="finance-month" class="date-input">
+                    <button class="btn-ghost" id="finance-refresh">Refresh</button>
                 </div>
+
+                <!-- Summary Cards -->
+                <div class="finance-hero">
+                    <div class="finance-hero-card finance-hero-revenue">
+                        <span class="finance-hero-label">Omzet Bulan Ini</span>
+                        <strong class="finance-hero-value" id="fin-revenue">—</strong>
+                        <span class="finance-hero-sub" id="fin-period-status">—</span>
+                    </div>
+                </div>
+
+                <div class="finance-grid">
+
+                    <div class="finance-bucket finance-bucket-hpp">
+                        <div class="finance-bucket-header">
+                            <h3 class="finance-bucket-title">HPP (Bahan Baku)</h3>
+                            <span class="finance-bucket-pct" id="fin-hpp-pct">40%</span>
+                        </div>
+                        <div class="finance-bucket-rows">
+                            <div class="finance-row">
+                                <span class="label">Alokasi</span>
+                                <strong id="fin-hpp-allocated">—</strong>
+                            </div>
+                            <div class="finance-row">
+                                <span class="label">Terpakai</span>
+                                <strong id="fin-hpp-spent">—</strong>
+                            </div>
+                            <div class="finance-row finance-row-highlight">
+                                <span class="label">Sisa</span>
+                                <strong id="fin-hpp-remaining">—</strong>
+                            </div>
+                            <div class="finance-progress">
+                                <div class="finance-progress-bar" id="fin-hpp-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="finance-bucket finance-bucket-cashflow">
+                        <div class="finance-bucket-header">
+                            <h3 class="finance-bucket-title">Cash Flow (Operasional)</h3>
+                            <span class="finance-bucket-pct" id="fin-cashflow-pct">40%</span>
+                        </div>
+                        <div class="finance-bucket-rows">
+                            <div class="finance-row">
+                                <span class="label">Alokasi</span>
+                                <strong id="fin-cashflow-allocated">—</strong>
+                            </div>
+                            <div class="finance-row">
+                                <span class="label">Terpakai</span>
+                                <strong id="fin-cashflow-spent">—</strong>
+                            </div>
+                            <div class="finance-row finance-row-highlight">
+                                <span class="label">Sisa</span>
+                                <strong id="fin-cashflow-remaining">—</strong>
+                            </div>
+                            <div class="finance-progress">
+                                <div class="finance-progress-bar" id="fin-cashflow-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="finance-bucket finance-bucket-profit">
+                        <div class="finance-bucket-header">
+                            <h3 class="finance-bucket-title">Profit (Laba)</h3>
+                            <span class="finance-bucket-pct" id="fin-profit-pct">20%</span>
+                        </div>
+                        <div class="finance-bucket-rows">
+                            <div class="finance-row">
+                                <span class="label">Target</span>
+                                <strong id="fin-profit-allocated">—</strong>
+                            </div>
+                            <div class="finance-row">
+                                <span class="label">Omzet - Pengeluaran</span>
+                                <strong id="fin-profit-detail">—</strong>
+                            </div>
+                            <div class="finance-row finance-row-highlight">
+                                <span class="label">Laba Final</span>
+                                <strong id="fin-profit-final">—</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <!-- Tab Panel: Input Pengeluaran -->
+                <div class="finance-tabs">
+                    <button class="finance-tab active" data-finance-tab="hpp">+ Input HPP</button>
+                    <button class="finance-tab" data-finance-tab="cashflow">+ Input Cashflow</button>
+                </div>
+
+                <!-- Form: HPP -->
+                <div class="finance-form-panel" data-finance-content="hpp">
+                    <form id="hpp-form" class="finance-form">
+                        <div class="finance-form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="hpp-date">Tanggal</label>
+                                <input type="date" id="hpp-date" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="hpp-item">Nama Item</label>
+                                <input type="text" id="hpp-item" class="form-input" placeholder="Tepung, telur, butter..." required>
+                            </div>
+                        </div>
+                        <div class="finance-form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="hpp-qty">Jumlah (opsional)</label>
+                                <input type="number" id="hpp-qty" class="form-input" step="0.01" min="0" placeholder="2">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="hpp-unit">Satuan (opsional)</label>
+                                <input type="text" id="hpp-unit" class="form-input" placeholder="kg, gram, pcs">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="hpp-amount">Total Harga (Rp)</label>
+                                <input type="number" id="hpp-amount" class="form-input" min="1" placeholder="30000" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="hpp-note">Catatan (opsional)</label>
+                            <input type="text" id="hpp-note" class="form-input" placeholder="Beli di toko X">
+                        </div>
+                        <button type="submit" class="btn-primary" id="hpp-submit">Simpan Pembelian</button>
+                    </form>
+                </div>
+
+                <!-- Form: Cashflow -->
+                <div class="finance-form-panel" data-finance-content="cashflow" hidden>
+                    <form id="cashflow-form" class="finance-form">
+                        <div class="finance-form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="cf-date">Tanggal</label>
+                                <input type="date" id="cf-date" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="cf-category">Kategori</label>
+                                <select id="cf-category" class="form-input" required>
+                                    <option value="">— Pilih kategori —</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="finance-form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="cf-desc">Deskripsi</label>
+                                <input type="text" id="cf-desc" class="form-input" placeholder="Gas dapur, listrik, transport..." required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="cf-amount">Jumlah (Rp)</label>
+                                <input type="number" id="cf-amount" class="form-input" min="1" placeholder="20000" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="cf-note">Catatan (opsional)</label>
+                            <input type="text" id="cf-note" class="form-input">
+                        </div>
+                        <button type="submit" class="btn-primary" id="cf-submit">Simpan Transaksi</button>
+                    </form>
+                </div>
+
+
+                <!-- Riwayat HPP -->
+                <div class="finance-history">
+                    <h3 class="finance-history-title">Riwayat HPP — <span id="hpp-history-month">—</span></h3>
+                    <div class="finance-history-wrap">
+                        <table class="finance-history-table">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Item</th>
+                                    <th>Qty</th>
+                                    <th class="align-right">Harga</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="hpp-history-tbody"></tbody>
+                        </table>
+                        <p class="finance-history-empty" id="hpp-history-empty" hidden>
+                            Belum ada pembelian HPP di bulan ini.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Riwayat Cashflow -->
+                <div class="finance-history">
+                    <h3 class="finance-history-title">Riwayat Cashflow — <span id="cf-history-month">—</span></h3>
+                    <div class="finance-history-wrap">
+                        <table class="finance-history-table">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Kategori</th>
+                                    <th>Deskripsi</th>
+                                    <th class="align-right">Jumlah</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="cf-history-tbody"></tbody>
+                        </table>
+                        <p class="finance-history-empty" id="cf-history-empty" hidden>
+                            Belum ada transaksi cashflow di bulan ini.
+                        </p>
+                    </div>
+                </div>
+
             </div>
 
-            <div class="admin-toolbar">
-                <input type="search" id="search-input" class="search-input" placeholder="Cari nama, order ID, atau WhatsApp...">
-                                <select id="location-filter" class="filter-select">
-                    <option value="all">Semua Lokasi</option>
-                    <option value="sman1">SMAN 1 Karawang</option>
-                    <option value="sman5">SMAN 5 Karawang</option>
-                    <option value="others">Lainnya</option>
-                </select>
-                <select id="status-filter" class="filter-select">
-                    <option value="all">Semua Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="success">Success</option>
-                    <option value="expired">Expired</option>
-                    <option value="failed">Failed</option>
-                </select>
-                <button class="btn-ghost" id="refresh-btn">Refresh</button>
-            </div>
-
-            <div class="admin-table-wrap">
-                <table class="admin-table" id="orders-table">
-                    <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Tanggal</th>
-                            <th>Nama</th>
-                            <th>Lokasi</th>
-                            <th>Status</th>
-                            <th>WhatsApp</th>
-                            <th>Total</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="orders-tbody"></tbody>
-                </table>
-                <p class="table-empty" id="table-empty" hidden>Belum ada pesanan.</p>
-                <p class="table-loading" id="table-loading">Memuat pesanan...</p>
-            </div>
         </main>
     </div>
 
