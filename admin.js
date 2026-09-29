@@ -32,6 +32,11 @@ const reportTbody = document.getElementById("report-tbody");
 const reportEmpty = document.getElementById("report-empty");
 const reportLocationTbody = document.getElementById("report-location-tbody");
 const reportLocationEmpty = document.getElementById("report-location-empty");
+const reportExportBtn = document.getElementById("report-export");
+const reportDeltaOrders = document.getElementById("report-delta-orders");
+const reportDeltaItems = document.getElementById("report-delta-items");
+const reportDeltaRevenue = document.getElementById("report-delta-revenue");
+const chart7Day = document.getElementById("chart-7day");
 const orderModal = document.getElementById("order-modal");
 const orderModalBody = document.getElementById("order-modal-body");
 const orderModalClose = document.getElementById("order-modal-close");
@@ -39,7 +44,10 @@ const orderModalClose = document.getElementById("order-modal-close");
 /* STATE */
 let allOrders = [];
 
-/* HELPERS */
+/* =========================
+   HELPERS
+   ========================= */
+
 function formatRupiah(number) {
     return "Rp" + Number(number).toLocaleString("id-ID");
 }
@@ -78,7 +86,65 @@ function getLocationClass(location) {
     return map[location] || "";
 }
 
-/* VIEW SWITCH */
+function getLocalDateString(isoString) {
+    if (!isoString) return "";
+    const d = new Date(isoString);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
+function getDateStringOffset(dateString, dayOffset) {
+    const d = new Date(dateString + "T00:00:00");
+    d.setDate(d.getDate() + dayOffset);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
+function getMetrics(orders) {
+    let totalItems = 0;
+    let totalRevenue = 0;
+
+    orders.forEach((order) => {
+        totalRevenue += order.total || 0;
+        (order.items || []).forEach((item) => {
+            totalItems += item.quantity;
+        });
+    });
+
+    return {
+        orders: orders.length,
+        items: totalItems,
+        revenue: totalRevenue
+    };
+}
+
+function normalizeWA(wa) {
+    if (!wa) return "";
+    let cleaned = String(wa).replace(/\D/g, "");
+    if (cleaned.startsWith("0")) {
+        cleaned = "62" + cleaned.slice(1);
+    }
+    return cleaned;
+}
+
+function escapeHtml(text) {
+    if (text === null || text === undefined) return "";
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+/* =========================
+   VIEW SWITCH
+   ========================= */
+
 function showLoginView() {
     loginView.hidden = false;
     dashboardView.hidden = true;
@@ -92,7 +158,10 @@ function showDashboardView() {
     dashboardView.hidden = false;
 }
 
-/* LOGIN */
+/* =========================
+   LOGIN
+   ========================= */
+
 if (loginForm) {
     loginForm.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -132,7 +201,10 @@ if (loginForm) {
     });
 }
 
-/* LOGOUT */
+/* =========================
+   LOGOUT
+   ========================= */
+
 if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
         clearToken();
@@ -141,7 +213,10 @@ if (logoutBtn) {
     });
 }
 
-/* FETCH ORDERS */
+/* =========================
+   FETCH ORDERS
+   ========================= */
+
 async function loadOrders() {
     tableLoading.hidden = false;
     tableEmpty.hidden = true;
@@ -180,7 +255,10 @@ async function loadOrders() {
     }
 }
 
-/* SUMMARY */
+/* =========================
+   SUMMARY
+   ========================= */
+
 function renderSummary() {
     const totalOrders = allOrders.length;
     const totalRevenue = allOrders.reduce((sum, o) => sum + (o.total || 0), 0);
@@ -195,7 +273,10 @@ function renderSummary() {
     summaryTodayOrders.innerText = todayOrders;
 }
 
-/* FILTER (search + location) */
+/* =========================
+   FILTER (search + location)
+   ========================= */
+
 function applyFilters() {
     const query = (searchInput?.value || "").trim().toLowerCase();
     const locFilter = locationFilter?.value || "all";
@@ -218,7 +299,10 @@ function applyFilters() {
     renderOrders(filtered);
 }
 
-/* RENDER TABLE */
+/* =========================
+   RENDER TABLE
+   ========================= */
+
 function renderOrders(orders) {
     tableLoading.hidden = true;
 
@@ -270,7 +354,10 @@ function renderOrders(orders) {
     });
 }
 
-/* SEARCH + FILTER EVENT */
+/* =========================
+   SEARCH + FILTER EVENT
+   ========================= */
+
 if (searchInput) {
     searchInput.addEventListener("input", applyFilters);
 }
@@ -279,12 +366,18 @@ if (locationFilter) {
     locationFilter.addEventListener("change", applyFilters);
 }
 
-/* REFRESH */
+/* =========================
+   REFRESH
+   ========================= */
+
 if (refreshBtn) {
     refreshBtn.addEventListener("click", () => loadOrders());
 }
 
-/* MODAL */
+/* =========================
+   ORDER DETAIL MODAL
+   ========================= */
+
 function openOrderModal(order) {
     if (!order) return;
 
@@ -375,38 +468,9 @@ if (orderModal) {
     });
 }
 
-/* UTILITIES */
-function normalizeWA(wa) {
-    if (!wa) return "";
-    let cleaned = String(wa).replace(/\D/g, "");
-    if (cleaned.startsWith("0")) {
-        cleaned = "62" + cleaned.slice(1);
-    }
-    return cleaned;
-}
-
-function escapeHtml(text) {
-    if (text === null || text === undefined) return "";
-    return String(text)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
 /* =========================
-   DAILY REPORT
+   DAILY REPORT — SETUP
    ========================= */
-
-function getLocalDateString(isoString) {
-    if (!isoString) return "";
-    const d = new Date(isoString);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-}
 
 function setReportDateToToday() {
     if (!reportDateInput) return;
@@ -417,6 +481,45 @@ function setReportDateToToday() {
     reportDateInput.value = `${year}-${month}-${day}`;
 }
 
+/* =========================
+   REPORT — DELTA
+   ========================= */
+
+function renderDelta(element, current, previous) {
+    if (!element) return;
+
+    element.classList.remove("up", "down", "neutral");
+
+    if (previous === 0 && current === 0) {
+        element.innerText = "";
+        return;
+    }
+
+    if (previous === 0) {
+        element.innerText = "Baru hari ini";
+        element.classList.add("up");
+        return;
+    }
+
+    const diff = current - previous;
+    const percent = Math.round((diff / previous) * 100);
+
+    if (diff === 0) {
+        element.innerText = "Sama dengan kemarin";
+        element.classList.add("neutral");
+    } else if (diff > 0) {
+        element.innerText = `↑ ${percent}% dari kemarin`;
+        element.classList.add("up");
+    } else {
+        element.innerText = `↓ ${Math.abs(percent)}% dari kemarin`;
+        element.classList.add("down");
+    }
+}
+
+/* =========================
+   REPORT — RENDER
+   ========================= */
+
 function renderDailyReport() {
     if (!reportDateInput) return;
 
@@ -426,18 +529,36 @@ function renderDailyReport() {
         reportTotalOrders.innerText = "—";
         reportTotalItems.innerText = "—";
         reportTotalRevenue.innerText = "—";
+        reportDeltaOrders.innerText = "";
+        reportDeltaItems.innerText = "";
+        reportDeltaRevenue.innerText = "";
         reportTbody.innerHTML = "";
         reportLocationTbody.innerHTML = "";
         reportEmpty.hidden = false;
         reportLocationEmpty.hidden = false;
         reportEmpty.innerText = "Pilih tanggal untuk melihat laporan.";
         reportLocationEmpty.innerText = "Pilih tanggal untuk melihat laporan.";
+        render7DayChart();
         return;
     }
 
     const dayOrders = allOrders.filter((order) => {
         return getLocalDateString(order.createdAt) === selectedDate;
     });
+
+    // Metrics untuk perbandingan
+    const previousDate = getDateStringOffset(selectedDate, -1);
+    const previousOrders = allOrders.filter((order) => {
+        return getLocalDateString(order.createdAt) === previousDate;
+    });
+
+    const currentMetrics = getMetrics(dayOrders);
+    const previousMetrics = getMetrics(previousOrders);
+
+    // Delta calculation
+    renderDelta(reportDeltaOrders, currentMetrics.orders, previousMetrics.orders);
+    renderDelta(reportDeltaItems, currentMetrics.items, previousMetrics.items);
+    renderDelta(reportDeltaRevenue, currentMetrics.revenue, previousMetrics.revenue);
 
     if (dayOrders.length === 0) {
         reportTotalOrders.innerText = "0";
@@ -449,6 +570,7 @@ function renderDailyReport() {
         reportLocationEmpty.hidden = false;
         reportEmpty.innerText = "Belum ada order di tanggal ini.";
         reportLocationEmpty.innerText = "Belum ada order di tanggal ini.";
+        render7DayChart();
         return;
     }
 
@@ -458,18 +580,10 @@ function renderDailyReport() {
     const variantMap = {};
     const locationMap = {};
 
-    let totalItems = 0;
-    let totalRevenue = 0;
-
     dayOrders.forEach((order) => {
-        totalRevenue += order.total || 0;
-
         const locKey = order.location || "unknown";
         if (!locationMap[locKey]) {
-            locationMap[locKey] = {
-                count: 0,
-                subtotal: 0
-            };
+            locationMap[locKey] = { count: 0, subtotal: 0 };
         }
         locationMap[locKey].count += 1;
         locationMap[locKey].subtotal += order.total || 0;
@@ -488,21 +602,18 @@ function renderDailyReport() {
             variantMap[key].qty += item.quantity;
             variantMap[key].subtotal +=
                 item.subtotal || (item.price * item.quantity);
-
-            totalItems += item.quantity;
         });
     });
 
-    reportTotalOrders.innerText = dayOrders.length;
-    reportTotalItems.innerText = totalItems;
-    reportTotalRevenue.innerText = formatRupiah(totalRevenue);
+    reportTotalOrders.innerText = currentMetrics.orders;
+    reportTotalItems.innerText = currentMetrics.items;
+    reportTotalRevenue.innerText = formatRupiah(currentMetrics.revenue);
 
     const variants = Object.values(variantMap).sort(
         (a, b) => b.qty - a.qty
     );
 
     let html = "";
-
     variants.forEach((v) => {
         html += `
             <tr>
@@ -512,7 +623,6 @@ function renderDailyReport() {
             </tr>
         `;
     });
-
     reportTbody.innerHTML = html;
 
     const locOrder = { "sman1": 1, "sman5": 2, "others": 3, "unknown": 99 };
@@ -527,7 +637,6 @@ function renderDailyReport() {
         .sort((a, b) => (locOrder[a.key] || 50) - (locOrder[b.key] || 50));
 
     let locHtml = "";
-
     locations.forEach((loc) => {
         locHtml += `
             <tr>
@@ -537,13 +646,169 @@ function renderDailyReport() {
             </tr>
         `;
     });
-
     reportLocationTbody.innerHTML = locHtml;
+
+    render7DayChart();
 }
+
+/* =========================
+   7-DAY CHART
+   ========================= */
+
+function render7DayChart() {
+    if (!chart7Day) return;
+
+    const baseDate = reportDateInput && reportDateInput.value
+        ? reportDateInput.value
+        : (() => {
+            const t = new Date();
+            const y = t.getFullYear();
+            const m = String(t.getMonth() + 1).padStart(2, "0");
+            const d = String(t.getDate()).padStart(2, "0");
+            return `${y}-${m}-${d}`;
+        })();
+
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+        const dateStr = getDateStringOffset(baseDate, -i);
+        const orders = allOrders.filter((order) => {
+            return getLocalDateString(order.createdAt) === dateStr;
+        });
+
+        const revenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+
+        days.push({
+            date: dateStr,
+            count: orders.length,
+            revenue
+        });
+    }
+
+    const maxCount = Math.max(...days.map((d) => d.count), 1);
+
+    let html = "";
+    days.forEach((day) => {
+        const heightPercent = (day.count / maxCount) * 100;
+        const isActive = day.date === baseDate;
+
+        const d = new Date(day.date + "T00:00:00");
+        const dayNum = String(d.getDate()).padStart(2, "0");
+        const monthNum = String(d.getMonth() + 1).padStart(2, "0");
+
+        html += `
+            <div class="chart-bar-wrap ${isActive ? "is-active" : ""}" data-date="${day.date}" title="${day.count} order · ${formatRupiah(day.revenue)}">
+                <span class="chart-bar-value">${day.count}</span>
+                <div class="chart-bar" style="height: ${Math.max(heightPercent, 3)}%;"></div>
+                <span class="chart-bar-label">${dayNum}/${monthNum}</span>
+            </div>
+        `;
+    });
+
+    chart7Day.innerHTML = html;
+
+    chart7Day.querySelectorAll(".chart-bar-wrap").forEach((bar) => {
+        bar.addEventListener("click", () => {
+            const dateStr = bar.dataset.date;
+            if (reportDateInput) {
+                reportDateInput.value = dateStr;
+                renderDailyReport();
+            }
+        });
+    });
+}
+
+/* =========================
+   EXPORT CSV
+   ========================= */
+
+function exportDailyCSV() {
+    if (!reportDateInput || !reportDateInput.value) {
+        alert("Pilih tanggal dulu.");
+        return;
+    }
+
+    const selectedDate = reportDateInput.value;
+
+    const dayOrders = allOrders.filter((order) => {
+        return getLocalDateString(order.createdAt) === selectedDate;
+    });
+
+    if (dayOrders.length === 0) {
+        alert("Belum ada order di tanggal ini.");
+        return;
+    }
+
+    function csvCell(value) {
+        if (value === null || value === undefined) return "";
+        const str = String(value).replace(/"/g, '""');
+        return `"${str}"`;
+    }
+
+    const headers = [
+        "Order ID",
+        "Tanggal",
+        "Nama",
+        "WhatsApp",
+        "Lokasi",
+        "Alamat",
+        "Catatan",
+        "Produk",
+        "Total"
+    ];
+
+    const rows = [headers.map(csvCell).join(",")];
+
+    dayOrders.forEach((order) => {
+        const itemsText = (order.items || [])
+            .map((item) => {
+                const addon = item.addonName ? ` + ${item.addonName}` : "";
+                return `${item.quantity}x ${item.name}${addon}`;
+            })
+            .join("; ");
+
+        const row = [
+            order.orderId || "",
+            formatDate(order.createdAt),
+            order.customerName || "",
+            order.whatsapp || "",
+            getLocationLabel(order.location),
+            order.locationDetail || "",
+            order.note || "",
+            itemsText,
+            order.total || 0
+        ];
+
+        rows.push(row.map(csvCell).join(","));
+    });
+
+    const BOM = "\uFEFF";
+    const csvContent = BOM + rows.join("\r\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `velacookies-orders-${selectedDate}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+}
+
+if (reportExportBtn) {
+    reportExportBtn.addEventListener("click", exportDailyCSV);
+}
+
+/* =========================
+   REPORT — EVENT LISTENERS
+   ========================= */
 
 if (reportDateInput) {
     reportDateInput.addEventListener("change", renderDailyReport);
     setReportDateToToday();
+    render7DayChart();
 }
 
 if (reportTodayBtn) {
@@ -553,7 +818,10 @@ if (reportTodayBtn) {
     });
 }
 
-/* INIT */
+/* =========================
+   INIT
+   ========================= */
+
 (async function init() {
     const token = getToken();
 

@@ -67,24 +67,28 @@
             <div class="admin-report">
                 <div class="report-header">
                     <h2 class="report-title">Laporan Harian</h2>
-                    <div class="report-controls">
+                <div class="report-controls">
                         <input type="date" id="report-date" class="date-input">
                         <button class="btn-ghost" id="report-today">Hari Ini</button>
+                        <button class="btn-ghost" id="report-export">Export CSV</button>
                     </div>
                 </div>
 
-                <div class="report-summary">
+                               <div class="report-summary">
                     <div class="report-card">
                         <span class="report-label">Total Order</span>
                         <strong class="report-value" id="report-total-orders">—</strong>
+                        <span class="report-delta" id="report-delta-orders"></span>
                     </div>
                     <div class="report-card">
                         <span class="report-label">Total Item Terjual</span>
                         <strong class="report-value" id="report-total-items">—</strong>
+                        <span class="report-delta" id="report-delta-items"></span>
                     </div>
                     <div class="report-card">
                         <span class="report-label">Pendapatan</span>
                         <strong class="report-value" id="report-total-revenue">—</strong>
+                        <span class="report-delta" id="report-delta-revenue"></span>
                     </div>
                 </div>
 
@@ -117,9 +121,14 @@
                         </thead>
                         <tbody id="report-location-tbody"></tbody>
                     </table>
-                    <p class="report-empty" id="report-location-empty" hidden>
+                                        <p class="report-empty" id="report-location-empty" hidden>
                         Belum ada order di tanggal ini.
                     </p>
+                </div>
+
+                <div class="report-breakdown">
+                    <h3 class="report-subtitle">7 Hari Terakhir</h3>
+                    <div class="chart-7day" id="chart-7day"></div>
                 </div>
             </div>
 
