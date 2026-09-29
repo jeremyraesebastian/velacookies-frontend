@@ -17,6 +17,7 @@ const logoutBtn = document.getElementById("logout-btn");
 const refreshBtn = document.getElementById("refresh-btn");
 const searchInput = document.getElementById("search-input");
 const locationFilter = document.getElementById("location-filter");
+const statusFilter = document.getElementById("status-filter");
 const ordersTbody = document.getElementById("orders-tbody");
 const tableEmpty = document.getElementById("table-empty");
 const tableLoading = document.getElementById("table-loading");
@@ -89,6 +90,26 @@ function getLocationClass(location) {
         "others": "loc-others"
     };
     return map[location] || "";
+}
+
+function getStatusLabel(status) {
+    const map = {
+        "pending": "Pending",
+        "success": "Success",
+        "expired": "Expired",
+        "failed": "Failed"
+    };
+    return map[status] || "Pending";
+}
+
+function getStatusClass(status) {
+    const map = {
+        "pending": "status-pending",
+        "success": "status-success",
+        "expired": "status-expired",
+        "failed": "status-failed"
+    };
+    return map[status] || "status-pending";
 }
 
 function getLocalDateString(isoString) {
@@ -360,7 +381,12 @@ async function loadOrders() {
 
 function renderSummary() {
     const totalOrders = allOrders.length;
-    const totalRevenue = allOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+
+    // Revenue cuma hitung order status "success"
+    const totalRevenue = allOrders
+        .filter((o) => (o.status || "pending") === "success")
+        .reduce((sum, o) => sum + (o.total || 0), 0);
+
     const today = new Date().toDateString();
     const todayOrders = allOrders.filter((o) => {
         if (!o.createdAt) return false;
@@ -371,7 +397,6 @@ function renderSummary() {
     summaryTotalRevenue.innerText = formatRupiah(totalRevenue);
     summaryTodayOrders.innerText = todayOrders;
 }
-
 /* =========================
    FILTER (search + location)
    ========================= */
@@ -379,11 +404,19 @@ function renderSummary() {
 function applyFilters() {
     const query = (searchInput?.value || "").trim().toLowerCase();
     const locFilter = locationFilter?.value || "all";
+    const statFilter = statusFilter?.value || "all";
 
     let filtered = allOrders;
 
     if (locFilter !== "all") {
         filtered = filtered.filter((o) => o.location === locFilter);
+    }
+
+    if (statFilter !== "all") {
+        filtered = filtered.filter((o) => {
+            const s = o.status || "pending";
+            return s === statFilter;
+        });
     }
 
     if (query) {
@@ -397,7 +430,6 @@ function applyFilters() {
 
     renderOrders(filtered);
 }
-
 /* =========================
    RENDER TABLE
    ========================= */
@@ -419,7 +451,10 @@ function renderOrders(orders) {
         const waLink = `https://wa.me/${normalizeWA(order.whatsapp)}`;
         const locLabel = getLocationLabel(order.location);
         const locClass = getLocationClass(order.location);
-        const custType = getCustomerType(order);
+                const custType = getCustomerType(order);
+        const statusVal = order.status || "pending";
+        const statusClass = getStatusClass(statusVal);
+        const statusLabel = getStatusLabel(statusVal);
 
         html += `
             <tr>
@@ -436,6 +471,11 @@ function renderOrders(orders) {
                 <td>
                     <span class="location-badge ${locClass}">
                         ${escapeHtml(locLabel)}
+                    </span>
+                </td>
+                <td>
+                    <span class="status-badge ${statusClass}">
+                        ${statusLabel}
                     </span>
                 </td>
                 <td class="cell-wa">
@@ -472,7 +512,9 @@ if (searchInput) {
 if (locationFilter) {
     locationFilter.addEventListener("change", applyFilters);
 }
-
+if (statusFilter) {
+    statusFilter.addEventListener("change", applyFilters);
+}
 /* =========================
    REFRESH
    ========================= */
@@ -508,7 +550,9 @@ function openOrderModal(order) {
     const locClass = getLocationClass(order.location);
     const custType = getCustomerType(order);
     const custLabel = custType === "baru" ? "Customer Baru" : "Customer Lama";
-
+    const statusVal = order.status || "pending";
+    const statusClass = getStatusClass(statusVal);
+    const statusLabel = getStatusLabel(statusVal);
     const locDetail = order.locationDetail
         ? `<div class="detail-row">
                <span class="label">Alamat</span>
@@ -534,6 +578,12 @@ function openOrderModal(order) {
 
         <div class="detail-row">
             <span class="label">Lokasi</span>
+                    <div class="detail-row">
+            <span class="label">Status</span>
+            <span class="value">
+                <span class="status-badge ${statusClass}">${statusLabel}</span>
+            </span>
+        </div>
             <span class="value">
                 <span class="location-badge ${locClass}">${escapeHtml(locLabel)}</span>
             </span>
@@ -560,19 +610,105 @@ function openOrderModal(order) {
             ${itemsHtml || "<p style='color:var(--cream-soft);font-size:13px;'>-</p>"}
         </div>
 
-        <div class="detail-total">
+                <div class="detail-total">
             <span>Total</span>
             <strong>${formatRupiah(order.total || 0)}</strong>
+        </div>
+
+        <div class="modal-actions">
+            <p class="modal-actions-label">Ubah Status</p>
+
+            ${
+                statusVal !== "success"
+                    ? `<button class="action-btn success" data-action="success" data-order-id="${order.orderId}">✓ Tandai Sukses</button>`
+                    : ""
+            }
+
+            ${
+                statusVal !== "pending"
+                    ? `<button class="action-btn pending" data-action="pending" data-order-id="${order.orderId}">⏳ Tandai Pending</button>`
+                    : ""
+            }
+
+            ${
+                statusVal !== "expired"
+                    ? `<button class="action-btn expired" data-action="expired" data-order-id="${order.orderId}">× Tandai Expired</button>`
+                    : ""
+            }
         </div>
     `;
 
     orderModal.classList.add("active");
-}
 
+    orderModalBody.querySelectorAll(".action-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const action = btn.dataset.action;
+            const orderId = btn.dataset.orderId;
+
+            if (action && orderId) {
+                updateOrderStatus(orderId, action, btn);
+            }
+        });
+    });
+}
 function closeOrderModal() {
     orderModal.classList.remove("active");
 }
+async function updateOrderStatus(orderId, newStatus, btnEl) {
+    if (!orderId || !newStatus) return;
 
+    const originalText = btnEl.innerText;
+    btnEl.disabled = true;
+    btnEl.innerText = "Mengubah...";
+
+    try {
+        const response = await fetch(
+            `${API_BASE}/api/admin/orders/${orderId}/status`,
+            {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${getToken()}`
+                },
+                body: JSON.stringify({ status: newStatus })
+            }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            alert(result.message || "Gagal mengubah status.");
+            btnEl.disabled = false;
+            btnEl.innerText = originalText;
+            return;
+        }
+
+        const order = allOrders.find((o) => o.orderId === orderId);
+        if (order) {
+            order.status = newStatus;
+            if (newStatus === "success" && !order.paidAt) {
+                order.paidAt = new Date().toISOString();
+            }
+            if (newStatus === "expired" && !order.expiredAt) {
+                order.expiredAt = new Date().toISOString();
+            }
+        }
+
+        applyFilters();
+        renderSummary();
+
+        btnEl.innerText = "✓ Berhasil";
+        setTimeout(() => {
+            closeOrderModal();
+        }, 600);
+
+    } catch (error) {
+        console.error("Update status error:", error);
+        alert("Gagal terhubung ke server.");
+        btnEl.disabled = false;
+        btnEl.innerText = originalText;
+    }
+}
 if (orderModalClose) {
     orderModalClose.addEventListener("click", closeOrderModal);
 }

@@ -160,11 +160,18 @@
 
             <div class="admin-toolbar">
                 <input type="search" id="search-input" class="search-input" placeholder="Cari nama, order ID, atau WhatsApp...">
-                <select id="location-filter" class="filter-select">
+                                <select id="location-filter" class="filter-select">
                     <option value="all">Semua Lokasi</option>
                     <option value="sman1">SMAN 1 Karawang</option>
                     <option value="sman5">SMAN 5 Karawang</option>
                     <option value="others">Lainnya</option>
+                </select>
+                <select id="status-filter" class="filter-select">
+                    <option value="all">Semua Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="success">Success</option>
+                    <option value="expired">Expired</option>
+                    <option value="failed">Failed</option>
                 </select>
                 <button class="btn-ghost" id="refresh-btn">Refresh</button>
             </div>
@@ -177,6 +184,7 @@
                             <th>Tanggal</th>
                             <th>Nama</th>
                             <th>Lokasi</th>
+                            <th>Status</th>
                             <th>WhatsApp</th>
                             <th>Total</th>
                             <th></th>

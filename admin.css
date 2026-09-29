@@ -1105,3 +1105,109 @@ CUSTOMER INSIGHTS
         grid-template-columns: 1fr;
     }
 }
+/* =========================
+STATUS BADGE + ACTIONS
+========================= */
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.status-badge.status-pending {
+    background: rgba(216, 168, 78, 0.18);
+    color: var(--gold-light);
+    border: 1px solid rgba(216, 168, 78, 0.4);
+}
+
+.status-badge.status-success {
+    background: rgba(36, 107, 73, 0.3);
+    color: #8bd28b;
+    border: 1px solid rgba(139, 210, 139, 0.4);
+}
+
+.status-badge.status-expired {
+    background: rgba(226, 114, 91, 0.15);
+    color: #e2a37a;
+    border: 1px solid rgba(226, 114, 91, 0.35);
+}
+
+.status-badge.status-failed {
+    background: rgba(226, 114, 91, 0.2);
+    color: #e2725b;
+    border: 1px solid rgba(226, 114, 91, 0.5);
+}
+
+/* Tombol aksi di modal */
+.modal-actions {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(216, 168, 78, 0.18);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.modal-actions-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--gold);
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.action-btn {
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    text-align: center;
+}
+
+.action-btn.success {
+    background: rgba(36, 107, 73, 0.25);
+    color: #8bd28b;
+    border-color: rgba(139, 210, 139, 0.4);
+}
+
+.action-btn.success:hover {
+    background: rgba(36, 107, 73, 0.5);
+    color: #ffffff;
+}
+
+.action-btn.expired {
+    background: rgba(226, 114, 91, 0.15);
+    color: #e2a37a;
+    border-color: rgba(226, 114, 91, 0.35);
+}
+
+.action-btn.expired:hover {
+    background: rgba(226, 114, 91, 0.35);
+    color: #ffffff;
+}
+
+.action-btn.pending {
+    background: rgba(216, 168, 78, 0.15);
+    color: var(--gold-light);
+    border-color: rgba(216, 168, 78, 0.4);
+}
+
+.action-btn.pending:hover {
+    background: rgba(216, 168, 78, 0.4);
+    color: #ffffff;
+}
+
+.action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
