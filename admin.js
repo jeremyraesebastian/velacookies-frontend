@@ -1616,9 +1616,8 @@ if (financeRefreshBtn) {
    ========================= */
 
 const financeExportBtn = document.getElementById("finance-export");
-
 async function exportFinanceExcel() {
-    if (typeof XLSX === "undefined") {
+    if (typeof ExcelJS === "undefined") {
         alert("Library Excel belum ke-load. Coba refresh halaman.");
         return;
     }
@@ -1633,7 +1632,7 @@ async function exportFinanceExcel() {
     financeExportBtn.innerText = "Menyiapkan...";
 
     try {
-        // Fetch ulang data biar fresh
+        // Fetch data fresh dari backend
         const [summaryRes, hppRes, cfRes] = await Promise.all([
             fetch(`${API_BASE}/api/admin/finance/summary?month=${currentFinanceMonth}`, {
                 headers: { "Authorization": `Bearer ${getToken()}` }
@@ -1660,53 +1659,223 @@ async function exportFinanceExcel() {
         const cfItems = cfData.items || [];
 
         /* =========================
+           WARNA BRAND
+           ========================= */
+        const COLOR = {
+            maroon: "FF250B0D",
+            maroonLight: "FF42191C",
+            gold: "FFD8A84E",
+            goldLight: "FFE7C77D",
+            cream: "FFF7EFE3",
+            creamSoft: "FFD9CABB",
+            white: "FFFFFAF3",
+            green: "FF246B49",
+            greenLight: "FF8BD28B",
+            error: "FFE2725B",
+            rowAlt: "FFFAF6EF"
+        };
+
+        const thinBorder = {
+            top:    { style: "thin", color: { argb: COLOR.gold } },
+            left:   { style: "thin", color: { argb: COLOR.gold } },
+            bottom: { style: "thin", color: { argb: COLOR.gold } },
+            right:  { style: "thin", color: { argb: COLOR.gold } }
+        };
+
+        const wb = new ExcelJS.Workbook();
+        wb.creator = "Velacookies Admin";
+        wb.created = new Date();
+
+        /* =========================
            SHEET 1: SUMMARY
            ========================= */
-        const summaryRows = [
-            ["LAPORAN KEUANGAN VELACOOKIES"],
-            ["Periode", currentFinanceMonth],
-            ["Dibuat", new Date().toLocaleString("id-ID")],
-            [],
-            ["RINGKASAN"],
-            ["Omzet", summary.revenue],
-            [],
-            ["Bucket", "Persentase", "Alokasi", "Terpakai", "Sisa"],
-            [
-                "HPP (Bahan Baku)",
-                summary.hppPct + "%",
-                summary.hppAllocated,
-                summary.hppSpent,
-                summary.hppRemaining
-            ],
-            [
-                "Cash Flow (Operasional)",
-                summary.cashflowPct + "%",
-                summary.cashflowAllocated,
-                summary.cashflowSpent,
-                summary.cashflowRemaining
-            ],
-            [
-                "Profit (Laba)",
-                summary.profitPct + "%",
-                summary.profitAllocated,
-                "-",
-                summary.profitFinal
-            ],
-            [],
-            ["Total Pengeluaran", summary.hppSpent + summary.cashflowSpent],
-            ["Laba Final", summary.profitFinal]
+        const ws1 = wb.addWorksheet("Summary", {
+            properties: { tabColor: { argb: COLOR.maroon } },
+            views: [{ showGridLines: false }]
+        });
+
+        // Title
+        ws1.mergeCells("A1:E1");
+        const titleCell = ws1.getCell("A1");
+        titleCell.value = "LAPORAN KEUANGAN — VELACOOKIES";
+        titleCell.font = { name: "Calibri", size: 16, bold: true, color: { argb: COLOR.cream } };
+        titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.maroon } };
+        titleCell.alignment = { horizontal: "center", vertical: "middle" };
+        ws1.getRow(1).height = 36;
+
+        // Sub info
+        ws1.mergeCells("A2:E2");
+        const subCell = ws1.getCell("A2");
+        subCell.value = `Periode: ${currentFinanceMonth}   •   Dibuat: ${new Date().toLocaleString("id-ID")}`;
+        subCell.font = { size: 11, italic: true, color: { argb: COLOR.maroonLight } };
+        subCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.cream } };
+        subCell.alignment = { horizontal: "center", vertical: "middle" };
+        ws1.getRow(2).height = 22;
+
+        // Spacer
+        ws1.addRow([]);
+
+        // Omzet highlight
+        ws1.getCell("A4").value = "OMZET BULAN INI";
+        ws1.getCell("A4").font = { size: 11, bold: true, color: { argb: COLOR.maroonLight } };
+        ws1.mergeCells("A4:B4");
+        ws1.getCell("D4").value = summary.revenue;
+        ws1.getCell("D4").numFmt = '"Rp"#,##0';
+        ws1.getCell("D4").font = { size: 14, bold: true, color: { argb: COLOR.green } };
+        ws1.mergeCells("D4:E4");
+        ws1.getCell("D4").alignment = { horizontal: "right", vertical: "middle" };
+        ws1.getRow(4).height = 28;
+
+        ws1.addRow([]);
+
+        // Header tabel bucket
+        const headerRow = ws1.addRow([
+            "BUCKET",
+            "PERSENTASE",
+            "ALOKASI",
+            "TERPAKAI",
+            "SISA"
+        ]);
+        headerRow.eachCell((cell) => {
+            cell.font = { bold: true, color: { argb: COLOR.maroon }, size: 11 };
+            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.gold } };
+            cell.alignment = { horizontal: "center", vertical: "middle" };
+            cell.border = thinBorder;
+        });
+        headerRow.height = 26;
+
+        // Data rows
+        const buckets = [
+            {
+                name: "HPP (Bahan Baku)",
+                pct: summary.hppPct + "%",
+                alloc: summary.hppAllocated,
+                spent: summary.hppSpent,
+                remain: summary.hppRemaining
+            },
+            {
+                name: "Cash Flow (Operasional)",
+                pct: summary.cashflowPct + "%",
+                alloc: summary.cashflowAllocated,
+                spent: summary.cashflowSpent,
+                remain: summary.cashflowRemaining
+            },
+            {
+                name: "Profit (Laba)",
+                pct: summary.profitPct + "%",
+                alloc: summary.profitAllocated,
+                spent: null,
+                remain: summary.profitFinal,
+                isProfit: true
+            }
+        ];
+
+        buckets.forEach((b, i) => {
+            const row = ws1.addRow([
+                b.name,
+                b.pct,
+                b.alloc,
+                b.spent === null ? "—" : b.spent,
+                b.remain
+            ]);
+
+            row.eachCell((cell, colNumber) => {
+                cell.border = thinBorder;
+                cell.alignment = { vertical: "middle" };
+                if (colNumber >= 3 && colNumber <= 5) {
+                    cell.numFmt = '"Rp"#,##0';
+                    cell.alignment = { horizontal: "right", vertical: "middle" };
+                }
+                if (colNumber === 2) {
+                    cell.alignment = { horizontal: "center", vertical: "middle" };
+                }
+
+                if (i % 2 === 1) {
+                    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.rowAlt } };
+                }
+
+                if (b.isProfit) {
+                    cell.font = { color: { argb: COLOR.green }, bold: true };
+                } else {
+                    cell.font = { color: { argb: COLOR.maroonLight } };
+                }
+            });
+
+            // Sisa warnai merah kalau negatif
+            const sisaCell = row.getCell(5);
+            if (b.remain < 0) {
+                sisaCell.font = { color: { argb: COLOR.error }, bold: true };
+            }
+
+            row.height = 22;
+        });
+
+        ws1.addRow([]);
+
+        // Total row
+        const totalSpent = (summary.hppSpent || 0) + (summary.cashflowSpent || 0);
+        const totalRow = ws1.addRow(["", "", "", "TOTAL PENGELUARAN", totalSpent]);
+        totalRow.getCell(4).font = { bold: true, color: { argb: COLOR.maroon } };
+        totalRow.getCell(4).alignment = { horizontal: "right" };
+        totalRow.getCell(5).numFmt = '"Rp"#,##0';
+        totalRow.getCell(5).font = { bold: true, color: { argb: COLOR.error }, size: 12 };
+        totalRow.getCell(5).alignment = { horizontal: "right" };
+        totalRow.height = 24;
+
+        const finalRow = ws1.addRow(["", "", "", "LABA FINAL", summary.profitFinal]);
+        finalRow.getCell(4).font = { bold: true, color: { argb: COLOR.maroon } };
+        finalRow.getCell(4).alignment = { horizontal: "right" };
+        finalRow.getCell(5).numFmt = '"Rp"#,##0';
+        finalRow.getCell(5).font = {
+            bold: true,
+            size: 14,
+            color: { argb: summary.profitFinal >= 0 ? COLOR.green : COLOR.error }
+        };
+        finalRow.getCell(5).alignment = { horizontal: "right" };
+        finalRow.height = 28;
+
+        // Column widths
+        ws1.columns = [
+            { width: 28 },
+            { width: 14 },
+            { width: 18 },
+            { width: 18 },
+            { width: 18 }
         ];
 
         /* =========================
-           SHEET 2: HPP PURCHASES
+           SHEET 2: HPP
            ========================= */
-        const hppRows = [
-            ["Tanggal", "Item", "Quantity", "Unit", "Harga", "Catatan"]
-        ];
+        const ws2 = wb.addWorksheet("HPP", {
+            properties: { tabColor: { argb: COLOR.green } },
+            views: [{ showGridLines: false }]
+        });
 
+        // Title
+        ws2.mergeCells("A1:F1");
+        const title2 = ws2.getCell("A1");
+        title2.value = `PEMBELIAN HPP — ${currentFinanceMonth}`;
+        title2.font = { size: 14, bold: true, color: { argb: COLOR.cream } };
+        title2.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.maroon } };
+        title2.alignment = { horizontal: "center", vertical: "middle" };
+        ws2.getRow(1).height = 32;
+
+        ws2.addRow([]);
+
+        // Header
+        const hppHeader = ws2.addRow(["TANGGAL", "ITEM", "QTY", "UNIT", "HARGA", "CATATAN"]);
+        hppHeader.eachCell((cell) => {
+            cell.font = { bold: true, color: { argb: COLOR.maroon }, size: 11 };
+            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.gold } };
+            cell.alignment = { horizontal: "center", vertical: "middle" };
+            cell.border = thinBorder;
+        });
+        hppHeader.height = 26;
+
+        // Data
         let totalHpp = 0;
-        hppItems.forEach((item) => {
-            hppRows.push([
+        hppItems.forEach((item, i) => {
+            const row = ws2.addRow([
                 item.purchaseDate || "-",
                 item.itemName || "-",
                 item.quantity != null ? item.quantity : "-",
@@ -1714,74 +1883,143 @@ async function exportFinanceExcel() {
                 item.amount || 0,
                 item.note || "-"
             ]);
+
+            row.eachCell((cell, colNumber) => {
+                cell.border = thinBorder;
+                cell.alignment = { vertical: "middle" };
+                if (colNumber === 5) {
+                    cell.numFmt = '"Rp"#,##0';
+                    cell.alignment = { horizontal: "right", vertical: "middle" };
+                }
+                if (colNumber === 3 || colNumber === 4) {
+                    cell.alignment = { horizontal: "center", vertical: "middle" };
+                }
+                if (i % 2 === 1) {
+                    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.rowAlt } };
+                }
+                cell.font = { color: { argb: COLOR.maroonLight } };
+            });
+
             totalHpp += item.amount || 0;
+            row.height = 20;
         });
 
-        hppRows.push([]);
-        hppRows.push(["", "", "", "", "TOTAL", totalHpp]);
+        // Total
+        if (hppItems.length > 0) {
+            const tRow = ws2.addRow(["", "", "", "TOTAL", totalHpp, ""]);
+            tRow.getCell(4).font = { bold: true, color: { argb: COLOR.maroon } };
+            tRow.getCell(4).alignment = { horizontal: "right" };
+            tRow.getCell(5).numFmt = '"Rp"#,##0';
+            tRow.getCell(5).font = { bold: true, color: { argb: COLOR.error }, size: 12 };
+            tRow.getCell(5).alignment = { horizontal: "right" };
+            tRow.getCell(5).border = thinBorder;
+            tRow.height = 24;
+        } else {
+            ws2.addRow(["", "", "", "", "Belum ada data", ""]);
+        }
+
+        ws2.columns = [
+            { width: 14 },
+            { width: 28 },
+            { width: 8 },
+            { width: 10 },
+            { width: 16 },
+            { width: 30 }
+        ];
 
         /* =========================
            SHEET 3: CASHFLOW
            ========================= */
-        const cfRows = [
-            ["Tanggal", "Kategori", "Deskripsi", "Jumlah", "Catatan"]
-        ];
+        const ws3 = wb.addWorksheet("Cashflow", {
+            properties: { tabColor: { argb: COLOR.gold } },
+            views: [{ showGridLines: false }]
+        });
+
+        ws3.mergeCells("A1:E1");
+        const title3 = ws3.getCell("A1");
+        title3.value = `CASH FLOW — ${currentFinanceMonth}`;
+        title3.font = { size: 14, bold: true, color: { argb: COLOR.cream } };
+        title3.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.maroon } };
+        title3.alignment = { horizontal: "center", vertical: "middle" };
+        ws3.getRow(1).height = 32;
+
+        ws3.addRow([]);
+
+        const cfHeader = ws3.addRow(["TANGGAL", "KATEGORI", "DESKRIPSI", "JUMLAH", "CATATAN"]);
+        cfHeader.eachCell((cell) => {
+            cell.font = { bold: true, color: { argb: COLOR.maroon }, size: 11 };
+            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.gold } };
+            cell.alignment = { horizontal: "center", vertical: "middle" };
+            cell.border = thinBorder;
+        });
+        cfHeader.height = 26;
 
         let totalCf = 0;
-        cfItems.forEach((item) => {
-            cfRows.push([
+        cfItems.forEach((item, i) => {
+            const row = ws3.addRow([
                 item.transactionDate || "-",
                 item.categoryName || "-",
                 item.description || "-",
                 item.amount || 0,
                 item.note || "-"
             ]);
+
+            row.eachCell((cell, colNumber) => {
+                cell.border = thinBorder;
+                cell.alignment = { vertical: "middle" };
+                if (colNumber === 4) {
+                    cell.numFmt = '"Rp"#,##0';
+                    cell.alignment = { horizontal: "right", vertical: "middle" };
+                }
+                if (i % 2 === 1) {
+                    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.rowAlt } };
+                }
+                cell.font = { color: { argb: COLOR.maroonLight } };
+            });
+
             totalCf += item.amount || 0;
+            row.height = 20;
         });
 
-        cfRows.push([]);
-        cfRows.push(["", "", "", "TOTAL", totalCf]);
+        if (cfItems.length > 0) {
+            const tRow = ws3.addRow(["", "", "", "TOTAL", ""]);
+            tRow.getCell(3).value = "TOTAL";
+            tRow.getCell(3).font = { bold: true, color: { argb: COLOR.maroon } };
+            tRow.getCell(3).alignment = { horizontal: "right" };
+            tRow.getCell(4).value = totalCf;
+            tRow.getCell(4).numFmt = '"Rp"#,##0';
+            tRow.getCell(4).font = { bold: true, color: { argb: COLOR.error }, size: 12 };
+            tRow.getCell(4).alignment = { horizontal: "right" };
+            tRow.getCell(4).border = thinBorder;
+            tRow.height = 24;
+        } else {
+            ws3.addRow(["", "", "", "Belum ada data", ""]);
+        }
+
+        ws3.columns = [
+            { width: 14 },
+            { width: 20 },
+            { width: 32 },
+            { width: 16 },
+            { width: 30 }
+        ];
 
         /* =========================
-           BUILD WORKBOOK
+           DOWNLOAD
            ========================= */
-        const wb = XLSX.utils.book_new();
+        const buffer = await wb.xlsx.writeBuffer();
+        const blob = new Blob([buffer], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        });
+        const url = URL.createObjectURL(blob);
 
-        const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
-        const wsHpp = XLSX.utils.aoa_to_sheet(hppRows);
-        const wsCf = XLSX.utils.aoa_to_sheet(cfRows);
-
-        // Set column widths biar rapi
-        wsSummary["!cols"] = [
-            { wch: 25 }, // A
-            { wch: 15 }, // B
-            { wch: 15 }, // C
-            { wch: 15 }, // D
-            { wch: 15 }  // E
-        ];
-        wsHpp["!cols"] = [
-            { wch: 14 },
-            { wch: 28 },
-            { wch: 10 },
-            { wch: 10 },
-            { wch: 14 },
-            { wch: 30 }
-        ];
-        wsCf["!cols"] = [
-            { wch: 14 },
-            { wch: 18 },
-            { wch: 32 },
-            { wch: 14 },
-            { wch: 30 }
-        ];
-
-        XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
-        XLSX.utils.book_append_sheet(wb, wsHpp, "HPP");
-        XLSX.utils.book_append_sheet(wb, wsCf, "Cashflow");
-
-        // Generate & download
-        const filename = `velacookies-keuangan-${currentFinanceMonth}.xlsx`;
-        XLSX.writeFile(wb, filename);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `velacookies-keuangan-${currentFinanceMonth}.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
 
     } catch (error) {
         console.error("Export Excel error:", error);
