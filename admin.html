@@ -64,17 +64,43 @@
                 </div>
             </div>
 
+            <div class="customer-insights">
+                <div class="customer-insights-header">
+                    <h2 class="customer-insights-title">Customer Insights</h2>
+                </div>
+
+                <div class="customer-insights-grid">
+                    <div class="insight-card">
+                        <span class="insight-label">Total Customer</span>
+                        <strong class="insight-value" id="insight-total-customers">—</strong>
+                        <span class="insight-sub">Nomor WA unik</span>
+                    </div>
+
+                    <div class="insight-card">
+                        <span class="insight-label">Repeat Rate</span>
+                        <strong class="insight-value" id="insight-repeat-rate">—</strong>
+                        <span class="insight-sub" id="insight-repeat-detail">—</span>
+                    </div>
+
+                    <div class="insight-card">
+                        <span class="insight-label">Order Baru vs Lama</span>
+                        <strong class="insight-value" id="insight-new-old-ratio">—</strong>
+                        <span class="insight-sub" id="insight-new-old-detail">—</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="admin-report">
                 <div class="report-header">
                     <h2 class="report-title">Laporan Harian</h2>
-                <div class="report-controls">
+                    <div class="report-controls">
                         <input type="date" id="report-date" class="date-input">
                         <button class="btn-ghost" id="report-today">Hari Ini</button>
                         <button class="btn-ghost" id="report-export">Export CSV</button>
                     </div>
                 </div>
 
-                               <div class="report-summary">
+                <div class="report-summary">
                     <div class="report-card">
                         <span class="report-label">Total Order</span>
                         <strong class="report-value" id="report-total-orders">—</strong>
@@ -121,7 +147,7 @@
                         </thead>
                         <tbody id="report-location-tbody"></tbody>
                     </table>
-                                        <p class="report-empty" id="report-location-empty" hidden>
+                    <p class="report-empty" id="report-location-empty" hidden>
                         Belum ada order di tanggal ini.
                     </p>
                 </div>

@@ -37,6 +37,11 @@ const reportDeltaOrders = document.getElementById("report-delta-orders");
 const reportDeltaItems = document.getElementById("report-delta-items");
 const reportDeltaRevenue = document.getElementById("report-delta-revenue");
 const chart7Day = document.getElementById("chart-7day");
+const insightTotalCustomers = document.getElementById("insight-total-customers");
+const insightRepeatRate = document.getElementById("insight-repeat-rate");
+const insightRepeatDetail = document.getElementById("insight-repeat-detail");
+const insightNewOldRatio = document.getElementById("insight-new-old-ratio");
+const insightNewOldDetail = document.getElementById("insight-new-old-detail");
 const orderModal = document.getElementById("order-modal");
 const orderModalBody = document.getElementById("order-modal-body");
 const orderModalClose = document.getElementById("order-modal-close");
@@ -160,6 +165,80 @@ function getCustomerType(order) {
     return previousOrders.length > 0 ? "lama" : "baru";
 }
 
+
+/* =========================
+   CUSTOMER INSIGHTS
+   ========================= */
+
+function renderCustomerInsights() {
+    if (!insightTotalCustomers) return;
+
+    const customerMap = {};
+
+    allOrders.forEach((order) => {
+        const wa = normalizeWA(order.whatsapp);
+        if (!wa) return;
+
+        if (!customerMap[wa]) {
+            customerMap[wa] = {
+                whatsapp: wa,
+                orderCount: 0,
+                totalSpent: 0
+            };
+        }
+
+        customerMap[wa].orderCount += 1;
+        customerMap[wa].totalSpent += order.total || 0;
+    });
+
+    const customers = Object.values(customerMap);
+    const totalCustomers = customers.length;
+
+    const repeatCustomers = customers.filter((c) => c.orderCount > 1).length;
+    const repeatRate =
+        totalCustomers > 0
+            ? Math.round((repeatCustomers / totalCustomers) * 100)
+            : 0;
+
+    let newOrdersCount = 0;
+    let oldOrdersCount = 0;
+
+    allOrders.forEach((order) => {
+        const type = getCustomerType(order);
+        if (type === "baru") {
+            newOrdersCount += 1;
+        } else {
+            oldOrdersCount += 1;
+        }
+    });
+
+    const totalOrdersCount = newOrdersCount + oldOrdersCount;
+    const newPercent =
+        totalOrdersCount > 0
+            ? Math.round((newOrdersCount / totalOrdersCount) * 100)
+            : 0;
+    const oldPercent = totalOrdersCount > 0 ? 100 - newPercent : 0;
+
+    insightTotalCustomers.innerText = totalCustomers;
+    insightRepeatRate.innerText = repeatRate + "%";
+
+    if (totalCustomers === 0) {
+        insightRepeatDetail.innerText = "Belum ada data";
+    } else {
+        insightRepeatDetail.innerHTML =
+            `<strong>${repeatCustomers}</strong> dari ${totalCustomers} customer order >1x`;
+    }
+
+    insightNewOldRatio.innerText = `${newPercent}% / ${oldPercent}%`;
+
+    if (totalOrdersCount === 0) {
+        insightNewOldDetail.innerText = "Belum ada data";
+    } else {
+        insightNewOldDetail.innerHTML =
+            `<strong>${newOrdersCount}</strong> baru · <strong>${oldOrdersCount}</strong> lama`;
+    }
+}
+
 /* =========================
    VIEW SWITCH
    ========================= */
@@ -261,8 +340,9 @@ async function loadOrders() {
             return;
         }
 
-        allOrders = result.orders || [];
+                allOrders = result.orders || [];
         renderSummary();
+        renderCustomerInsights();
         applyFilters();
         renderDailyReport();
 

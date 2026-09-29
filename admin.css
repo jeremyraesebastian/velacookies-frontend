@@ -889,9 +889,13 @@ REPORT DELTA + EXPORT + CHART
 CUSTOMER TYPE BADGE
 ========================= */
 
+/* =========================
+CUSTOMER TYPE BADGE
+========================= */
+
 .cell-customer {
-    display: flex;
-    flex-direction: column;
+    display: flex !important;
+    flex-direction: column !important;
     gap: 5px;
     align-items: flex-start;
 }
@@ -922,4 +926,182 @@ CUSTOMER TYPE BADGE
     background: rgba(36, 107, 73, 0.25);
     color: #8bd28b;
     border: 1px solid rgba(139, 210, 139, 0.35);
+}
+
+
+/* =========================
+CUSTOMER INSIGHTS
+========================= */
+
+.customer-insights {
+    margin-bottom: 24px;
+    padding: 22px 24px;
+    border-radius: 16px;
+    background: var(--maroon-card);
+    border: 1px solid rgba(216, 168, 78, 0.18);
+}
+
+.customer-insights-header {
+    margin-bottom: 18px;
+}
+
+.customer-insights-title {
+    font-size: 17px;
+    font-family: Georgia, serif;
+    color: var(--white);
+    font-weight: normal;
+}
+
+.customer-insights-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.insight-card {
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: rgba(8, 28, 20, 0.4);
+    border: 1px solid rgba(216, 168, 78, 0.12);
+}
+
+.insight-label {
+    display: block;
+    font-size: 10.5px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--cream-soft);
+    margin-bottom: 6px;
+}
+
+.insight-value {
+    font-size: 22px;
+    color: var(--gold);
+    font-family: Georgia, serif;
+    font-weight: normal;
+}
+
+.insight-sub {
+    display: block;
+    font-size: 11px;
+    color: var(--cream-soft);
+    margin-top: 4px;
+}
+
+.insight-sub strong {
+    color: var(--gold-light);
+}
+
+@media (max-width: 720px) {
+    .customer-insights-grid {
+        grid-template-columns: 1fr;
+    }
+}
+/* =========================
+CUSTOMER TYPE BADGE (FIX)
+========================= */
+
+.cell-customer {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 5px;
+}
+
+.cell-customer .customer-name {
+    color: var(--cream);
+    font-size: 13.5px;
+}
+
+.customer-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 9.5px;
+    font-weight: bold;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.customer-badge.baru {
+    background: rgba(216, 168, 78, 0.18);
+    color: var(--gold-light);
+    border: 1px solid rgba(216, 168, 78, 0.4);
+}
+
+.customer-badge.lama {
+    background: rgba(36, 107, 73, 0.25);
+    color: #8bd28b;
+    border: 1px solid rgba(139, 210, 139, 0.35);
+}
+
+
+/* =========================
+CUSTOMER INSIGHTS
+========================= */
+
+.customer-insights {
+    margin-bottom: 24px;
+    padding: 22px 24px;
+    border-radius: 16px;
+    background: var(--maroon-card);
+    border: 1px solid rgba(216, 168, 78, 0.18);
+}
+
+.customer-insights-header {
+    margin-bottom: 18px;
+}
+
+.customer-insights-title {
+    font-size: 17px;
+    font-family: Georgia, serif;
+    color: var(--white);
+    font-weight: normal;
+}
+
+.customer-insights-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.insight-card {
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: rgba(8, 28, 20, 0.4);
+    border: 1px solid rgba(216, 168, 78, 0.12);
+}
+
+.insight-label {
+    display: block;
+    font-size: 10.5px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--cream-soft);
+    margin-bottom: 6px;
+}
+
+.insight-value {
+    font-size: 22px;
+    color: var(--gold);
+    font-family: Georgia, serif;
+    font-weight: normal;
+}
+
+.insight-sub {
+    display: block;
+    font-size: 11px;
+    color: var(--cream-soft);
+    margin-top: 4px;
+}
+
+.insight-sub strong {
+    color: var(--gold-light);
+}
+
+@media (max-width: 720px) {
+    .customer-insights-grid {
+        grid-template-columns: 1fr;
+    }
 }
