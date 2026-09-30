@@ -305,7 +305,6 @@ adminTabs.forEach((tab) => {
             content.hidden = !isActive;
         });
 
-        // Load data sesuai tab yang dibuka
         if (targetTab === "finance") {
             loadFinance();
         }
@@ -368,6 +367,7 @@ if (logoutBtn) {
         showLoginView();
     });
 }
+
 
 /* =========================
    FETCH ORDERS
@@ -910,10 +910,22 @@ function renderDailyReport() {
         locationMap[locKey].subtotal += order.total || 0;
 
         (order.items || []).forEach((item) => {
-            const key = item.productId || item.name;
+            // Key include addon biar varian + addon jadi baris terpisah
+            const key = (item.productId || item.name) +
+                        (item.addonName ? "||" + item.addonName : "");
+
+            const displayName = item.addonName
+                ? `${item.name} (+ ${item.addonName})`
+                : item.name;
+
             if (!variantMap[key]) {
-                variantMap[key] = { name: item.name, qty: 0, subtotal: 0 };
+                variantMap[key] = {
+                    name: displayName,
+                    qty: 0,
+                    subtotal: 0
+                };
             }
+
             variantMap[key].qty += item.quantity;
             variantMap[key].subtotal += item.subtotal || (item.price * item.quantity);
         });
@@ -923,7 +935,12 @@ function renderDailyReport() {
     reportTotalItems.innerText = currentMetrics.items;
     reportTotalRevenue.innerText = formatRupiah(currentMetrics.revenue);
 
-    const variants = Object.values(variantMap).sort((a, b) => b.qty - a.qty);
+    // Sort: qty terbanyak dulu, kalau sama sort by nama
+    const variants = Object.values(variantMap).sort((a, b) => {
+        if (b.qty !== a.qty) return b.qty - a.qty;
+        return a.name.localeCompare(b.name);
+    });
+
     let html = "";
     variants.forEach((v) => {
         html += `
@@ -1197,7 +1214,6 @@ function populateCategorySelect() {
 function renderFinanceSummary(s) {
     if (!s) return;
 
-    /* Hero: revenue + period status */
     finRevenue.innerText = formatRupiah(s.revenue);
 
     const statusMap = {
@@ -1207,21 +1223,18 @@ function renderFinanceSummary(s) {
     };
     finPeriodStatus.innerText = statusMap[s.periodStatus] || "—";
 
-    /* HPP bucket */
     finHppPct.innerText = s.hppPct + "%";
     finHppAllocated.innerText = formatRupiah(s.hppAllocated);
     finHppSpent.innerText = formatRupiah(s.hppSpent);
     finHppRemaining.innerText = formatRupiah(s.hppRemaining);
     updateProgressBar(finHppBar, s.hppSpent, s.hppAllocated);
 
-    /* Cashflow bucket */
     finCashflowPct.innerText = s.cashflowPct + "%";
     finCashflowAllocated.innerText = formatRupiah(s.cashflowAllocated);
     finCashflowSpent.innerText = formatRupiah(s.cashflowSpent);
     finCashflowRemaining.innerText = formatRupiah(s.cashflowRemaining);
     updateProgressBar(finCashflowBar, s.cashflowSpent, s.cashflowAllocated);
 
-    /* Profit bucket */
     finProfitPct.innerText = s.profitPct + "%";
     finProfitAllocated.innerText = formatRupiah(s.profitAllocated);
 
@@ -1410,11 +1423,9 @@ if (hppForm) {
                 return;
             }
 
-            // Reset form
             hppForm.reset();
             hppDate.value = getTodayDateString();
 
-            // Refresh summary + history
             await Promise.all([
                 loadFinanceSummary(),
                 loadHppHistory()
@@ -1611,11 +1622,13 @@ if (financeRefreshBtn) {
     financeRefreshBtn.addEventListener("click", () => loadFinance());
 }
 
+
 /* =========================
    FINANCE — EXPORT EXCEL
    ========================= */
 
 const financeExportBtn = document.getElementById("finance-export");
+
 async function exportFinanceExcel() {
     if (typeof ExcelJS === "undefined") {
         alert("Library Excel belum ke-load. Coba refresh halaman.");
@@ -1632,7 +1645,6 @@ async function exportFinanceExcel() {
     financeExportBtn.innerText = "Menyiapkan...";
 
     try {
-        // Fetch data fresh dari backend
         const [summaryRes, hppRes, cfRes] = await Promise.all([
             fetch(`${API_BASE}/api/admin/finance/summary?month=${currentFinanceMonth}`, {
                 headers: { "Authorization": `Bearer ${getToken()}` }
@@ -1658,9 +1670,6 @@ async function exportFinanceExcel() {
         const hppItems = hppData.items || [];
         const cfItems = cfData.items || [];
 
-        /* =========================
-           WARNA BRAND
-           ========================= */
         const COLOR = {
             maroon: "FF250B0D",
             maroonLight: "FF42191C",
@@ -1686,15 +1695,12 @@ async function exportFinanceExcel() {
         wb.creator = "Velacookies Admin";
         wb.created = new Date();
 
-        /* =========================
-           SHEET 1: SUMMARY
-           ========================= */
+        /* SHEET 1: SUMMARY */
         const ws1 = wb.addWorksheet("Summary", {
             properties: { tabColor: { argb: COLOR.maroon } },
             views: [{ showGridLines: false }]
         });
 
-        // Title
         ws1.mergeCells("A1:E1");
         const titleCell = ws1.getCell("A1");
         titleCell.value = "LAPORAN KEUANGAN — VELACOOKIES";
@@ -1703,7 +1709,6 @@ async function exportFinanceExcel() {
         titleCell.alignment = { horizontal: "center", vertical: "middle" };
         ws1.getRow(1).height = 36;
 
-        // Sub info
         ws1.mergeCells("A2:E2");
         const subCell = ws1.getCell("A2");
         subCell.value = `Periode: ${currentFinanceMonth}   •   Dibuat: ${new Date().toLocaleString("id-ID")}`;
@@ -1712,10 +1717,8 @@ async function exportFinanceExcel() {
         subCell.alignment = { horizontal: "center", vertical: "middle" };
         ws1.getRow(2).height = 22;
 
-        // Spacer
         ws1.addRow([]);
 
-        // Omzet highlight
         ws1.getCell("A4").value = "OMZET BULAN INI";
         ws1.getCell("A4").font = { size: 11, bold: true, color: { argb: COLOR.maroonLight } };
         ws1.mergeCells("A4:B4");
@@ -1728,7 +1731,6 @@ async function exportFinanceExcel() {
 
         ws1.addRow([]);
 
-        // Header tabel bucket
         const headerRow = ws1.addRow([
             "BUCKET",
             "PERSENTASE",
@@ -1744,7 +1746,6 @@ async function exportFinanceExcel() {
         });
         headerRow.height = 26;
 
-        // Data rows
         const buckets = [
             {
                 name: "HPP (Bahan Baku)",
@@ -1801,7 +1802,6 @@ async function exportFinanceExcel() {
                 }
             });
 
-            // Sisa warnai merah kalau negatif
             const sisaCell = row.getCell(5);
             if (b.remain < 0) {
                 sisaCell.font = { color: { argb: COLOR.error }, bold: true };
@@ -1812,7 +1812,6 @@ async function exportFinanceExcel() {
 
         ws1.addRow([]);
 
-        // Total row
         const totalSpent = (summary.hppSpent || 0) + (summary.cashflowSpent || 0);
         const totalRow = ws1.addRow(["", "", "", "TOTAL PENGELUARAN", totalSpent]);
         totalRow.getCell(4).font = { bold: true, color: { argb: COLOR.maroon } };
@@ -1834,7 +1833,6 @@ async function exportFinanceExcel() {
         finalRow.getCell(5).alignment = { horizontal: "right" };
         finalRow.height = 28;
 
-        // Column widths
         ws1.columns = [
             { width: 28 },
             { width: 14 },
@@ -1843,15 +1841,12 @@ async function exportFinanceExcel() {
             { width: 18 }
         ];
 
-        /* =========================
-           SHEET 2: HPP
-           ========================= */
+        /* SHEET 2: HPP */
         const ws2 = wb.addWorksheet("HPP", {
             properties: { tabColor: { argb: COLOR.green } },
             views: [{ showGridLines: false }]
         });
 
-        // Title
         ws2.mergeCells("A1:F1");
         const title2 = ws2.getCell("A1");
         title2.value = `PEMBELIAN HPP — ${currentFinanceMonth}`;
@@ -1862,7 +1857,6 @@ async function exportFinanceExcel() {
 
         ws2.addRow([]);
 
-        // Header
         const hppHeader = ws2.addRow(["TANGGAL", "ITEM", "QTY", "UNIT", "HARGA", "CATATAN"]);
         hppHeader.eachCell((cell) => {
             cell.font = { bold: true, color: { argb: COLOR.maroon }, size: 11 };
@@ -1872,7 +1866,6 @@ async function exportFinanceExcel() {
         });
         hppHeader.height = 26;
 
-        // Data
         let totalHpp = 0;
         hppItems.forEach((item, i) => {
             const row = ws2.addRow([
@@ -1904,7 +1897,6 @@ async function exportFinanceExcel() {
             row.height = 20;
         });
 
-        // Total
         if (hppItems.length > 0) {
             const tRow = ws2.addRow(["", "", "", "TOTAL", totalHpp, ""]);
             tRow.getCell(4).font = { bold: true, color: { argb: COLOR.maroon } };
@@ -1927,9 +1919,7 @@ async function exportFinanceExcel() {
             { width: 30 }
         ];
 
-        /* =========================
-           SHEET 3: CASHFLOW
-           ========================= */
+        /* SHEET 3: CASHFLOW */
         const ws3 = wb.addWorksheet("Cashflow", {
             properties: { tabColor: { argb: COLOR.gold } },
             views: [{ showGridLines: false }]
@@ -1982,11 +1972,9 @@ async function exportFinanceExcel() {
         });
 
         if (cfItems.length > 0) {
-            const tRow = ws3.addRow(["", "", "", "TOTAL", ""]);
-            tRow.getCell(3).value = "TOTAL";
+            const tRow = ws3.addRow(["", "", "TOTAL", totalCf, ""]);
             tRow.getCell(3).font = { bold: true, color: { argb: COLOR.maroon } };
             tRow.getCell(3).alignment = { horizontal: "right" };
-            tRow.getCell(4).value = totalCf;
             tRow.getCell(4).numFmt = '"Rp"#,##0';
             tRow.getCell(4).font = { bold: true, color: { argb: COLOR.error }, size: 12 };
             tRow.getCell(4).alignment = { horizontal: "right" };
@@ -2004,9 +1992,6 @@ async function exportFinanceExcel() {
             { width: 30 }
         ];
 
-        /* =========================
-           DOWNLOAD
-           ========================= */
         const buffer = await wb.xlsx.writeBuffer();
         const blob = new Blob([buffer], {
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -2034,12 +2019,12 @@ if (financeExportBtn) {
     financeExportBtn.addEventListener("click", exportFinanceExcel);
 }
 
+
 /* =========================
    INIT
    ========================= */
 
 (async function init() {
-    // Set default tanggal untuk form finance
     if (hppDate) hppDate.value = getTodayDateString();
     if (cfDate) cfDate.value = getTodayDateString();
 
