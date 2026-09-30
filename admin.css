@@ -1701,3 +1701,46 @@ EXPORT EXCEL BUTTON
     opacity: 0.5;
     cursor: not-allowed;
 }
+/* =========================
+LOCATION BREAKDOWN (NESTED)
+========================= */
+
+.report-location-parent td {
+    font-weight: bold;
+    color: var(--gold-light);
+    background: rgba(216, 168, 78, 0.06);
+    border-top: 1px solid rgba(216, 168, 78, 0.15);
+    padding-top: 14px;
+    padding-bottom: 10px;
+}
+
+.report-location-parent:first-child td {
+    border-top: none;
+}
+
+.report-location-child td:first-child {
+    padding-left: 28px;
+    color: var(--cream);
+    font-weight: normal;
+    font-size: 13px;
+    position: relative;
+}
+
+.report-location-child td:first-child::before {
+    content: "└─";
+    position: absolute;
+    left: 10px;
+    color: rgba(216, 168, 78, 0.4);
+    font-family: monospace;
+}
+
+.report-location-child td {
+    font-size: 13px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(216, 168, 78, 0.04);
+}
+
+.report-location-child:last-child td {
+    padding-bottom: 14px;
+}

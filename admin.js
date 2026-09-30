@@ -909,19 +909,24 @@ function renderDailyReport() {
     reportEmpty.hidden = true;
     reportLocationEmpty.hidden = true;
 
-    const variantMap = {};
+        const variantMap = {};
     const locationMap = {};
 
     dayOrders.forEach((order) => {
         const locKey = order.location || "unknown";
+
         if (!locationMap[locKey]) {
-            locationMap[locKey] = { count: 0, subtotal: 0 };
+            locationMap[locKey] = {
+                count: 0,
+                subtotal: 0,
+                variants: {}
+            };
         }
         locationMap[locKey].count += 1;
         locationMap[locKey].subtotal += order.total || 0;
 
         (order.items || []).forEach((item) => {
-            // Key include addon biar varian + addon jadi baris terpisah
+            // Key include addon
             const key = (item.productId || item.name) +
                         (item.addonName ? "||" + item.addonName : "");
 
@@ -929,6 +934,10 @@ function renderDailyReport() {
                 ? `${item.name} (+ ${item.addonName})`
                 : item.name;
 
+            const lineQty = item.quantity;
+            const lineSubtotal = item.subtotal || (item.price * item.quantity);
+
+            // Untuk global variant breakdown
             if (!variantMap[key]) {
                 variantMap[key] = {
                     name: displayName,
@@ -936,9 +945,19 @@ function renderDailyReport() {
                     subtotal: 0
                 };
             }
+            variantMap[key].qty += lineQty;
+            variantMap[key].subtotal += lineSubtotal;
 
-            variantMap[key].qty += item.quantity;
-            variantMap[key].subtotal += item.subtotal || (item.price * item.quantity);
+            // Untuk per-location variant breakdown (NEW)
+            if (!locationMap[locKey].variants[key]) {
+                locationMap[locKey].variants[key] = {
+                    name: displayName,
+                    qty: 0,
+                    subtotal: 0
+                };
+            }
+            locationMap[locKey].variants[key].qty += lineQty;
+            locationMap[locKey].variants[key].subtotal += lineSubtotal;
         });
     });
 
@@ -974,16 +993,37 @@ function renderDailyReport() {
         }))
         .sort((a, b) => (locOrder[a.key] || 50) - (locOrder[b.key] || 50));
 
-    let locHtml = "";
+        let locHtml = "";
+
     locations.forEach((loc) => {
+        const locData = locationMap[loc.key];
+        const variantsInLoc = Object.values(locData.variants || {})
+            .sort((a, b) => {
+                if (b.qty !== a.qty) return b.qty - a.qty;
+                return a.name.localeCompare(b.name);
+            });
+
+        // Parent row (lokasi)
         locHtml += `
-            <tr>
+            <tr class="report-location-parent">
                 <td>${escapeHtml(loc.label)}</td>
                 <td class="align-right">${loc.count}</td>
                 <td class="align-right">${formatRupiah(loc.subtotal)}</td>
             </tr>
         `;
+
+        // Child rows (varian per lokasi)
+        variantsInLoc.forEach((v) => {
+            locHtml += `
+                <tr class="report-location-child">
+                    <td>${escapeHtml(v.name)}</td>
+                    <td class="align-right">${v.qty}</td>
+                    <td class="align-right">${formatRupiah(v.subtotal)}</td>
+                </tr>
+            `;
+        });
     });
+
     reportLocationTbody.innerHTML = locHtml;
 
     render7DayChart();
