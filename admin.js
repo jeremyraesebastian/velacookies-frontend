@@ -418,14 +418,19 @@ async function loadOrders() {
    ========================= */
 
 function renderSummary() {
-    const totalOrders = allOrders.length;
+    // Cuma hitung order status "success"
+    const successOrders = allOrders.filter(
+        (o) => (o.status || "pending") === "success"
+    );
 
-    const totalRevenue = allOrders
-        .filter((o) => (o.status || "pending") === "success")
-        .reduce((sum, o) => sum + (o.total || 0), 0);
+    const totalOrders = successOrders.length;
+
+    const totalRevenue = successOrders.reduce(
+        (sum, o) => sum + (o.total || 0), 0
+    );
 
     const today = new Date().toDateString();
-    const todayOrders = allOrders.filter((o) => {
+    const todayOrders = successOrders.filter((o) => {
         if (!o.createdAt) return false;
         return new Date(o.createdAt).toDateString() === today;
     }).length;
@@ -435,7 +440,6 @@ function renderSummary() {
     summaryTodayOrders.innerText = todayOrders;
 }
 
-
 /* =========================
    CUSTOMER INSIGHTS
    ========================= */
@@ -443,8 +447,12 @@ function renderSummary() {
 function renderCustomerInsights() {
     if (!insightTotalCustomers) return;
 
+        const successOrders = allOrders.filter(
+        (o) => (o.status || "pending") === "success"
+    );
+
     const customerMap = {};
-    allOrders.forEach((order) => {
+    successOrders.forEach((order) => {
         const wa = normalizeWA(order.whatsapp);
         if (!wa) return;
         if (!customerMap[wa]) {
@@ -461,9 +469,9 @@ function renderCustomerInsights() {
         ? Math.round((repeatCustomers / totalCustomers) * 100)
         : 0;
 
-    let newOrdersCount = 0;
+        let newOrdersCount = 0;
     let oldOrdersCount = 0;
-    allOrders.forEach((order) => {
+    successOrders.forEach((order) => {
         const type = getCustomerType(order);
         if (type === "baru") newOrdersCount += 1;
         else oldOrdersCount += 1;
@@ -865,15 +873,18 @@ function renderDailyReport() {
         return;
     }
 
-    const dayOrders = allOrders.filter(
-        (order) => getLocalDateString(order.createdAt) === selectedDate
+        const dayOrders = allOrders.filter(
+        (order) =>
+            getLocalDateString(order.createdAt) === selectedDate &&
+            (order.status || "pending") === "success"
     );
 
     const previousDate = getDateStringOffset(selectedDate, -1);
     const previousOrders = allOrders.filter(
-        (order) => getLocalDateString(order.createdAt) === previousDate
+        (order) =>
+            getLocalDateString(order.createdAt) === previousDate &&
+            (order.status || "pending") === "success"
     );
-
     const currentMetrics = getMetrics(dayOrders);
     const previousMetrics = getMetrics(previousOrders);
 
@@ -993,8 +1004,10 @@ function render7DayChart() {
     const days = [];
     for (let i = 6; i >= 0; i--) {
         const dateStr = getDateStringOffset(baseDate, -i);
-        const orders = allOrders.filter(
-            (order) => getLocalDateString(order.createdAt) === dateStr
+                const orders = allOrders.filter(
+            (order) =>
+                getLocalDateString(order.createdAt) === dateStr &&
+                (order.status || "pending") === "success"
         );
         const revenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
         days.push({ date: dateStr, count: orders.length, revenue });
