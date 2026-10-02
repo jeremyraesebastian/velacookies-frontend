@@ -122,7 +122,50 @@ let currentFinanceSummary = null;
 let cashflowCategories = [];
 
 /* =========================
-   HELPERS
+   HELPERS — TIMEZONE (WIB)
+   ========================= */
+
+/**
+ * Parse ISO string dengan aman.
+ * Kalau string gak ada timezone tag (naive), assume UTC.
+ */
+function parseISOString(isoString) {
+    if (!isoString) return null;
+    const hasTz = /[Zz]$/.test(isoString) || /[+-]\d{2}:?\d{2}$/.test(isoString);
+    const iso = hasTz ? isoString : isoString + "Z";
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return null;
+    return d;
+}
+
+/**
+ * Ambil komponen tanggal/jam di timezone Jakarta (WIB).
+ */
+function getWIBParts(date) {
+    if (!date || isNaN(date.getTime())) return null;
+    const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Jakarta",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+    }).formatToParts(date);
+
+    const get = (type) => parts.find((p) => p.type === type)?.value;
+    return {
+        year: get("year"),
+        month: get("month"),
+        day: get("day"),
+        hour: get("hour"),
+        minute: get("minute")
+    };
+}
+
+
+/* =========================
+   HELPERS — FORMAT
    ========================= */
 
 function formatRupiah(number) {
@@ -130,26 +173,69 @@ function formatRupiah(number) {
 }
 
 function formatDate(isoString) {
-    if (!isoString) return "-";
-    const date = new Date(isoString);
+    const date = parseISOString(isoString);
+    if (!date) return "-";
     return date.toLocaleString("id-ID", {
+        timeZone: "Asia/Jakarta",
         day: "2-digit",
         month: "short",
         year: "numeric",
         hour: "2-digit",
-        minute: "2-digit"
+        minute: "2-digit",
+        hour12: false
     });
 }
 
 function formatDateShort(isoDate) {
     if (!isoDate) return "-";
-    const date = new Date(isoDate + "T00:00:00");
-    return date.toLocaleDateString("id-ID", {
+    // isoDate = "YYYY-MM-DD" (date only, gak ada timezone)
+    const parts = String(isoDate).split("-");
+    if (parts.length !== 3) return isoDate;
+    const d = new Date(Date.UTC(+parts[0], +parts[1] - 1, +parts[2]));
+    return d.toLocaleDateString("id-ID", {
+        timeZone: "UTC",
         day: "2-digit",
         month: "short",
         year: "numeric"
     });
 }
+
+function getLocalDateString(isoString) {
+    const d = parseISOString(isoString);
+    if (!d) return "";
+    const p = getWIBParts(d);
+    if (!p) return "";
+    return `${p.year}-${p.month}-${p.day}`;
+}
+
+function getDateStringOffset(dateString, dayOffset) {
+    // dateString = "YYYY-MM-DD" (date only) — pakai UTC biar konsisten
+    const parts = String(dateString).split("-");
+    if (parts.length !== 3) return dateString;
+    const d = new Date(Date.UTC(+parts[0], +parts[1] - 1, +parts[2]));
+    d.setUTCDate(d.getUTCDate() + dayOffset);
+    const year = d.getUTCFullYear();
+    const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
+function getCurrentMonthString() {
+    const p = getWIBParts(new Date());
+    if (!p) return "";
+    return `${p.year}-${p.month}`;
+}
+
+function getTodayDateString() {
+    const p = getWIBParts(new Date());
+    if (!p) return "";
+    return `${p.year}-${p.month}-${p.day}`;
+}
+
+
+/* =========================
+   HELPERS — LAINNYA
+   ========================= */
 
 function getToken() { return localStorage.getItem(TOKEN_KEY); }
 function setToken(token) { localStorage.setItem(TOKEN_KEY, token); }
@@ -193,24 +279,6 @@ function getStatusClass(status) {
     return map[status] || "status-pending";
 }
 
-function getLocalDateString(isoString) {
-    if (!isoString) return "";
-    const d = new Date(isoString);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-}
-
-function getDateStringOffset(dateString, dayOffset) {
-    const d = new Date(dateString + "T00:00:00");
-    d.setDate(d.getDate() + dayOffset);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-}
-
 function getMetrics(orders) {
     let totalItems = 0;
     let totalRevenue = 0;
@@ -245,28 +313,19 @@ function escapeHtml(text) {
 function getCustomerType(order) {
     const wa = normalizeWA(order.whatsapp);
     if (!wa) return "baru";
-    const orderDate = new Date(order.createdAt).getTime();
+
+    const orderDateObj = parseISOString(order.createdAt);
+    if (!orderDateObj) return "baru";
+    const orderDate = orderDateObj.getTime();
+
     const previousOrders = allOrders.filter((o) => {
         if (normalizeWA(o.whatsapp) !== wa) return false;
-        const otherDate = new Date(o.createdAt).getTime();
-        return otherDate < orderDate;
+        const otherDateObj = parseISOString(o.createdAt);
+        if (!otherDateObj) return false;
+        return otherDateObj.getTime() < orderDate;
     });
+
     return previousOrders.length > 0 ? "lama" : "baru";
-}
-
-function getCurrentMonthString() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    return `${year}-${month}`;
-}
-
-function getTodayDateString() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
 }
 
 
@@ -418,7 +477,6 @@ async function loadOrders() {
    ========================= */
 
 function renderSummary() {
-    // Cuma hitung order status "success"
     const successOrders = allOrders.filter(
         (o) => (o.status || "pending") === "success"
     );
@@ -429,16 +487,16 @@ function renderSummary() {
         (sum, o) => sum + (o.total || 0), 0
     );
 
-    const today = new Date().toDateString();
+    const todayWIB = getTodayDateString();
     const todayOrders = successOrders.filter((o) => {
-        if (!o.createdAt) return false;
-        return new Date(o.createdAt).toDateString() === today;
+        return getLocalDateString(o.createdAt) === todayWIB;
     }).length;
 
     summaryTotalOrders.innerText = totalOrders;
     summaryTotalRevenue.innerText = formatRupiah(totalRevenue);
     summaryTodayOrders.innerText = todayOrders;
 }
+
 
 /* =========================
    CUSTOMER INSIGHTS
@@ -447,7 +505,7 @@ function renderSummary() {
 function renderCustomerInsights() {
     if (!insightTotalCustomers) return;
 
-        const successOrders = allOrders.filter(
+    const successOrders = allOrders.filter(
         (o) => (o.status || "pending") === "success"
     );
 
@@ -469,7 +527,7 @@ function renderCustomerInsights() {
         ? Math.round((repeatCustomers / totalCustomers) * 100)
         : 0;
 
-        let newOrdersCount = 0;
+    let newOrdersCount = 0;
     let oldOrdersCount = 0;
     successOrders.forEach((order) => {
         const type = getCustomerType(order);
@@ -873,7 +931,7 @@ function renderDailyReport() {
         return;
     }
 
-        const dayOrders = allOrders.filter(
+    const dayOrders = allOrders.filter(
         (order) =>
             getLocalDateString(order.createdAt) === selectedDate &&
             (order.status || "pending") === "success"
@@ -885,6 +943,7 @@ function renderDailyReport() {
             getLocalDateString(order.createdAt) === previousDate &&
             (order.status || "pending") === "success"
     );
+
     const currentMetrics = getMetrics(dayOrders);
     const previousMetrics = getMetrics(previousOrders);
 
@@ -909,7 +968,7 @@ function renderDailyReport() {
     reportEmpty.hidden = true;
     reportLocationEmpty.hidden = true;
 
-        const variantMap = {};
+    const variantMap = {};
     const locationMap = {};
 
     dayOrders.forEach((order) => {
@@ -926,7 +985,6 @@ function renderDailyReport() {
         locationMap[locKey].subtotal += order.total || 0;
 
         (order.items || []).forEach((item) => {
-            // Key include addon
             const key = (item.productId || item.name) +
                         (item.addonName ? "||" + item.addonName : "");
 
@@ -937,7 +995,6 @@ function renderDailyReport() {
             const lineQty = item.quantity;
             const lineSubtotal = item.subtotal || (item.price * item.quantity);
 
-            // Untuk global variant breakdown
             if (!variantMap[key]) {
                 variantMap[key] = {
                     name: displayName,
@@ -948,7 +1005,6 @@ function renderDailyReport() {
             variantMap[key].qty += lineQty;
             variantMap[key].subtotal += lineSubtotal;
 
-            // Untuk per-location variant breakdown (NEW)
             if (!locationMap[locKey].variants[key]) {
                 locationMap[locKey].variants[key] = {
                     name: displayName,
@@ -965,7 +1021,6 @@ function renderDailyReport() {
     reportTotalItems.innerText = currentMetrics.items;
     reportTotalRevenue.innerText = formatRupiah(currentMetrics.revenue);
 
-    // Sort: qty terbanyak dulu, kalau sama sort by nama
     const variants = Object.values(variantMap).sort((a, b) => {
         if (b.qty !== a.qty) return b.qty - a.qty;
         return a.name.localeCompare(b.name);
@@ -993,7 +1048,7 @@ function renderDailyReport() {
         }))
         .sort((a, b) => (locOrder[a.key] || 50) - (locOrder[b.key] || 50));
 
-        let locHtml = "";
+    let locHtml = "";
 
     locations.forEach((loc) => {
         const locData = locationMap[loc.key];
@@ -1003,7 +1058,6 @@ function renderDailyReport() {
                 return a.name.localeCompare(b.name);
             });
 
-        // Parent row (lokasi)
         locHtml += `
             <tr class="report-location-parent">
                 <td>${escapeHtml(loc.label)}</td>
@@ -1012,7 +1066,6 @@ function renderDailyReport() {
             </tr>
         `;
 
-        // Child rows (varian per lokasi)
         variantsInLoc.forEach((v) => {
             locHtml += `
                 <tr class="report-location-child">
@@ -1044,7 +1097,7 @@ function render7DayChart() {
     const days = [];
     for (let i = 6; i >= 0; i--) {
         const dateStr = getDateStringOffset(baseDate, -i);
-                const orders = allOrders.filter(
+        const orders = allOrders.filter(
             (order) =>
                 getLocalDateString(order.createdAt) === dateStr &&
                 (order.status || "pending") === "success"
@@ -1059,9 +1112,11 @@ function render7DayChart() {
     days.forEach((day) => {
         const heightPercent = (day.count / maxCount) * 100;
         const isActive = day.date === baseDate;
-        const d = new Date(day.date + "T00:00:00");
-        const dayNum = String(d.getDate()).padStart(2, "0");
-        const monthNum = String(d.getMonth() + 1).padStart(2, "0");
+
+        // Ambil day & month dari string (gak butuh Date object)
+        const parts = day.date.split("-");
+        const dayNum = parts[2];
+        const monthNum = parts[1];
 
         html += `
             <div class="chart-bar-wrap ${isActive ? "is-active" : ""}" data-date="${day.date}" title="${day.count} order · ${formatRupiah(day.revenue)}">
@@ -1764,7 +1819,7 @@ async function exportFinanceExcel() {
 
         ws1.mergeCells("A2:E2");
         const subCell = ws1.getCell("A2");
-        subCell.value = `Periode: ${currentFinanceMonth}   •   Dibuat: ${new Date().toLocaleString("id-ID")}`;
+        subCell.value = `Periode: ${currentFinanceMonth}   •   Dibuat: ${new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })}`;
         subCell.font = { size: 11, italic: true, color: { argb: COLOR.maroonLight } };
         subCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.cream } };
         subCell.alignment = { horizontal: "center", vertical: "middle" };
