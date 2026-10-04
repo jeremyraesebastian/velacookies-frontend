@@ -2330,10 +2330,10 @@ CONFIRMATION MODAL — SECONDARY BUTTON
     transition: background 0.2s ease, transform 0.18s ease;
 }
 /* =========================
-CONFIRMATION INFO BOX
+CONFIRMATION NOTICE BOX
 ========================= */
 
-.confirmation-info {
+.confirmation-notice {
     display: flex;
     align-items: flex-start;
     gap: 10px;
@@ -2344,19 +2344,21 @@ CONFIRMATION INFO BOX
     background: rgba(168, 118, 28, 0.06);
     border: 1px solid rgba(168, 118, 28, 0.25);
     border-radius: 12px;
+
+    text-align: left;
 }
 
-.confirmation-info[hidden] {
+.confirmation-notice[hidden] {
     display: none !important;
 }
 
-.confirmation-info-icon {
+.confirmation-notice-icon {
     font-size: 16px;
     line-height: 1.4;
     flex-shrink: 0;
 }
 
-.confirmation-info p {
+.confirmation-notice p {
     font-size: 12.5px;
     color: var(--text-soft);
     line-height: 1.55;
