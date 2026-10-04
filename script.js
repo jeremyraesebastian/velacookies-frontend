@@ -330,10 +330,10 @@ function renderStockLabels() {
             el.innerText = "Stok habis";
             el.classList.add("out");
         } else if (info.status === "low") {
-            el.innerText = `Sisa ${info.stock} pcs — stok terbatas!`;
+            el.innerText = `Stok : ${info.stock} pcs — terbatas!`;
             el.classList.add("low");
         } else {
-            el.innerText = `Sisa ${info.stock} pcs`;
+            el.innerText = `Stok : ${info.stock} pcs`;
             el.classList.add("available");
         }
     });
