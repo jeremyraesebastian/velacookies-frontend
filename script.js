@@ -642,7 +642,7 @@ function calculateCartTotal(items) {
 
 let paymentSettings = {
     adminWaNumber: "6285117122454",
-    qrisImageUrl: "/images/qris.png",
+    qrisImageUrl: "/images/qris.jpeg",
     qrisOwnerName: "Velacookies"
 };
 
@@ -724,6 +724,7 @@ function clearConfirmationRedirect() {
         confirmationActionBtn.disabled = false;
     }
 }
+
 function startCashRedirectCountdown(waMessage) {
     clearConfirmationRedirect();
 
@@ -1095,6 +1096,7 @@ const confirmationItemsEl = document.getElementById("confirmation-items");
 const confirmationTotalEl = document.getElementById("confirmation-total");
 const confirmationDoneBtn = document.getElementById("confirmation-done");
 const confirmationActionBtn = document.getElementById("confirmation-action");
+const confirmationInfoBox = document.getElementById("confirmation-info-box");
 
 function showConfirmation(order) {
     if (confirmationOrderIdEl) confirmationOrderIdEl.innerText = order.orderId;
@@ -1109,6 +1111,15 @@ function showConfirmation(order) {
 
     if (confirmationTotalEl) {
         confirmationTotalEl.innerText = formatRupiah(order.total);
+    }
+
+    /* Info box — cuma muncul untuk COD */
+    if (confirmationInfoBox) {
+        if (order.paymentMethod === "cash") {
+            confirmationInfoBox.hidden = false;
+        } else {
+            confirmationInfoBox.hidden = true;
+        }
     }
 
     /* Atur tombol action berdasarkan metode pembayaran */
@@ -1135,6 +1146,11 @@ function showConfirmation(order) {
 
 function closeConfirmationModal() {
     clearConfirmationRedirect();
+
+    if (confirmationInfoBox) {
+        confirmationInfoBox.hidden = true;
+    }
+
     if (confirmationModal) confirmationModal.classList.remove("active");
 }
 
