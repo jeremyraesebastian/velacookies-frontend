@@ -290,6 +290,81 @@ function formatRupiah(number) {
 
 
 /* =========================
+   STOCK STATE & HELPERS
+   ========================= */
+
+let stockData = {};
+
+async function loadStockStatus() {
+    try {
+        const response = await fetch(`${API_BASE}/api/stocks/status`);
+        const result = await response.json();
+
+        if (result.success && result.stocks) {
+            stockData = result.stocks;
+            renderStockLabels();
+        }
+    } catch (error) {
+        console.error("Load stock status error:", error);
+    }
+}
+
+function getStockInfo(key) {
+    const info = stockData[key];
+    if (!info) {
+        return { status: "out", stock: 0 };
+    }
+    return info;
+}
+
+function renderStockLabels() {
+    const stockElements = document.querySelectorAll(".product-stock");
+
+    stockElements.forEach((el) => {
+        const key = el.dataset.stockKey;
+        const info = getStockInfo(key);
+
+        el.classList.remove("available", "low", "out");
+
+        if (info.status === "out") {
+            el.innerText = "Stok habis";
+            el.classList.add("out");
+        } else if (info.status === "low") {
+            el.innerText = `Sisa ${info.stock} pcs — stok terbatas!`;
+            el.classList.add("low");
+        } else {
+            el.innerText = `Sisa ${info.stock} pcs`;
+            el.classList.add("available");
+        }
+    });
+
+    // Disable add button kalau habis
+    const productCards = document.querySelectorAll(".product-card");
+    productCards.forEach((card) => {
+        const productId = card.dataset.id;
+        const info = getStockInfo(productId);
+        const addBtn = card.querySelector(".add-button");
+        const stockLabel = card.querySelector(".product-stock");
+
+        if (addBtn) {
+            if (info.status === "out") {
+                addBtn.disabled = true;
+                addBtn.style.opacity = "0.4";
+                addBtn.style.cursor = "not-allowed";
+            } else {
+                addBtn.disabled = false;
+                addBtn.style.opacity = "";
+                addBtn.style.cursor = "";
+            }
+        }
+
+        if (stockLabel) {
+            card.classList.toggle("stock-out", info.status === "out");
+        }
+    });
+}
+
+/* =========================
    CART STATE
    ========================= */
 
@@ -430,7 +505,15 @@ addButtons.forEach((button) => {
     button.addEventListener("click", () => {
         const card = button.closest(".product-card");
         const productId = card ? card.dataset.id : null;
-        if (productId) openProductModal(productId);
+        if (!productId) return;
+
+        const info = getStockInfo(productId);
+        if (info.status === "out") {
+            alert("Stok produk ini sedang habis. Coba lagi nanti ya!");
+            return;
+        }
+
+        openProductModal(productId);
     });
 });
 
@@ -1178,7 +1261,7 @@ if (confirmationModal) {
 updateFloatingCart();
 updatePOStatusUI();
 loadPaymentSettings();
-
+loadStockStatus();
 
 /* =========================
    SCROLLBAR AUTO-HIDE
