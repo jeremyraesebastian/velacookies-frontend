@@ -1,6 +1,13 @@
 console.log("Velacookies website loaded!");
 
 /* =========================
+   CONFIG
+   ========================= */
+
+const API_BASE = "https://velacookies-production.up.railway.app";
+
+
+/* =========================
    HERO IMAGE SLIDER
    ========================= */
 
@@ -173,14 +180,12 @@ if (heroImage) {
 /* =========================
    COUNTDOWN TIMER (PO STATUS)
    ========================= */
+
 let poEndDate = null;
 
 async function loadPOCountdown() {
     try {
-        const response = await fetch(
-            "https://velacookies-production.up.railway.app/api/po/status"
-        );
-
+        const response = await fetch(`${API_BASE}/api/po/status`);
         const result = await response.json();
 
         if (!response.ok || !result.success) {
@@ -632,6 +637,142 @@ function calculateCartTotal(items) {
 
 
 /* =========================
+   PAYMENT HELPERS
+   ========================= */
+
+let paymentSettings = {
+    adminWaNumber: "6285117122454",
+    qrisImageUrl: "/images/qris.png",
+    qrisOwnerName: "Velacookies"
+};
+
+let confirmationRedirectTimer = null;
+
+async function loadPaymentSettings() {
+    try {
+        const response = await fetch(`${API_BASE}/api/payment-settings`);
+        const result = await response.json();
+
+        if (result.success && result.settings) {
+            paymentSettings = result.settings;
+        }
+    } catch (error) {
+        console.error("Load payment settings error:", error);
+    }
+}
+
+function getSelectedPaymentMethod() {
+    let selected = "cash";
+    checkoutPaymentRadios.forEach((radio) => {
+        if (radio.checked) selected = radio.value;
+    });
+    return selected;
+}
+
+function resetPaymentField() {
+    checkoutPaymentRadios.forEach((radio) => {
+        radio.checked = radio.value === "cash";
+    });
+}
+
+function getLocationLabel(location) {
+    const map = {
+        "sman1": "SMAN 1 Karawang",
+        "sman5": "SMAN 5 Karawang",
+        "others": "Lainnya"
+    };
+    return map[location] || "Lainnya";
+}
+
+function openWhatsApp(phone, message) {
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank");
+}
+
+function buildCashWhatsAppMessage(order) {
+    const lines = [];
+
+    lines.push("Halo Velacookies! \uD83C\uDF6A");
+    lines.push("");
+    lines.push("Saya mau order dengan metode COD:");
+    lines.push("");
+    lines.push(`Order ID: ${order.orderId}`);
+    lines.push(`Nama: ${order.name}`);
+    lines.push(`Total: ${formatRupiah(order.total)} (${order.totalPcs} pcs)`);
+    lines.push(`Lokasi: ${order.locationLabel}`);
+
+    if (order.totalPcs >= 3) {
+        const dp = Math.round(order.total * 0.5);
+        lines.push("");
+        lines.push(`Karena order saya \u22653 pcs, saya siap DP 50% dulu = ${formatRupiah(dp)}.`);
+        lines.push("Mohon diinfo cara DP-nya ya. Terima kasih!");
+    } else {
+        lines.push("");
+        lines.push("Mohon diinfo kapan bisa COD ya. Terima kasih!");
+    }
+
+    return lines.join("\n");
+}
+
+function clearConfirmationRedirect() {
+    if (confirmationRedirectTimer) {
+        clearInterval(confirmationRedirectTimer);
+        confirmationRedirectTimer = null;
+    }
+}
+
+function startCashRedirectCountdown(waMessage) {
+    clearConfirmationRedirect();
+
+    let secondsLeft = 5;
+    const baseText = "Buka WhatsApp";
+
+    if (confirmationActionBtn) {
+        confirmationActionBtn.innerText = `${baseText} (${secondsLeft})`;
+    }
+
+    confirmationRedirectTimer = setInterval(() => {
+        secondsLeft--;
+
+        if (secondsLeft <= 0) {
+            clearConfirmationRedirect();
+            openWhatsApp(paymentSettings.adminWaNumber, waMessage);
+            return;
+        }
+
+        if (confirmationActionBtn) {
+            confirmationActionBtn.innerText = `${baseText} (${secondsLeft})`;
+        }
+    }, 1000);
+}
+
+function startQrisRedirectCountdown(orderId) {
+    clearConfirmationRedirect();
+
+    let secondsLeft = 3;
+    const baseText = "Lanjut ke Pembayaran";
+
+    if (confirmationActionBtn) {
+        confirmationActionBtn.innerText = `${baseText} (${secondsLeft})`;
+    }
+
+    confirmationRedirectTimer = setInterval(() => {
+        secondsLeft--;
+
+        if (secondsLeft <= 0) {
+            clearConfirmationRedirect();
+            window.location.href = `payment.html?orderId=${orderId}`;
+            return;
+        }
+
+        if (confirmationActionBtn) {
+            confirmationActionBtn.innerText = `${baseText} (${secondsLeft})`;
+        }
+    }, 1000);
+}
+
+
+/* =========================
    CHECKOUT MODAL
    ========================= */
 
@@ -653,6 +794,10 @@ const checkoutLocationDetailGroup = document.getElementById("checkout-location-d
 const checkoutLocationDetailInput = document.getElementById("checkout-location-detail");
 const checkoutLocationDetailError = document.getElementById("checkout-location-detail-error");
 
+/* PAYMENT — DOM */
+const checkoutPaymentRadios = document.querySelectorAll('input[name="checkout-payment"]');
+const checkoutPaymentError = document.getElementById("checkout-payment-error");
+
 function openCheckoutModal() {
     if (checkoutSummaryItemsEl) {
         checkoutSummaryItemsEl.innerHTML = buildOrderItemsHTML(cart);
@@ -665,6 +810,7 @@ function openCheckoutModal() {
     if (checkoutWaInput) checkoutWaInput.value = "";
     if (checkoutNoteInput) checkoutNoteInput.value = "";
     resetLocationFields();
+    resetPaymentField();
     clearCheckoutErrors();
 
     if (checkoutModal) checkoutModal.classList.add("active");
@@ -679,6 +825,7 @@ function clearCheckoutErrors() {
     if (checkoutWaError) checkoutWaError.innerText = "";
     if (checkoutLocationError) checkoutLocationError.innerText = "";
     if (checkoutLocationDetailError) checkoutLocationDetailError.innerText = "";
+    if (checkoutPaymentError) checkoutPaymentError.innerText = "";
     if (checkoutNameInput) checkoutNameInput.classList.remove("invalid");
     if (checkoutWaInput) checkoutWaInput.classList.remove("invalid");
     if (checkoutLocationDetailInput) checkoutLocationDetailInput.classList.remove("invalid");
@@ -727,6 +874,12 @@ checkoutLocationRadios.forEach((radio) => {
     });
 });
 
+checkoutPaymentRadios.forEach((radio) => {
+    radio.addEventListener("change", () => {
+        if (checkoutPaymentError) checkoutPaymentError.innerText = "";
+    });
+});
+
 if (checkoutModalClose) checkoutModalClose.addEventListener("click", closeCheckoutModal);
 
 if (checkoutModal) {
@@ -746,7 +899,7 @@ function isValidWhatsApp(value) {
 
 async function checkPOStatus() {
     try {
-        const response = await fetch("https://velacookies-production.up.railway.app/api/po/status");
+        const response = await fetch(`${API_BASE}/api/po/status`);
         const result = await response.json();
 
         if (!response.ok || !result.success) return false;
@@ -765,9 +918,7 @@ async function updatePOStatusUI() {
     const poCountdown = document.getElementById("po-countdown");
 
     try {
-        const response = await fetch(
-            "https://velacookies-production.up.railway.app/api/po/status"
-        );
+        const response = await fetch(`${API_BASE}/api/po/status`);
         const result = await response.json();
 
         if (!response.ok || !result.success) {
@@ -856,6 +1007,7 @@ if (checkoutSubmitBtn) {
 
         /* VALIDASI CART */
         if (cart.length === 0) hasError = true;
+
         if (hasError) return;
 
         /* CEK STATUS PO */
@@ -868,12 +1020,15 @@ if (checkoutSubmitBtn) {
         /* SIAPKAN ORDER */
         const orderItems = cart.map((item) => ({ ...item }));
 
+        const selectedPaymentMethod = getSelectedPaymentMethod();
+
         const orderPayload = {
             customerName: name,
             whatsapp: wa,
             note: note,
             location: selectedLocation,
             locationDetail: selectedLocation === "others" ? locationDetail : "",
+            paymentMethod: selectedPaymentMethod,
             items: orderItems
         };
 
@@ -882,25 +1037,30 @@ if (checkoutSubmitBtn) {
             checkoutSubmitBtn.disabled = true;
             checkoutSubmitBtn.innerText = "Mengirim...";
 
-            const response = await fetch(
-                "https://velacookies-production.up.railway.app/api/orders",
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(orderPayload)
-                }
-            );
+            const response = await fetch(`${API_BASE}/api/orders`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(orderPayload)
+            });
 
             const result = await response.json();
 
             if (result.success) {
+                const totalPcs = cart.reduce(
+                    (sum, item) => sum + item.quantity,
+                    0
+                );
+
                 showConfirmation({
                     orderId: result.orderId,
                     name: name,
                     wa: wa,
                     note: note,
                     items: result.items,
-                    total: result.total
+                    total: result.total,
+                    paymentMethod: selectedPaymentMethod,
+                    totalPcs: totalPcs,
+                    locationLabel: getLocationLabel(selectedLocation)
                 });
 
                 cart = [];
@@ -934,31 +1094,74 @@ const confirmationCustomerEl = document.getElementById("confirmation-customer");
 const confirmationItemsEl = document.getElementById("confirmation-items");
 const confirmationTotalEl = document.getElementById("confirmation-total");
 const confirmationDoneBtn = document.getElementById("confirmation-done");
+const confirmationActionBtn = document.getElementById("confirmation-action");
 
 function showConfirmation(order) {
     if (confirmationOrderIdEl) confirmationOrderIdEl.innerText = order.orderId;
+
     if (confirmationCustomerEl) {
-        confirmationCustomerEl.innerText = order.name + " · " + order.wa;
+        confirmationCustomerEl.innerText = order.name + " \u00B7 " + order.wa;
     }
+
     if (confirmationItemsEl) {
         confirmationItemsEl.innerHTML = buildOrderItemsHTML(order.items);
     }
+
     if (confirmationTotalEl) {
         confirmationTotalEl.innerText = formatRupiah(order.total);
     }
+
+    /* Atur tombol action berdasarkan metode pembayaran */
+    if (confirmationActionBtn) {
+        if (order.paymentMethod === "qris") {
+            confirmationActionBtn.onclick = () => {
+                clearConfirmationRedirect();
+                window.location.href = `payment.html?orderId=${order.orderId}`;
+            };
+            startQrisRedirectCountdown(order.orderId);
+        } else {
+            const waMessage = buildCashWhatsAppMessage(order);
+
+            confirmationActionBtn.onclick = () => {
+                clearConfirmationRedirect();
+                openWhatsApp(paymentSettings.adminWaNumber, waMessage);
+            };
+            startCashRedirectCountdown(waMessage);
+        }
+    }
+
     if (confirmationModal) confirmationModal.classList.add("active");
 }
 
 function closeConfirmationModal() {
+    clearConfirmationRedirect();
     if (confirmationModal) confirmationModal.classList.remove("active");
 }
 
 if (confirmationDoneBtn) {
-    confirmationDoneBtn.addEventListener("click", closeConfirmationModal);
+    confirmationDoneBtn.addEventListener("click", () => {
+        clearConfirmationRedirect();
+        closeConfirmationModal();
+    });
 }
+
+if (confirmationModal) {
+    confirmationModal.addEventListener("click", (e) => {
+        if (e.target === confirmationModal) {
+            clearConfirmationRedirect();
+            closeConfirmationModal();
+        }
+    });
+}
+
+
+/* =========================
+   INIT
+   ========================= */
 
 updateFloatingCart();
 updatePOStatusUI();
+loadPaymentSettings();
 
 
 /* =========================

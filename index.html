@@ -628,6 +628,32 @@
                     <span class="form-error" id="checkout-wa-error"></span>
                 </div>
 
+                                <div class="form-group">
+                    <label class="form-label">Metode Pembayaran</label>
+
+                    <div class="payment-options">
+
+                        <label class="payment-option">
+                            <input type="radio" name="checkout-payment" value="cash" checked>
+                            <div class="payment-option-content">
+                                <span class="payment-option-title">Cash (COD)</span>
+                                <span class="payment-option-desc">Bayar langsung saat barang diterima. Order akan diarahkan ke WhatsApp admin.</span>
+                            </div>
+                        </label>
+
+                        <label class="payment-option">
+                            <input type="radio" name="checkout-payment" value="qris">
+                            <div class="payment-option-content">
+                                <span class="payment-option-title">QRIS</span>
+                                <span class="payment-option-desc">Scan QR pakai m-banking / GoPay / OVO / DANA. Konfirmasi via WhatsApp.</span>
+                            </div>
+                        </label>
+
+                    </div>
+
+                    <span class="form-error" id="checkout-payment-error"></span>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Lokasi Pengiriman</label>
 
@@ -713,7 +739,11 @@
                     </div>
                 </div>
 
-                <button class="modal-add-btn" id="confirmation-done">
+                              <button class="modal-add-btn" id="confirmation-action">
+                    Lanjut
+                </button>
+
+                <button class="modal-add-btn modal-add-btn-ghost" id="confirmation-done">
                     Pesan Lagi
                 </button>
 

@@ -48,10 +48,11 @@
             </div>
         </header>
 
-        <!-- TAB NAVIGATION -->
+                <!-- TAB NAVIGATION -->
         <nav class="admin-tabs">
             <button class="admin-tab active" data-tab="orders">Pesanan</button>
             <button class="admin-tab" data-tab="finance">Keuangan</button>
+            <button class="admin-tab" data-tab="settings">Pengaturan</button>
         </nav>
 
         <main class="admin-main">
@@ -190,18 +191,19 @@
 
                 <div class="admin-table-wrap">
                     <table class="admin-table" id="orders-table">
-                        <thead>
-                            <tr>
-                                <th>Order ID</th>
-                                <th>Tanggal</th>
-                                <th>Nama</th>
-                                <th>Lokasi</th>
-                                <th>Status</th>
-                                <th>WhatsApp</th>
-                                <th>Total</th>
-                                <th></th>
-                            </tr>
-                        </thead>
+                                            <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Tanggal</th>
+                            <th>Nama</th>
+                            <th>Lokasi</th>
+                            <th>Metode</th>
+                            <th>Status</th>
+                            <th>WhatsApp</th>
+                            <th>Total</th>
+                            <th></th>
+                        </tr>
+                    </thead>
                         <tbody id="orders-tbody"></tbody>
                     </table>
                     <p class="table-empty" id="table-empty" hidden>Belum ada pesanan.</p>
@@ -426,7 +428,98 @@
                     </div>
                 </div>
 
+                        </div>
+
+
+            <!-- ============================================
+                 TAB: PENGATURAN
+                 ============================================ -->
+            <div class="tab-content" data-tab-content="settings" hidden>
+
+                <div class="settings-container">
+
+                    <div class="settings-card">
+                        <div class="settings-card-header">
+                            <h2 class="settings-card-title">Pembayaran & Kontak</h2>
+                            <p class="settings-card-desc">
+                                Kelola QRIS dan kontak admin yang dipakai di halaman pembayaran dan WhatsApp.
+                            </p>
+                        </div>
+
+                        <form id="settings-form" class="settings-form">
+
+                            <div class="settings-section">
+                                <h3 class="settings-section-title">QRIS</h3>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="settings-qris-owner">Nama Penerima QRIS</label>
+                                    <input
+                                        type="text"
+                                        id="settings-qris-owner"
+                                        class="form-input"
+                                        placeholder="Velacookies"
+                                    >
+                                    <span class="form-help">Nama yang muncul di bawah QR code (contoh: nama toko / pemilik).</span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="settings-qris-image">URL Gambar QRIS</label>
+                                    <input
+                                        type="text"
+                                        id="settings-qris-image"
+                                        class="form-input"
+                                        placeholder="/images/qris.jpeg"
+                                    >
+                                    <span class="form-help">Path ke file QR. Default: <code>/images/qris.jpeg</code>. Ganti file di folder <code>images/</code> kalau mau update QR.</span>
+                                </div>
+
+                                <div class="settings-preview">
+                                    <span class="settings-preview-label">Preview QRIS</span>
+                                    <div class="settings-preview-qr">
+                                        <img
+                                            id="settings-qris-preview"
+                                            src="/images/qris.jpeg"
+                                            alt="QRIS Preview"
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div class="settings-section">
+                                <h3 class="settings-section-title">Kontak Admin</h3>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="settings-wa">Nomor WhatsApp Admin</label>
+                                    <input
+                                        type="tel"
+                                        id="settings-wa"
+                                        class="form-input"
+                                        placeholder="6285117122454"
+                                    >
+                                    <span class="form-help">Format: <code>62xxxxxxxxxx</code> (tanpa tanda +, tanpa spasi, tanpa strip). Contoh: <code>6285117122454</code>.</span>
+                                </div>
+                            </div>
+
+
+                            <div class="settings-actions">
+                                <button type="submit" class="btn-primary" id="settings-submit">
+                                    Simpan Pengaturan
+                                </button>
+                                <span class="settings-status" id="settings-status"></span>
+                            </div>
+
+                            <p class="settings-updated" id="settings-updated"></p>
+
+                        </form>
+                    </div>
+
+                </div>
+
             </div>
+
+        </main>
+    </div>
 
         </main>
     </div>

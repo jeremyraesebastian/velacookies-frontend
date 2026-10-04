@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Pembayaran — Velacookies</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="payment-body">
+
+    <!-- =========================
+         HEADER SEDERHANA
+         ========================= -->
+
+    <header class="payment-header">
+        <a href="index.html" class="payment-brand">
+            <img src="images/logo.png" alt="Velacookies">
+        </a>
+
+        <a href="index.html" class="payment-back">
+            ← Kembali ke Website
+        </a>
+    </header>
+
+
+    <!-- =========================
+         LOADING STATE
+         ========================= -->
+
+    <div class="payment-loading" id="payment-loading">
+        <div class="payment-loading-spinner"></div>
+        <p>Memuat data pembayaran...</p>
+    </div>
+
+
+    <!-- =========================
+         ERROR STATE
+         ========================= -->
+
+    <div class="payment-error" id="payment-error" hidden>
+        <div class="payment-error-icon">⚠️</div>
+        <h2 id="payment-error-title">Terjadi Kesalahan</h2>
+        <p id="payment-error-message">Pesanan tidak dapat ditemukan.</p>
+        <a href="index.html" class="payment-btn payment-btn-primary">
+            Kembali ke Website
+        </a>
+    </div>
+
+
+    <!-- =========================
+         PAYMENT CONTENT
+         ========================= -->
+
+    <main class="payment-main" id="payment-main" hidden>
+
+        <div class="payment-container">
+
+            <!-- =========================
+                 KARTU UTAMA
+                 ========================= -->
+
+            <div class="payment-card">
+
+                <div class="payment-card-header">
+                    <div class="payment-status-dot" id="payment-status-dot"></div>
+                    <span class="payment-status-label" id="payment-status-label">Menunggu Pembayaran</span>
+                </div>
+
+                <h1 class="payment-title">Pembayaran QRIS</h1>
+
+                <div class="payment-meta">
+                    <div class="payment-meta-row">
+                        <span class="payment-meta-label">Order ID</span>
+                        <strong class="payment-meta-value" id="payment-order-id">—</strong>
+                    </div>
+                    <div class="payment-meta-row">
+                        <span class="payment-meta-label">Nama</span>
+                        <strong class="payment-meta-value" id="payment-customer-name">—</strong>
+                    </div>
+                    <div class="payment-meta-row">
+                        <span class="payment-meta-label">Lokasi</span>
+                        <strong class="payment-meta-value" id="payment-location">—</strong>
+                    </div>
+                </div>
+
+                <div class="payment-total-box">
+                    <span class="payment-total-label">Total Pembayaran</span>
+                    <strong class="payment-total-value" id="payment-total">Rp0</strong>
+                </div>
+
+            </div>
+
+
+            <!-- =========================
+                 KARTU QR CODE
+                 ========================= -->
+
+            <div class="payment-card payment-qr-card">
+
+                <h2 class="payment-section-title">Scan QRIS di Bawah</h2>
+
+                <div class="payment-qr-wrap">
+                    <img
+                        src="images/qris.jpeg"
+                        alt="QRIS Velacookies"
+                        id="payment-qr-image"
+                        class="payment-qr-image"
+                    >
+                </div>
+
+                <p class="payment-qr-owner">
+                    a/n <strong id="payment-qris-owner">Velacookies</strong>
+                </p>
+
+            </div>
+
+
+            <!-- =========================
+                 INSTRUKSI
+                 ========================= -->
+
+            <div class="payment-card">
+
+                <h2 class="payment-section-title">Cara Bayar</h2>
+
+                <ol class="payment-steps">
+                    <li>Buka aplikasi <strong>m-banking</strong>, <strong>GoPay</strong>, <strong>OVO</strong>, <strong>DANA</strong>, atau aplikasi apapun yang mendukung QRIS.</li>
+                    <li>Pilih menu <strong>Scan QR</strong>, lalu arahkan ke QR di atas.</li>
+                    <li>Masukkan nominal <strong>sesuai total</strong> di atas.</li>
+                    <li>Konfirmasi pembayaran.</li>
+                    <li>Klik tombol <strong>"Saya Sudah Bayar"</strong> di bawah.</li>
+                </ol>
+
+                <div class="payment-actions">
+                    <button class="payment-btn payment-btn-primary" id="payment-confirm-btn">
+                        ✓ Saya Sudah Bayar
+                    </button>
+
+                    <button class="payment-btn payment-btn-wa" id="payment-wa-btn">
+                        📱 Chat Admin via WhatsApp
+                    </button>
+                </div>
+
+            </div>
+
+
+            <!-- =========================
+                 DETAIL ORDER
+                 ========================= -->
+
+            <div class="payment-card">
+
+                <h2 class="payment-section-title">Detail Pesanan</h2>
+
+                <div class="payment-items" id="payment-items">
+                    <!-- Diisi JS -->
+                </div>
+
+                <div class="payment-items-total">
+                    <span>Total</span>
+                    <strong id="payment-items-total">Rp0</strong>
+                </div>
+
+            </div>
+
+
+            <!-- =========================
+                 DESKRIPSI PEMBAYARAN
+                 (Bisa diedit owner)
+                 ========================= -->
+
+            <div class="payment-card payment-card-info">
+
+                <h2 class="payment-section-title">Info Pembayaran</h2>
+
+                <div class="payment-description" id="payment-description">
+                    <!-- ============================================
+                         GANTI TEKS DI BAWAH INI DENGAN DESKRIPSI
+                         YANG MAU KAMU TULIS
+                         ============================================ -->
+
+                    <p>
+                        Terima kasih sudah order di Velacookies! 🍪
+                    </p>
+
+                    <p>
+                        Setelah kamu scan dan bayar via QRIS, klik tombol <strong>"Saya Sudah Bayar"</strong>.
+                        Admin akan verifikasi pembayaran kamu secara manual dalam waktu maksimal <strong>1×24 jam</strong>.
+                    </p>
+
+                    <p>
+                        Kalau ada kendala pembayaran, langsung chat admin via WhatsApp ya.
+                        Kami akan bantu prosesnya.
+                    </p>
+
+                    <!-- ============================================
+                         SELESAI — JANGAN DIUBAH DI BAWAH INI
+                         ============================================ -->
+                </div>
+
+            </div>
+
+
+            <!-- =========================
+                 INFO EXPIRED
+                 ========================= -->
+
+            <div class="payment-expiry" id="payment-expiry-info">
+                <span class="payment-expiry-label">Batas Waktu Pembayaran</span>
+                <strong class="payment-expiry-value" id="payment-expiry-countdown">—</strong>
+                <p class="payment-expiry-note">
+                    Pesanan otomatis dibatalkan jika belum dibayar dalam batas waktu di atas.
+                </p>
+            </div>
+
+        </div>
+
+    </main>
+
+
+    <!-- =========================
+         SUCCESS MODAL
+         ========================= -->
+
+    <div class="payment-modal-overlay" id="payment-success-modal">
+        <div class="payment-modal-box">
+
+            <div class="payment-modal-check">✓</div>
+
+            <h3>Konfirmasi Terkirim!</h3>
+
+            <p>
+                Terima kasih sudah konfirmasi pembayaran.
+                Admin akan memverifikasi pesanan kamu.
+            </p>
+
+            <p class="payment-modal-note">
+                Untuk respon lebih cepat, silakan lanjut chat admin via WhatsApp.
+            </p>
+
+            <div class="payment-modal-actions">
+                <button class="payment-btn payment-btn-wa" id="payment-modal-wa">
+                    📱 Chat Admin Sekarang
+                </button>
+                <button class="payment-btn payment-btn-ghost" id="payment-modal-close">
+                    Nanti Saja
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+
+    <script src="payment.js"></script>
+
+</body>
+</html>

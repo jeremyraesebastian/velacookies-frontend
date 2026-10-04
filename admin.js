@@ -56,6 +56,16 @@ const orderModal = document.getElementById("order-modal");
 const orderModalBody = document.getElementById("order-modal-body");
 const orderModalClose = document.getElementById("order-modal-close");
 
+/* Settings tab DOM */
+const settingsForm = document.getElementById("settings-form");
+const settingsQrisOwner = document.getElementById("settings-qris-owner");
+const settingsQrisImage = document.getElementById("settings-qris-image");
+const settingsQrisPreview = document.getElementById("settings-qris-preview");
+const settingsWa = document.getElementById("settings-wa");
+const settingsSubmit = document.getElementById("settings-submit");
+const settingsStatus = document.getElementById("settings-status");
+const settingsUpdated = document.getElementById("settings-updated");
+
 /* Finance tab DOM */
 const financeMonthInput = document.getElementById("finance-month");
 const financeRefreshBtn = document.getElementById("finance-refresh");
@@ -367,6 +377,10 @@ adminTabs.forEach((tab) => {
         if (targetTab === "finance") {
             loadFinance();
         }
+
+        if (targetTab === "settings") {
+            loadSettings();
+        }
     });
 });
 
@@ -619,7 +633,7 @@ function renderOrders(orders) {
     tableEmpty.hidden = true;
     let html = "";
 
-    orders.forEach((order, index) => {
+        orders.forEach((order, index) => {
         const waLink = `https://wa.me/${normalizeWA(order.whatsapp)}`;
         const locLabel = getLocationLabel(order.location);
         const locClass = getLocationClass(order.location);
@@ -627,6 +641,8 @@ function renderOrders(orders) {
         const statusVal = order.status || "pending";
         const statusClass = getStatusClass(statusVal);
         const statusLabel = getStatusLabel(statusVal);
+        const paymentMethod = order.paymentMethod || "cash";
+        const paymentLabel = paymentMethod === "qris" ? "QRIS" : "Cash";
 
         html += `
             <tr>
@@ -643,6 +659,11 @@ function renderOrders(orders) {
                 <td>
                     <span class="location-badge ${locClass}">
                         ${escapeHtml(locLabel)}
+                    </span>
+                </td>
+                <td>
+                    <span class="payment-badge payment-${paymentMethod}">
+                        ${paymentLabel}
                     </span>
                 </td>
                 <td>
@@ -703,6 +724,9 @@ function openOrderModal(order) {
     const statusVal = order.status || "pending";
     const statusClass = getStatusClass(statusVal);
     const statusLabel = getStatusLabel(statusVal);
+    const paymentMethod = order.paymentMethod || "cash";
+    const paymentLabel = paymentMethod === "qris" ? "QRIS" : "Cash (COD)";
+    const customerConfirmed = order.customerConfirmed === true;
 
     const locDetail = order.locationDetail
         ? `<div class="detail-row">
@@ -734,12 +758,30 @@ function openOrderModal(order) {
             </span>
         </div>
 
-        <div class="detail-row">
+                <div class="detail-row">
             <span class="label">Lokasi</span>
             <span class="value">
                 <span class="location-badge ${locClass}">${escapeHtml(locLabel)}</span>
             </span>
         </div>
+
+        <div class="detail-row">
+            <span class="label">Metode</span>
+            <span class="value">
+                <span class="payment-badge payment-${paymentMethod}">${paymentLabel}</span>
+            </span>
+        </div>
+
+        ${
+            customerConfirmed
+                ? `<div class="detail-row">
+                       <span class="label">Konfirmasi</span>
+                       <span class="value">
+                           <span class="confirmed-badge">Customer klaim sudah bayar</span>
+                       </span>
+                   </div>`
+                : ""
+        }
 
         ${locDetail}
 
@@ -1166,9 +1208,10 @@ function exportDailyCSV() {
         return `"${str}"`;
     }
 
-    const headers = [
+        const headers = [
         "Order ID", "Tanggal", "Nama", "Tipe Customer", "WhatsApp",
-        "Lokasi", "Alamat", "Catatan", "Produk", "Total", "Status"
+        "Lokasi", "Alamat", "Metode", "Konfirmasi Customer",
+        "Catatan", "Produk", "Total", "Status"
     ];
 
     const rows = [headers.map(csvCell).join(",")];
@@ -1183,6 +1226,8 @@ function exportDailyCSV() {
 
         const custType = getCustomerType(order);
         const statusVal = order.status || "pending";
+        const paymentMethod = order.paymentMethod || "cash";
+        const confirmed = order.customerConfirmed === true ? "Ya" : "Belum";
 
         const row = [
             order.orderId || "",
@@ -1192,6 +1237,8 @@ function exportDailyCSV() {
             order.whatsapp || "",
             getLocationLabel(order.location),
             order.locationDetail || "",
+            paymentMethod === "qris" ? "QRIS" : "Cash (COD)",
+            confirmed,
             order.note || "",
             itemsText,
             order.total || 0,
@@ -2162,3 +2209,157 @@ if (financeExportBtn) {
         showLoginView();
     }
 })();
+
+/* =========================
+   SETTINGS (PAYMENT)
+   ========================= */
+
+async function loadSettings() {
+    if (!settingsForm) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/api/admin/payment-settings`, {
+            headers: { "Authorization": `Bearer ${getToken()}` }
+        });
+
+        if (response.status === 401) {
+            clearToken();
+            showLoginView();
+            return;
+        }
+
+        const result = await response.json();
+        if (!response.ok || !result.success) return;
+
+        renderSettings(result.settings);
+
+    } catch (error) {
+        console.error("Load settings error:", error);
+    }
+}
+
+function renderSettings(settings) {
+    if (!settings) return;
+
+    if (settingsQrisOwner) {
+        settingsQrisOwner.value = settings.qrisOwnerName || "";
+    }
+
+    if (settingsQrisImage) {
+        settingsQrisImage.value = settings.qrisImageUrl || "";
+    }
+
+    if (settingsQrisPreview) {
+        settingsQrisPreview.src = settings.qrisImageUrl || "/images/qris.jpeg";
+    }
+
+    if (settingsWa) {
+        settingsWa.value = settings.adminWaNumber || "";
+    }
+
+    if (settingsUpdated) {
+        if (settings.updatedAt) {
+            settingsUpdated.innerText = `Terakhir diperbarui: ${formatDate(settings.updatedAt)}`;
+        } else {
+            settingsUpdated.innerText = "";
+        }
+    }
+
+    if (settingsStatus) {
+        settingsStatus.innerText = "";
+        settingsStatus.className = "settings-status";
+    }
+}
+
+function showSettingsStatus(message, type) {
+    if (!settingsStatus) return;
+
+    settingsStatus.innerText = message;
+    settingsStatus.className = "settings-status " + type;
+
+    if (type === "success") {
+        setTimeout(() => {
+            settingsStatus.innerText = "";
+            settingsStatus.className = "settings-status";
+        }, 3000);
+    }
+}
+
+async function saveSettings(e) {
+    e.preventDefault();
+
+    const qrisOwnerName = settingsQrisOwner ? settingsQrisOwner.value.trim() : "";
+    const qrisImageUrl = settingsQrisImage ? settingsQrisImage.value.trim() : "";
+    const adminWaNumber = settingsWa ? settingsWa.value.trim() : "";
+
+    if (!qrisOwnerName) {
+        showSettingsStatus("Nama penerima QRIS wajib diisi.", "error");
+        return;
+    }
+
+    if (!qrisImageUrl) {
+        showSettingsStatus("URL gambar QRIS wajib diisi.", "error");
+        return;
+    }
+
+    if (!adminWaNumber) {
+        showSettingsStatus("Nomor WhatsApp admin wajib diisi.", "error");
+        return;
+    }
+
+    if (!/^62[0-9]{8,13}$/.test(adminWaNumber)) {
+        showSettingsStatus("Format WA harus diawali 62 (contoh: 6285117122454).", "error");
+        return;
+    }
+
+    const originalText = settingsSubmit.innerText;
+    settingsSubmit.disabled = true;
+    settingsSubmit.innerText = "Menyimpan...";
+
+    try {
+        const response = await fetch(`${API_BASE}/api/admin/payment-settings`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${getToken()}`
+            },
+            body: JSON.stringify({
+                qrisImageUrl,
+                qrisOwnerName,
+                adminWaNumber
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            showSettingsStatus(result.message || "Gagal menyimpan pengaturan.", "error");
+            return;
+        }
+
+        showSettingsStatus("✓ Pengaturan tersimpan", "success");
+
+        if (settingsUpdated && result.updatedAt) {
+            settingsUpdated.innerText = `Terakhir diperbarui: ${formatDate(result.updatedAt)}`;
+        }
+
+    } catch (error) {
+        console.error("Save settings error:", error);
+        showSettingsStatus("Gagal terhubung ke server.", "error");
+    } finally {
+        settingsSubmit.disabled = false;
+        settingsSubmit.innerText = originalText;
+    }
+}
+
+if (settingsForm) {
+    settingsForm.addEventListener("submit", saveSettings);
+}
+
+if (settingsQrisImage) {
+    settingsQrisImage.addEventListener("input", () => {
+        if (settingsQrisPreview) {
+            settingsQrisPreview.src = settingsQrisImage.value.trim() || "/images/qris.jpeg";
+        }
+    });
+}
