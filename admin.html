@@ -52,6 +52,7 @@
         <nav class="admin-tabs">
             <button class="admin-tab active" data-tab="orders">Pesanan</button>
             <button class="admin-tab" data-tab="finance">Keuangan</button>
+            <button class="admin-tab" data-tab="stocks">Stok</button>
             <button class="admin-tab" data-tab="settings">Pengaturan</button>
         </nav>
 
@@ -429,6 +430,44 @@
                 </div>
 
                         </div>
+
+            <!-- ============================================
+                 TAB: STOK
+                 ============================================ -->
+            <div class="tab-content" data-tab-content="stocks" hidden>
+
+                <div class="stocks-container">
+
+                    <div class="stocks-header">
+                        <div>
+                            <h2 class="stocks-title">Sisa Stok</h2>
+                            <p class="stocks-subtitle">Daftar stok cookies yang tersedia saat ini.</p>
+                        </div>
+
+                        <button class="btn-ghost" id="stocks-refresh">
+                            Refresh
+                        </button>
+                    </div>
+
+                    <div class="stocks-table-wrap">
+                        <table class="stocks-table" id="stocks-table">
+                            <thead>
+                                <tr>
+                                    <th>Produk</th>
+                                    <th class="align-right">Stok</th>
+                                    <th class="align-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stocks-tbody"></tbody>
+                        </table>
+
+                        <p class="stocks-loading" id="stocks-loading">Memuat stok...</p>
+                        <p class="stocks-empty" id="stocks-empty" hidden>Belum ada data stok.</p>
+                    </div>
+
+                </div>
+
+            </div>
 
 
             <!-- ============================================

@@ -66,6 +66,12 @@ const settingsSubmit = document.getElementById("settings-submit");
 const settingsStatus = document.getElementById("settings-status");
 const settingsUpdated = document.getElementById("settings-updated");
 
+/* Stocks tab DOM */
+const stocksTbody = document.getElementById("stocks-tbody");
+const stocksLoading = document.getElementById("stocks-loading");
+const stocksEmpty = document.getElementById("stocks-empty");
+const stocksRefreshBtn = document.getElementById("stocks-refresh");
+
 /* Finance tab DOM */
 const financeMonthInput = document.getElementById("finance-month");
 const financeRefreshBtn = document.getElementById("finance-refresh");
@@ -378,12 +384,127 @@ adminTabs.forEach((tab) => {
             loadFinance();
         }
 
+        if (targetTab === "stocks") {
+            loadStocks();
+        }
+
         if (targetTab === "settings") {
             loadSettings();
         }
     });
 });
 
+
+/* =========================
+   STOCKS
+   ========================= */
+
+async function loadStocks() {
+    if (!stocksTbody) return;
+
+    if (stocksLoading) stocksLoading.hidden = false;
+    if (stocksEmpty) stocksEmpty.hidden = true;
+    stocksTbody.innerHTML = "";
+
+    try {
+        const response = await fetch(`${API_BASE}/api/admin/stocks`, {
+            headers: { "Authorization": `Bearer ${getToken()}` }
+        });
+
+        if (response.status === 401) {
+            clearToken();
+            showLoginView();
+            return;
+        }
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            if (stocksLoading) stocksLoading.hidden = true;
+            if (stocksEmpty) {
+                stocksEmpty.hidden = false;
+                stocksEmpty.innerText = result.message || "Gagal memuat stok.";
+            }
+            return;
+        }
+
+        renderStocks(result.items || []);
+
+    } catch (error) {
+        console.error("Load stocks error:", error);
+        if (stocksLoading) stocksLoading.hidden = true;
+        if (stocksEmpty) {
+            stocksEmpty.hidden = false;
+            stocksEmpty.innerText = "Gagal terhubung ke server.";
+        }
+    }
+}
+
+function renderStocks(items) {
+    if (!stocksTbody) return;
+
+    if (stocksLoading) stocksLoading.hidden = true;
+
+    if (!items || items.length === 0) {
+        if (stocksEmpty) stocksEmpty.hidden = false;
+        stocksTbody.innerHTML = "";
+        return;
+    }
+
+    if (stocksEmpty) stocksEmpty.hidden = true;
+
+    let html = "";
+
+    items.forEach((item) => {
+        const stock = item.stock;
+
+        let statusKey = "available";
+        let statusLabel = "Tersedia";
+        let rowClass = "";
+
+        if (stock <= 0) {
+            statusKey = "out";
+            statusLabel = "Habis";
+            rowClass = "row-out";
+        } else if (stock <= 5) {
+            statusKey = "low";
+            statusLabel = "Stok Terbatas";
+            rowClass = "row-low";
+        }
+
+        const countClass = statusKey === "out" ? "out" : statusKey === "low" ? "low" : "";
+
+        // Pisahkan nama produk & addon
+        let productName = escapeHtml(item.displayName || item.productId);
+        let addonText = "";
+
+        if (item.addonName) {
+            productName = escapeHtml(item.displayName.split(" (+ ")[0]);
+            addonText = `<span class="stocks-product-addon">+ ${escapeHtml(item.addonName)}</span>`;
+        }
+
+        html += `
+            <tr class="${rowClass}">
+                <td>
+                    <span class="stocks-product-name">${productName}</span>
+                    ${addonText}
+                </td>
+                <td class="align-right">
+                    <span class="stocks-count ${countClass}">${stock}</span>
+                </td>
+                <td class="align-center">
+                    <span class="stocks-badge ${statusKey}">${statusLabel}</span>
+                </td>
+            </tr>
+        `;
+    });
+
+    stocksTbody.innerHTML = html;
+}
+
+if (stocksRefreshBtn) {
+    stocksRefreshBtn.addEventListener("click", () => loadStocks());
+}
 
 /* =========================
    LOGIN
