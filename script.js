@@ -719,16 +719,20 @@ function clearConfirmationRedirect() {
         clearInterval(confirmationRedirectTimer);
         confirmationRedirectTimer = null;
     }
-}
 
+    if (confirmationActionBtn) {
+        confirmationActionBtn.disabled = false;
+    }
+}
 function startCashRedirectCountdown(waMessage) {
     clearConfirmationRedirect();
 
-    let secondsLeft = 5;
-    const baseText = "Buka WhatsApp";
+    let secondsLeft = 2;
+    const baseText = "Membuka WhatsApp...";
 
     if (confirmationActionBtn) {
-        confirmationActionBtn.innerText = `${baseText} (${secondsLeft})`;
+        confirmationActionBtn.innerText = baseText;
+        confirmationActionBtn.disabled = true;
     }
 
     confirmationRedirectTimer = setInterval(() => {
@@ -738,10 +742,6 @@ function startCashRedirectCountdown(waMessage) {
             clearConfirmationRedirect();
             openWhatsApp(paymentSettings.adminWaNumber, waMessage);
             return;
-        }
-
-        if (confirmationActionBtn) {
-            confirmationActionBtn.innerText = `${baseText} (${secondsLeft})`;
         }
     }, 1000);
 }
