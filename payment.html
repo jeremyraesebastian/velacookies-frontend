@@ -6,7 +6,7 @@
 
     <title>Pembayaran — Velacookies</title>
 
-        <link rel="stylesheet" href="payment.css">
+    <link rel="stylesheet" href="payment.css">
 </head>
 
 <body class="payment-body">
@@ -131,16 +131,39 @@
                     <li>Pilih menu <strong>Scan QR</strong>, lalu arahkan ke QR di atas.</li>
                     <li>Masukkan nominal <strong>sesuai total</strong> di atas.</li>
                     <li>Konfirmasi pembayaran.</li>
-                    <li>Klik tombol <strong>"Saya Sudah Bayar"</strong> di bawah.</li>
+                    <li>Centang kotak persetujuan di bawah, lalu klik tombol <strong>"Saya Sudah Bayar & Chat Admin"</strong>.</li>
                 </ol>
 
+                <div class="payment-warning-box">
+                    <div class="payment-warning-icon">⚠️</div>
+                    <div class="payment-warning-content">
+                        <strong>Wajib Konfirmasi via WhatsApp</strong>
+                        <p>
+                            Pesanan kamu <strong>BELUM akan diproses</strong> sampai kamu konfirmasi ke WhatsApp admin
+                            dan <strong>kirim bukti pembayaran</strong> (screenshot / struk transfer) ke WA.
+                        </p>
+                    </div>
+                </div>
+
+                <label class="payment-checkbox-label">
+                    <input
+                        type="checkbox"
+                        id="payment-confirm-checkbox"
+                        class="payment-checkbox"
+                    >
+                    <span class="payment-checkbox-text">
+                        Saya sudah baca dan akan <strong>mengirim bukti pembayaran</strong> ke WhatsApp admin
+                        setelah klik tombol di bawah.
+                    </span>
+                </label>
+
                 <div class="payment-actions">
-                    <button class="payment-btn payment-btn-primary" id="payment-confirm-btn">
-                        ✓ Saya Sudah Bayar
+                    <button class="payment-btn payment-btn-primary" id="payment-confirm-btn" disabled>
+                        ✓ Saya Sudah Bayar & Chat Admin
                     </button>
 
                     <button class="payment-btn payment-btn-wa" id="payment-wa-btn">
-                        📱 Chat Admin via WhatsApp
+                        📱 Chat Admin Dulu (Belum Bayar)
                     </button>
                 </div>
 
@@ -187,9 +210,22 @@
                     </p>
 
                     <p>
-                        Setelah kamu scan dan bayar via QRIS, klik tombol <strong>"Saya Sudah Bayar"</strong>.
-                        Admin akan verifikasi pembayaran kamu secara manual dalam waktu maksimal <strong>1×24 jam</strong>.
+                        <strong>PENTING:</strong> Setelah kamu scan dan bayar via QRIS,
+                        kamu <strong>WAJIB</strong> centang kotak persetujuan lalu klik tombol
+                        <strong>"Saya Sudah Bayar & Chat Admin"</strong>.
+                        Tombol itu akan otomatis membuka WhatsApp dengan detail pesanan kamu.
                     </p>
+
+                    <p>
+                        Pesanan kamu <strong>baru akan diproses</strong> setelah:
+                    </p>
+
+                    <ul class="payment-description-list">
+                        <li>Kamu konfirmasi pembayaran via WhatsApp</li>
+                        <li>Kamu kirimkan bukti pembayaran (screenshot / struk transfer)</li>
+                        <li>Admin verifikasi nominal transfer sesuai dengan total pesanan</li>
+                        <li>Admin ubah status pesanan menjadi "Success"</li>
+                    </ul>
 
                     <p>
                         Kalau ada kendala pembayaran, langsung chat admin via WhatsApp ya.
@@ -238,7 +274,7 @@
             </p>
 
             <p class="payment-modal-note">
-                Untuk respon lebih cepat, silakan lanjut chat admin via WhatsApp.
+                Jangan lupa kirim bukti pembayaran (screenshot / struk transfer) ke WhatsApp admin ya.
             </p>
 
             <div class="payment-modal-actions">

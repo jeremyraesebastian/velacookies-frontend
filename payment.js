@@ -34,6 +34,7 @@ const expiryCountdownEl = document.getElementById("payment-expiry-countdown");
 
 const confirmBtn = document.getElementById("payment-confirm-btn");
 const waBtn = document.getElementById("payment-wa-btn");
+const confirmCheckbox = document.getElementById("payment-confirm-checkbox");
 
 const successModal = document.getElementById("payment-success-modal");
 const modalWaBtn = document.getElementById("payment-modal-wa");
@@ -93,20 +94,6 @@ function parseISOString(isoString) {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return null;
     return d;
-}
-
-function formatDateTimeWIB(isoString) {
-    const d = parseISOString(isoString);
-    if (!d) return "-";
-    return d.toLocaleString("id-ID", {
-        timeZone: "Asia/Jakarta",
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false
-    });
 }
 
 function openWhatsApp(phone, message) {
@@ -178,7 +165,7 @@ function renderOrder(order) {
 
     /* QR */
     if (qrImageEl) {
-        qrImageEl.src = paymentSettings.qrisImageUrl || "/images/qris.png";
+        qrImageEl.src = paymentSettings.qrisImageUrl || "/images/qris.jpeg";
     }
     if (qrisOwnerEl) {
         qrisOwnerEl.innerText = paymentSettings.qrisOwnerName || "Velacookies";
@@ -270,6 +257,11 @@ function renderExpiry(order) {
                 confirmBtn.disabled = true;
                 confirmBtn.innerText = "Pesanan Sudah Expired";
             }
+
+            if (confirmCheckbox) {
+                confirmCheckbox.disabled = true;
+            }
+
             return;
         }
 
@@ -289,21 +281,45 @@ function updateActionsForStatus(order) {
     if (!confirmBtn) return;
 
     if (order.status === "pending") {
-        confirmBtn.disabled = order.customerConfirmed === true;
-        if (order.customerConfirmed) {
-            confirmBtn.innerText = "✓ Konfirmasi Sudah Terkirim";
+        if (order.customerConfirmed === true) {
+            /* Udah confirmed → tombol aktif, checkbox tidak wajib lagi */
+            confirmBtn.disabled = false;
+            confirmBtn.innerText = "✓ Buka WhatsApp Admin Lagi";
+
+            if (confirmCheckbox) {
+                confirmCheckbox.checked = true;
+                confirmCheckbox.disabled = true;
+            }
         } else {
-            confirmBtn.innerText = "✓ Saya Sudah Bayar";
+            /* Belum confirmed → tombol disabled sampai checkbox dicentang */
+            confirmBtn.disabled = confirmCheckbox ? !confirmCheckbox.checked : true;
+            confirmBtn.innerText = "✓ Saya Sudah Bayar & Chat Admin";
+
+            if (confirmCheckbox) {
+                confirmCheckbox.disabled = false;
+            }
         }
     } else if (order.status === "success") {
         confirmBtn.disabled = true;
         confirmBtn.innerText = "✓ Pembayaran Berhasil";
+
+        if (confirmCheckbox) {
+            confirmCheckbox.disabled = true;
+        }
     } else if (order.status === "expired") {
         confirmBtn.disabled = true;
         confirmBtn.innerText = "× Pesanan Expired";
+
+        if (confirmCheckbox) {
+            confirmCheckbox.disabled = true;
+        }
     } else {
         confirmBtn.disabled = true;
         confirmBtn.innerText = "× Pesanan Tidak Aktif";
+
+        if (confirmCheckbox) {
+            confirmCheckbox.disabled = true;
+        }
     }
 }
 
@@ -350,7 +366,9 @@ function buildConfirmWaMessage(order) {
     lines.push(`Total: ${formatRupiah(order.total)}`);
     lines.push(`Lokasi: ${getLocationLabel(order.location)}`);
     lines.push("");
-    lines.push("Mohon dicek ya, terima kasih!");
+    lines.push("Saya kirim bukti transfernya di chat ini ya.");
+    lines.push("");
+    lines.push("Mohon dicek, terima kasih!");
 
     return lines.join("\n");
 }
@@ -360,7 +378,7 @@ function buildGeneralWaMessage(order) {
 
     lines.push("Halo Velacookies! \uD83C\uDF6A");
     lines.push("");
-    lines.push(`Saya mau tanya soal pesanan saya:`);
+    lines.push("Saya mau tanya soal pesanan saya:");
     lines.push("");
     lines.push(`Order ID: ${order ? order.orderId : "-"}`);
     if (order) {
@@ -381,6 +399,19 @@ async function handleConfirmPayment() {
 
     if (currentOrder.status !== "pending") {
         alert("Pesanan tidak dalam status yang bisa dikonfirmasi.");
+        return;
+    }
+
+    /* Wajib centang dulu */
+    if (!confirmCheckbox || !confirmCheckbox.checked) {
+        alert("Centang dulu kotak persetujuan di atas ya, biar pesanan bisa diproses.");
+        return;
+    }
+
+    /* Kalau udah pernah konfirmasi → langsung WA tanpa API call lagi */
+    if (currentOrder.customerConfirmed === true) {
+        const message = buildConfirmWaMessage(currentOrder);
+        openWhatsApp(paymentSettings.adminWaNumber, message);
         return;
     }
 
@@ -409,8 +440,14 @@ async function handleConfirmPayment() {
         currentOrder.customerConfirmed = true;
         currentOrder.customerConfirmedAt = result.confirmedAt;
 
-        confirmBtn.innerText = "✓ Konfirmasi Sudah Terkirim";
+        confirmBtn.innerText = "✓ Konfirmasi Terkirim";
 
+        /* LANGSUNG buka WA (auto redirect) */
+        const waMessage = buildConfirmWaMessage(currentOrder);
+        openWhatsApp(paymentSettings.adminWaNumber, waMessage);
+
+        /* Modal muncul sebagai fallback
+           (kalau browser block popup, customer masih bisa klik tombol WA di modal) */
         openSuccessModal();
 
     } catch (error) {
@@ -477,6 +514,16 @@ async function init() {
 
 if (confirmBtn) {
     confirmBtn.addEventListener("click", handleConfirmPayment);
+}
+
+if (confirmCheckbox) {
+    confirmCheckbox.addEventListener("change", () => {
+        if (!confirmBtn) return;
+
+        if (currentOrder && currentOrder.status === "pending" && currentOrder.customerConfirmed !== true) {
+            confirmBtn.disabled = !confirmCheckbox.checked;
+        }
+    });
 }
 
 if (waBtn) {
