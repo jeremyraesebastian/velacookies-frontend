@@ -556,7 +556,19 @@ addButtons.forEach((button) => {
         if (!productId) return;
 
         const info = getStockInfo(productId);
-        if (info.status === "out") {
+        const product = PRODUCTS[productId];
+
+        // Cek apakah produk ini punya addon yang masih tersedia
+        let addonAvailable = false;
+
+        if (product && product.hasAddon && product.addonName) {
+            const addonKey = `${productId}||${product.addonName}`;
+            const addonInfo = stockData[addonKey] || { status: "out", stock: 0 };
+            addonAvailable = addonInfo.status !== "out";
+        }
+
+        // Block cuma kalau POLOS habis DAN addon habis (atau gak punya addon)
+        if (info.status === "out" && !addonAvailable) {
             alert("Stok produk ini sedang habis. Coba lagi nanti ya!");
             return;
         }
