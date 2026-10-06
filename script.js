@@ -823,16 +823,23 @@ function openWhatsApp(phone, message) {
 function buildCashWhatsAppMessage(order) {
     const lines = [];
 
+    /* Hitung total pcs langsung dari order.items
+       (gak bergantung ke field order.totalPcs yang bisa ketinggalan) */
+    const totalPcs = (order.items || []).reduce(
+        (sum, item) => sum + (item.quantity || 0),
+        0
+    );
+
     lines.push("Halo Velacookies! \uD83C\uDF6A");
     lines.push("");
     lines.push("Saya mau order dengan metode COD:");
     lines.push("");
     lines.push(`Order ID: ${order.orderId}`);
     lines.push(`Nama: ${order.name}`);
-    lines.push(`Total: ${formatRupiah(order.total)} (${order.totalPcs} pcs)`);
+    lines.push(`Total: ${formatRupiah(order.total)} (${totalPcs} pcs)`);
     lines.push(`Lokasi: ${order.locationLabel}`);
 
-    if (order.totalPcs >= 3) {
+    if (totalPcs >= 3) {
         const dp = Math.round(order.total * 0.5);
         lines.push("");
         lines.push(`Karena order saya \u22653 pcs, saya siap DP 50% dulu = ${formatRupiah(dp)}.`);
