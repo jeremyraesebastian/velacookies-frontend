@@ -326,9 +326,25 @@ function renderStockLabels() {
 
         el.classList.remove("available", "low", "out");
 
+        // Cek stok addon (kalau produk punya addon)
+        const product = PRODUCTS[key];
+        let addonInfo = null;
+
+        if (product && product.hasAddon && product.addonName) {
+            const addonKey = `${key}||${product.addonName}`;
+            addonInfo = stockData[addonKey] || { status: "out", stock: 0 };
+        }
+
         if (info.status === "out") {
-            el.innerText = "Stok habis";
-            el.classList.add("out");
+            // Polos habis
+            if (addonInfo && addonInfo.status !== "out") {
+                // Addon masih ada
+                el.innerText = "Ori habis — addon tersedia";
+                el.classList.add("low");
+            } else {
+                el.innerText = "Stok habis";
+                el.classList.add("out");
+            }
         } else if (info.status === "low") {
             el.innerText = `Stok : ${info.stock} pcs — terbatas!`;
             el.classList.add("low");
@@ -338,16 +354,28 @@ function renderStockLabels() {
         }
     });
 
-    // Disable add button kalau habis
+    // Update tombol Add to Cart
     const productCards = document.querySelectorAll(".product-card");
+
     productCards.forEach((card) => {
         const productId = card.dataset.id;
         const info = getStockInfo(productId);
-        const addBtn = card.querySelector(".add-button");
-        const stockLabel = card.querySelector(".product-stock");
 
+        // Cek stok addon
+        const product = PRODUCTS[productId];
+        let addonInfo = null;
+
+        if (product && product.hasAddon && product.addonName) {
+            const addonKey = `${productId}||${product.addonName}`;
+            addonInfo = stockData[addonKey] || { status: "out", stock: 0 };
+        }
+
+        // Tombol disabled kalau polos DAN addon dua-duanya habis
+        const allOut = info.status === "out" && (!addonInfo || addonInfo.status === "out");
+
+        const addBtn = card.querySelector(".add-button");
         if (addBtn) {
-            if (info.status === "out") {
+            if (allOut) {
                 addBtn.disabled = true;
                 addBtn.style.opacity = "0.4";
                 addBtn.style.cursor = "not-allowed";
@@ -356,10 +384,6 @@ function renderStockLabels() {
                 addBtn.style.opacity = "";
                 addBtn.style.cursor = "";
             }
-        }
-
-        if (stockLabel) {
-            card.classList.toggle("stock-out", info.status === "out");
         }
     });
 }
@@ -445,6 +469,7 @@ const modalBasePrice = document.getElementById("modal-base-price");
 const modalAddonWrap = document.getElementById("modal-addon-wrap");
 const modalAddonCheckbox = document.getElementById("modal-addon-checkbox");
 const modalAddonPriceEl = document.getElementById("modal-addon-price");
+const modalAddonStockInfo = document.getElementById("modal-addon-stock-info");
 const qtyMinusBtn = document.getElementById("qty-minus");
 const qtyPlusBtn = document.getElementById("qty-plus");
 const qtyValueEl = document.getElementById("qty-value");
@@ -475,6 +500,29 @@ function openProductModal(productId) {
     if (product.hasAddon) {
         modalAddonWrap.hidden = false;
         modalAddonPriceEl.innerText = formatRupiah(product.addonPrice);
+
+        // Tampilkan stok addon
+        const addonKey = `${productId}||${product.addonName}`;
+        const addonInfo = stockData[addonKey] || { status: "out", stock: 0 };
+
+        if (modalAddonStockInfo) {
+            modalAddonStockInfo.classList.remove("available", "low", "out");
+
+            if (addonInfo.status === "out") {
+                modalAddonStockInfo.innerText = "Addon habis";
+                modalAddonStockInfo.classList.add("out");
+                modalAddonCheckbox.disabled = true;
+                modalAddonCheckbox.checked = false;
+            } else if (addonInfo.status === "low") {
+                modalAddonStockInfo.innerText = `Sisa addon : ${addonInfo.stock} pcs — terbatas!`;
+                modalAddonStockInfo.classList.add("low");
+                modalAddonCheckbox.disabled = false;
+            } else {
+                modalAddonStockInfo.innerText = `Sisa addon : ${addonInfo.stock} pcs`;
+                modalAddonStockInfo.classList.add("available");
+                modalAddonCheckbox.disabled = false;
+            }
+        }
     } else {
         modalAddonWrap.hidden = true;
     }

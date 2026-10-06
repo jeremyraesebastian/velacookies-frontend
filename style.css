@@ -2390,3 +2390,24 @@ PRODUCT STOCK LABEL
     letter-spacing: 0.8px;
     font-weight: 600;
 }
+/* =========================
+ADDON STOCK INFO (MODAL)
+========================= */
+
+.addon-stock-info {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 11.5px;
+    margin-top: 8px;
+    margin-left: 27px;
+    letter-spacing: 0.2px;
+    color: rgba(90, 58, 60, 0.65);
+}
+
+.addon-stock-info.low {
+    color: rgba(201, 130, 42, 0.9);
+}
+
+.addon-stock-info.out {
+    color: rgba(192, 57, 43, 0.9);
+    font-weight: 600;
+}
