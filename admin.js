@@ -27,6 +27,8 @@ const refreshBtn = document.getElementById("refresh-btn");
 const searchInput = document.getElementById("search-input");
 const locationFilter = document.getElementById("location-filter");
 const statusFilter = document.getElementById("status-filter");
+const dateFilter = document.getElementById("date-filter");
+const clearDateBtn = document.getElementById("clear-date-btn");
 const ordersTbody = document.getElementById("orders-tbody");
 const tableEmpty = document.getElementById("table-empty");
 const tableLoading = document.getElementById("table-loading");
@@ -705,8 +707,17 @@ function applyFilters() {
     const query = (searchInput?.value || "").trim().toLowerCase();
     const locFilter = locationFilter?.value || "all";
     const statFilter = statusFilter?.value || "all";
+    const dateVal = dateFilter?.value || "";
+
+    if (clearDateBtn) {
+        clearDateBtn.hidden = !dateVal;
+    }
 
     let filtered = allOrders;
+
+    if (dateVal) {
+        filtered = filtered.filter((o) => getLocalDateString(o.createdAt) === dateVal);
+    }
 
     if (locFilter !== "all") {
         filtered = filtered.filter((o) => o.location === locFilter);
@@ -734,6 +745,13 @@ function applyFilters() {
 if (searchInput) searchInput.addEventListener("input", applyFilters);
 if (locationFilter) locationFilter.addEventListener("change", applyFilters);
 if (statusFilter) statusFilter.addEventListener("change", applyFilters);
+if (dateFilter) dateFilter.addEventListener("change", applyFilters);
+if (clearDateBtn) {
+    clearDateBtn.addEventListener("click", () => {
+        if (dateFilter) dateFilter.value = "";
+        applyFilters();
+    });
+}
 if (refreshBtn) refreshBtn.addEventListener("click", () => loadOrders());
 
 
@@ -944,6 +962,8 @@ function openOrderModal(order) {
             ${statusVal !== "expired"
                 ? `<button class="action-btn expired" data-action="expired" data-order-id="${order.orderId}">× Tandai Expired</button>`
                 : ""}
+
+            <button class="action-btn delete" data-action="delete" data-order-id="${order.orderId}">🗑️ Hapus Pesanan</button>
         </div>
     `;
 
@@ -953,7 +973,11 @@ function openOrderModal(order) {
         btn.addEventListener("click", () => {
             const action = btn.dataset.action;
             const orderId = btn.dataset.orderId;
-            if (action && orderId) {
+            if (!action || !orderId) return;
+
+            if (action === "delete") {
+                deleteOrder(orderId, btn);
+            } else {
                 updateOrderStatus(orderId, action, btn);
             }
         });
@@ -1027,6 +1051,79 @@ async function updateOrderStatus(orderId, newStatus, btnEl) {
 
     } catch (error) {
         console.error("Update status error:", error);
+        alert("Gagal terhubung ke server.");
+        btnEl.disabled = false;
+        btnEl.innerText = originalText;
+    }
+}
+
+
+/* =========================
+   DELETE ORDER
+   ========================= */
+
+async function deleteOrder(orderId, btnEl) {
+    if (!orderId) return;
+
+    const order = allOrders.find((o) => o.orderId === orderId);
+    const isPending = order && (order.status || "pending") === "pending";
+
+    let confirmMsg = `Yakin ingin menghapus pesanan ${orderId}?`;
+    if (isPending) {
+        confirmMsg += `\n\nStok pesanan pending akan otomatis dikembalikan ke inventaris.`;
+    }
+    confirmMsg += `\n\nTindakan ini tidak dapat dibatalkan.`;
+
+    if (!confirm(confirmMsg)) return;
+
+    const originalText = btnEl.innerText;
+    btnEl.disabled = true;
+    btnEl.innerText = "Menghapus...";
+
+    try {
+        const response = await fetch(
+            `${API_BASE}/api/admin/orders/${orderId}`,
+            {
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${getToken()}`
+                }
+            }
+        );
+
+        if (response.status === 401) {
+            clearToken();
+            showLoginView();
+            return;
+        }
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            alert(result.message || "Gagal menghapus pesanan.");
+            btnEl.disabled = false;
+            btnEl.innerText = originalText;
+            return;
+        }
+
+        /* Hapus order dari state lokal */
+        allOrders = allOrders.filter((o) => o.orderId !== orderId);
+
+        closeOrderModal();
+        applyFilters();
+        renderSummary();
+        renderCustomerInsights();
+        renderDailyReport();
+
+        /* Jika pesanan pending, stok dikembalikan, reload data stok */
+        if (isPending) {
+            loadStocks();
+        }
+
+        alert(`Pesanan ${orderId} berhasil dihapus.`);
+
+    } catch (error) {
+        console.error("Delete order error:", error);
         alert("Gagal terhubung ke server.");
         btnEl.disabled = false;
         btnEl.innerText = originalText;
@@ -1324,53 +1421,130 @@ function exportDailyCSV() {
     }
 
     function csvCell(value) {
-        if (value === null || value === undefined) return "";
+        if (value === null || value === undefined) return '""';
         const str = String(value).replace(/"/g, '""');
         return `"${str}"`;
     }
 
-        const headers = [
-        "Order ID", "Tanggal", "Nama", "Tipe Customer", "WhatsApp",
-        "Lokasi", "Alamat", "Metode", "Konfirmasi Customer",
-        "Catatan", "Produk", "Total", "Status"
+    /* Kelompokkan pesanan berdasarkan lokasi */
+    const groups = [
+        {
+            key: "sman1",
+            title: "SMAN 1 KARAWANG",
+            orders: dayOrders.filter((o) => o.location === "sman1")
+        },
+        {
+            key: "sman5",
+            title: "SMAN 5 KARAWANG",
+            orders: dayOrders.filter((o) => o.location === "sman5")
+        },
+        {
+            key: "others",
+            title: "LAINNYA (PENGIRIMAN LUAR)",
+            orders: dayOrders.filter((o) => o.location !== "sman1" && o.location !== "sman5")
+        }
     ];
 
-    const rows = [headers.map(csvCell).join(",")];
-
-    dayOrders.forEach((order) => {
-        const itemsText = (order.items || [])
-            .map((item) => {
-                const addon = item.addonName ? ` + ${item.addonName}` : "";
-                return `${item.quantity}x ${item.name}${addon}`;
-            })
-            .join("; ");
-
-        const custType = getCustomerType(order);
-        const statusVal = order.status || "pending";
-        const paymentMethod = order.paymentMethod || "cash";
-        const confirmed = order.customerConfirmed === true ? "Ya" : "Belum";
-
-        const row = [
-            order.orderId || "",
-            formatDate(order.createdAt),
-            order.customerName || "",
-            custType === "baru" ? "Baru" : "Lama",
-            order.whatsapp || "",
-            getLocationLabel(order.location),
-            order.locationDetail || "",
-            paymentMethod === "qris" ? "QRIS" : "Cash (COD)",
-            confirmed,
-            order.note || "",
-            itemsText,
-            order.total || 0,
-            statusVal
-        ];
-
-        rows.push(row.map(csvCell).join(","));
+    /* Urutkan pesanan di sekolah berdasarkan kelas (locationDetail) */
+    groups.forEach((g) => {
+        g.orders.sort((a, b) => {
+            const locA = (a.locationDetail || "").toLowerCase();
+            const locB = (b.locationDetail || "").toLowerCase();
+            if (locA < locB) return -1;
+            if (locA > locB) return 1;
+            return (a.orderId || "").localeCompare(b.orderId || "");
+        });
     });
 
+    const headers = [
+        "Order ID", "Tanggal", "Nama Customer", "Kelas / Detail",
+        "WhatsApp", "Tipe Customer", "Metode", "Status",
+        "Konfirmasi", "Catatan", "Produk", "Total (Rp)"
+    ];
+
+    const lines = [];
+
+    /* Header ringkasan laporan */
+    lines.push([`LAPORAN PESANAN VELACOOKIES — TANGGAL ${selectedDate}`].map(csvCell).join(","));
+    lines.push([`Total Pesanan: ${dayOrders.length} Pesanan`].map(csvCell).join(","));
+    lines.push("");
+
+    let grandTotalRevenue = 0;
+    let grandTotalPcs = 0;
+
+    groups.forEach((group) => {
+        if (group.orders.length === 0) return;
+
+        let groupTotal = 0;
+        let groupPcs = 0;
+
+        group.orders.forEach((o) => {
+            groupTotal += (o.total || 0);
+            (o.items || []).forEach((it) => {
+                groupPcs += (it.quantity || 0);
+            });
+        });
+
+        grandTotalRevenue += groupTotal;
+        grandTotalPcs += groupPcs;
+
+        /* Baris judul kelompok lokasi */
+        lines.push([
+            `=== LOKASI: ${group.title} (${group.orders.length} Pesanan | ${groupPcs} Pcs | Rp${groupTotal.toLocaleString("id-ID")}) ===`
+        ].map(csvCell).join(","));
+
+        /* Header kolom */
+        lines.push(headers.map(csvCell).join(","));
+
+        /* Baris data pesanan */
+        group.orders.forEach((order) => {
+            const itemsText = (order.items || [])
+                .map((item) => {
+                    const addon = item.addonName ? ` + ${item.addonName}` : "";
+                    return `${item.quantity}x ${item.name}${addon}`;
+                })
+                .join("; ");
+
+            const custType = getCustomerType(order);
+            const statusVal = order.status || "pending";
+            const paymentMethod = order.paymentMethod === "qris" ? "QRIS" : "Cash (COD)";
+            const confirmed = order.customerConfirmed === true ? "Ya" : "Belum";
+
+            const row = [
+                order.orderId || "",
+                formatDate(order.createdAt),
+                order.customerName || "",
+                order.locationDetail || "-",
+                order.whatsapp || "",
+                custType === "baru" ? "Baru" : "Lama",
+                paymentMethod,
+                statusVal,
+                confirmed,
+                order.note || "",
+                itemsText,
+                order.total || 0
+            ];
+
+            lines.push(row.map(csvCell).join(","));
+        });
+
+        /* Subtotal per lokasi */
+        lines.push([
+            `SUBTOTAL ${group.title}`, "", "", "", "", "", "", "", "", "",
+            `${groupPcs} pcs`, groupTotal
+        ].map(csvCell).join(","));
+
+        lines.push(""); /* Baris kosong antar kelompok */
+    });
+
+    /* Grand total */
+    lines.push([
+        "GRAND TOTAL KESELURUHAN", "", "", "", "", "", "", "", "", "",
+        `${grandTotalPcs} pcs`, grandTotalRevenue
+    ].map(csvCell).join(","));
+
     const BOM = "\uFEFF";
-    const csvContent = BOM + rows.join("\r\n");
+    const csvContent = BOM + lines.join("\r\n");
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);

@@ -850,6 +850,9 @@ function buildCashWhatsAppMessage(order) {
     lines.push(`Nama: ${order.name}`);
     lines.push(`Total: ${formatRupiah(order.total)} (${totalPcs} pcs)`);
     lines.push(`Lokasi: ${order.locationLabel}`);
+    if (order.locationDetail) {
+        lines.push(`Kelas/Alamat: ${order.locationDetail}`);
+    }
 
     if (totalPcs >= 3) {
         const dp = Math.round(order.total * 0.5);
@@ -945,6 +948,13 @@ const checkoutLocationDetailGroup = document.getElementById("checkout-location-d
 const checkoutLocationDetailInput = document.getElementById("checkout-location-detail");
 const checkoutLocationDetailError = document.getElementById("checkout-location-detail-error");
 
+/* KELAS SEKOLAH — DOM */
+const checkoutSchoolClassGroup = document.getElementById("checkout-school-class-group");
+const checkoutGradePills = document.querySelectorAll(".grade-pill");
+const checkoutSchoolClassDetailInput = document.getElementById("checkout-school-class-detail");
+const checkoutSchoolClassError = document.getElementById("checkout-school-class-error");
+let selectedGrade = null;
+
 /* PAYMENT — DOM */
 const checkoutPaymentRadios = document.querySelectorAll('input[name="checkout-payment"]');
 const checkoutPaymentError = document.getElementById("checkout-payment-error");
@@ -976,10 +986,12 @@ function clearCheckoutErrors() {
     if (checkoutWaError) checkoutWaError.innerText = "";
     if (checkoutLocationError) checkoutLocationError.innerText = "";
     if (checkoutLocationDetailError) checkoutLocationDetailError.innerText = "";
+    if (checkoutSchoolClassError) checkoutSchoolClassError.innerText = "";
     if (checkoutPaymentError) checkoutPaymentError.innerText = "";
     if (checkoutNameInput) checkoutNameInput.classList.remove("invalid");
     if (checkoutWaInput) checkoutWaInput.classList.remove("invalid");
     if (checkoutLocationDetailInput) checkoutLocationDetailInput.classList.remove("invalid");
+    if (checkoutSchoolClassDetailInput) checkoutSchoolClassDetailInput.classList.remove("invalid");
 }
 
 /* LOKASI — helper */
@@ -1001,27 +1013,44 @@ function resetLocationFields() {
     if (checkoutLocationDetailGroup) {
         checkoutLocationDetailGroup.hidden = true;
     }
+    if (checkoutSchoolClassGroup) {
+        checkoutSchoolClassGroup.hidden = true;
+    }
+    if (checkoutSchoolClassDetailInput) {
+        checkoutSchoolClassDetailInput.value = "";
+    }
+    checkoutGradePills.forEach((p) => p.classList.remove("active"));
+    selectedGrade = null;
 }
+
+/* Pill klik untuk tingkat kelas */
+checkoutGradePills.forEach((pill) => {
+    pill.addEventListener("click", () => {
+        checkoutGradePills.forEach((p) => p.classList.remove("active"));
+        pill.classList.add("active");
+        selectedGrade = pill.dataset.grade;
+        if (checkoutSchoolClassError) checkoutSchoolClassError.innerText = "";
+    });
+});
 
 checkoutLocationRadios.forEach((radio) => {
     radio.addEventListener("change", () => {
         const selected = getSelectedLocation();
 
         if (selected === "others") {
-            if (checkoutLocationDetailGroup) {
-                checkoutLocationDetailGroup.hidden = false;
-            }
+            if (checkoutLocationDetailGroup) checkoutLocationDetailGroup.hidden = false;
+            if (checkoutSchoolClassGroup) checkoutSchoolClassGroup.hidden = true;
+        } else if (selected === "sman1" || selected === "sman5") {
+            if (checkoutLocationDetailGroup) checkoutLocationDetailGroup.hidden = true;
+            if (checkoutSchoolClassGroup) checkoutSchoolClassGroup.hidden = false;
         } else {
-            if (checkoutLocationDetailGroup) {
-                checkoutLocationDetailGroup.hidden = true;
-            }
-            if (checkoutLocationDetailInput) {
-                checkoutLocationDetailInput.value = "";
-            }
+            if (checkoutLocationDetailGroup) checkoutLocationDetailGroup.hidden = true;
+            if (checkoutSchoolClassGroup) checkoutSchoolClassGroup.hidden = true;
         }
 
         if (checkoutLocationError) checkoutLocationError.innerText = "";
         if (checkoutLocationDetailError) checkoutLocationDetailError.innerText = "";
+        if (checkoutSchoolClassError) checkoutSchoolClassError.innerText = "";
     });
 });
 
@@ -1137,23 +1166,43 @@ if (checkoutSubmitBtn) {
 
         /* VALIDASI LOKASI */
         const selectedLocation = getSelectedLocation();
-        const locationDetail = checkoutLocationDetailInput
-            ? checkoutLocationDetailInput.value.trim()
-            : "";
+        let finalLocationDetail = "";
 
         if (!selectedLocation) {
             if (checkoutLocationError) {
                 checkoutLocationError.innerText = "Lokasi pengiriman wajib dipilih.";
             }
             hasError = true;
-        } else if (selectedLocation === "others" && !locationDetail) {
-            if (checkoutLocationDetailError) {
-                checkoutLocationDetailError.innerText = "Alamat lengkap wajib diisi.";
+        } else if (selectedLocation === "others") {
+            const locDetail = checkoutLocationDetailInput
+                ? checkoutLocationDetailInput.value.trim()
+                : "";
+            if (!locDetail) {
+                if (checkoutLocationDetailError) {
+                    checkoutLocationDetailError.innerText = "Alamat lengkap wajib diisi.";
+                }
+                if (checkoutLocationDetailInput) {
+                    checkoutLocationDetailInput.classList.add("invalid");
+                }
+                hasError = true;
+            } else {
+                finalLocationDetail = locDetail;
             }
-            if (checkoutLocationDetailInput) {
-                checkoutLocationDetailInput.classList.add("invalid");
+        } else if (selectedLocation === "sman1" || selectedLocation === "sman5") {
+            const classDetail = checkoutSchoolClassDetailInput
+                ? checkoutSchoolClassDetailInput.value.trim()
+                : "";
+            if (!selectedGrade || !classDetail) {
+                if (checkoutSchoolClassError) {
+                    checkoutSchoolClassError.innerText = "Pilih tingkat kelas (X, XI, XII) dan isi detail kelas.";
+                }
+                if (!classDetail && checkoutSchoolClassDetailInput) {
+                    checkoutSchoolClassDetailInput.classList.add("invalid");
+                }
+                hasError = true;
+            } else {
+                finalLocationDetail = `${selectedGrade} - ${classDetail}`;
             }
-            hasError = true;
         }
 
         /* VALIDASI CART */
@@ -1178,7 +1227,7 @@ if (checkoutSubmitBtn) {
             whatsapp: wa,
             note: note,
             location: selectedLocation,
-            locationDetail: selectedLocation === "others" ? locationDetail : "",
+            locationDetail: finalLocationDetail,
             paymentMethod: selectedPaymentMethod,
             items: orderItems
         };
@@ -1211,7 +1260,8 @@ if (checkoutSubmitBtn) {
                     total: result.total,
                     paymentMethod: selectedPaymentMethod,
                     totalPcs: totalPcs,
-                    locationLabel: getLocationLabel(selectedLocation)
+                    locationLabel: getLocationLabel(selectedLocation),
+                    locationDetail: finalLocationDetail
                 });
 
                 cart = [];

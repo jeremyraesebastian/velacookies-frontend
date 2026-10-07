@@ -737,6 +737,40 @@ LOCATION BADGE + FILTER + REPORT
     color: var(--cream);
 }
 
+.date-filter-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.filter-select.date-filter {
+    min-width: 160px;
+    padding-right: 30px;
+}
+
+.filter-select.date-filter::-webkit-calendar-picker-indicator {
+    filter: invert(0.8);
+    cursor: pointer;
+}
+
+.btn-clear-date {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--cream-soft);
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+    transition: color 0.15s ease;
+}
+
+.btn-clear-date:hover {
+    color: #ffffff;
+}
+
 /* Location badge */
 .location-badge {
     display: inline-block;
@@ -1204,6 +1238,18 @@ STATUS BADGE + ACTIONS
 
 .action-btn.pending:hover {
     background: rgba(216, 168, 78, 0.4);
+    color: #ffffff;
+}
+
+.action-btn.delete {
+    background: rgba(220, 53, 69, 0.18);
+    color: #ff8b94;
+    border-color: rgba(220, 53, 69, 0.4);
+    margin-top: 6px;
+}
+
+.action-btn.delete:hover {
+    background: rgba(220, 53, 69, 0.45);
     color: #ffffff;
 }
 

@@ -681,6 +681,33 @@
                     <span class="form-error" id="checkout-location-error"></span>
                 </div>
 
+                <div class="form-group school-class-container" id="checkout-school-class-group" hidden>
+                    <label class="form-label">Pilih Kelas</label>
+                    <div class="school-class-row">
+                        <div class="school-class-col">
+                            <span class="sub-label">Tingkat</span>
+                            <div class="grade-pills" id="checkout-grade-pills">
+                                <button type="button" class="grade-pill" data-grade="X">X</button>
+                                <button type="button" class="grade-pill" data-grade="XI">XI</button>
+                                <button type="button" class="grade-pill" data-grade="XII">XII</button>
+                            </div>
+                        </div>
+
+                        <div class="school-class-col">
+                            <span class="sub-label">Ruang / Detail Kelas</span>
+                            <input
+                                type="text"
+                                id="checkout-school-class-detail"
+                                class="form-input"
+                                placeholder="Contoh: MIPA 1 / E-2 / 1"
+                                autocomplete="off"
+                                maxlength="30"
+                            >
+                        </div>
+                    </div>
+                    <span class="form-error" id="checkout-school-class-error"></span>
+                </div>
+
                 <div class="form-group" id="checkout-location-detail-group" hidden>
                     <label class="form-label" for="checkout-location-detail">Alamat Lengkap</label>
                     <textarea
