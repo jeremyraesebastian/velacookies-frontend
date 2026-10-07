@@ -43,6 +43,10 @@
                 <small>Admin</small>
             </div>
             <div class="admin-header-actions">
+                <div class="po-header-badge" id="header-po-badge" title="Klik untuk kelola Pre-Order (PO)">
+                    <span class="po-indicator-dot"></span>
+                    <span id="header-po-text">PO: Memuat...</span>
+                </div>
                 <a href="index.html" class="btn-ghost">← Lihat Website</a>
                 <button class="btn-ghost" id="logout-btn">Logout</button>
             </div>
@@ -461,6 +465,7 @@
                                     <th>Produk</th>
                                     <th class="align-right">Stok</th>
                                     <th class="align-center">Status</th>
+                                    <th class="align-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="stocks-tbody"></tbody>
@@ -482,6 +487,86 @@
 
                 <div class="settings-container">
 
+                    <!-- ============================================
+                         CARD: MANAJEMEN PRE-ORDER (PO)
+                         ============================================ -->
+                    <div class="settings-card" id="po-settings-card">
+                        <div class="settings-card-header">
+                            <div class="po-card-header-row">
+                                <div>
+                                    <h2 class="settings-card-title">📅 Status & Jadwal Pre-Order (PO)</h2>
+                                    <p class="settings-card-desc">
+                                        Atur status buka/tutup Pre-Order serta jadwal batas pemesanan dan produksi.
+                                    </p>
+                                </div>
+                                <span class="po-badge" id="po-current-badge">Memuat status...</span>
+                            </div>
+                        </div>
+
+                        <!-- Current PO Overview Box -->
+                        <div class="po-status-card-box">
+                            <div class="po-info-grid">
+                                <div class="po-info-item">
+                                    <span class="po-info-label">Status Pre-Order</span>
+                                    <span class="po-info-value" id="po-info-status">—</span>
+                                </div>
+                                <div class="po-info-item">
+                                    <span class="po-info-label">Batas Tutup PO (Cutoff)</span>
+                                    <span class="po-info-value" id="po-info-close">—</span>
+                                </div>
+                                <div class="po-info-item">
+                                    <span class="po-info-label">Tanggal Produksi / Kirim</span>
+                                    <span class="po-info-value" id="po-info-production">—</span>
+                                </div>
+                            </div>
+
+                            <div class="po-quick-actions" id="po-quick-actions" style="margin-top: 16px;">
+                                <button type="button" class="action-btn delete" id="btn-close-po" style="display: none;">
+                                    🛑 Tutup Pre-Order Sekarang
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Form Buka PO Baru / Update PO -->
+                        <form id="po-form" class="settings-form" style="margin-top: 24px;">
+                            <h3 class="settings-section-title" id="po-form-title">Buka Periode Pre-Order Baru</h3>
+
+                            <div class="bulk-date-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="po-close-date">Batas Waktu Tutup PO <span class="required">*</span></label>
+                                    <input
+                                        type="datetime-local"
+                                        id="po-close-date"
+                                        class="form-input"
+                                        required
+                                    >
+                                    <span class="form-help">Waktu PO otomatis ditutup (WIB). Countdown toko akan menghitung mundur ke jam ini.</span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="po-production-date">Tanggal Produksi / Kirim <span class="required">*</span></label>
+                                    <input
+                                        type="date"
+                                        id="po-production-date"
+                                        class="form-input"
+                                        required
+                                    >
+                                    <span class="form-help">Tanggal saat pesanan dibuat / siap diantar ke customer.</span>
+                                </div>
+                            </div>
+
+                            <div class="settings-actions">
+                                <button type="submit" class="btn-primary" id="po-submit-btn">
+                                    🚀 Buka Pre-Order
+                                </button>
+                                <span class="settings-status" id="po-status-msg"></span>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- ============================================
+                         CARD: PEMBAYARAN & KONTAK
+                         ============================================ -->
                     <div class="settings-card">
                         <div class="settings-card-header">
                             <h2 class="settings-card-title">Pembayaran & Kontak</h2>
@@ -565,9 +650,6 @@
         </main>
     </div>
 
-        </main>
-    </div>
-
     <!-- ORDER DETAIL MODAL -->
     <div class="admin-modal-overlay" id="order-modal">
         <div class="admin-modal">
@@ -621,6 +703,67 @@
                     <button type="button" class="action-btn delete" id="bulk-delete-submit-btn" disabled>Hapus Pesanan</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- STOCK EDIT MODAL -->
+    <div class="admin-modal-overlay" id="stock-modal">
+        <div class="admin-modal bulk-modal-card">
+            <button class="admin-modal-close" id="stock-modal-close" aria-label="Tutup">&times;</button>
+            <div class="bulk-modal-header">
+                <h3>🍪 Ubah Stok Produk</h3>
+                <p id="stock-modal-product-name">Memuat nama produk...</p>
+            </div>
+            
+            <form id="stock-modal-form" class="bulk-modal-body">
+                <input type="hidden" id="stock-modal-id">
+
+                <div class="stock-current-box">
+                    <span class="stock-current-label">Stok Tercatat Saat Ini</span>
+                    <strong class="stock-current-val" id="stock-modal-current-display">0 pcs</strong>
+                </div>
+
+                <div class="form-group" style="margin-top: 14px;">
+                    <label class="form-label" for="stock-modal-new-input">Jumlah Stok Baru <span class="required">*</span></label>
+                    <div class="stock-stepper-wrap">
+                        <button type="button" class="btn-stepper" id="stock-step-minus">−</button>
+                        <input
+                            type="number"
+                            id="stock-modal-new-input"
+                            class="form-input stock-stepper-input"
+                            min="0"
+                            step="1"
+                            required
+                        >
+                        <button type="button" class="btn-stepper" id="stock-step-plus">+</button>
+                    </div>
+                    <span class="form-help">Masukkan jumlah fisik terbaru yang siap dijual.</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="stock-modal-reason">Alasan Perubahan Stok</label>
+                    <select id="stock-modal-reason" class="filter-select" style="width: 100%;">
+                        <option value="restock">Restock (Produksi baru / bahan siap)</option>
+                        <option value="admin_adjust">Penyesuaian Admin (Koreksi fisik / rusak / batal)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="stock-modal-note">Catatan (Opsional)</label>
+                    <input
+                        type="text"
+                        id="stock-modal-note"
+                        class="form-input"
+                        placeholder="Contoh: Tambah batch 2, atau koreksi toples pecah"
+                    >
+                </div>
+
+                <div class="bulk-actions" style="margin-top: 20px;">
+                    <button type="button" class="btn-ghost" id="stock-modal-cancel">Batal</button>
+                    <button type="submit" class="btn-primary" id="stock-modal-save">💾 Simpan Stok</button>
+                </div>
+                <p id="stock-modal-error" class="settings-status error" style="margin-top: 10px; display: none;"></p>
+            </form>
         </div>
     </div>
 

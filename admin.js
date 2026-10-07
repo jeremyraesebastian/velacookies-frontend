@@ -86,6 +86,37 @@ const stocksLoading = document.getElementById("stocks-loading");
 const stocksEmpty = document.getElementById("stocks-empty");
 const stocksRefreshBtn = document.getElementById("stocks-refresh");
 
+/* PO Management DOM */
+const headerPoBadge = document.getElementById("header-po-badge");
+const headerPoText = document.getElementById("header-po-text");
+const poCurrentBadge = document.getElementById("po-current-badge");
+const poInfoStatus = document.getElementById("po-info-status");
+const poInfoClose = document.getElementById("po-info-close");
+const poInfoProduction = document.getElementById("po-info-production");
+const btnClosePo = document.getElementById("btn-close-po");
+const poForm = document.getElementById("po-form");
+const poFormTitle = document.getElementById("po-form-title");
+const poCloseDate = document.getElementById("po-close-date");
+const poProductionDate = document.getElementById("po-production-date");
+const poSubmitBtn = document.getElementById("po-submit-btn");
+const poStatusMsg = document.getElementById("po-status-msg");
+
+/* Stock Modal DOM */
+const stockModal = document.getElementById("stock-modal");
+const stockModalClose = document.getElementById("stock-modal-close");
+const stockModalCancel = document.getElementById("stock-modal-cancel");
+const stockModalForm = document.getElementById("stock-modal-form");
+const stockModalId = document.getElementById("stock-modal-id");
+const stockModalProductName = document.getElementById("stock-modal-product-name");
+const stockModalCurrentDisplay = document.getElementById("stock-modal-current-display");
+const stockModalNewInput = document.getElementById("stock-modal-new-input");
+const stockStepMinus = document.getElementById("stock-step-minus");
+const stockStepPlus = document.getElementById("stock-step-plus");
+const stockModalReason = document.getElementById("stock-modal-reason");
+const stockModalNote = document.getElementById("stock-modal-note");
+const stockModalSave = document.getElementById("stock-modal-save");
+const stockModalError = document.getElementById("stock-modal-error");
+
 /* Finance tab DOM */
 const financeMonthInput = document.getElementById("finance-month");
 const financeRefreshBtn = document.getElementById("finance-refresh");
@@ -404,6 +435,7 @@ adminTabs.forEach((tab) => {
 
         if (targetTab === "settings") {
             loadSettings();
+            loadPOSettings();
         }
     });
 });
@@ -509,6 +541,11 @@ function renderStocks(items) {
                 <td class="align-center">
                     <span class="stocks-badge ${statusKey}">${statusLabel}</span>
                 </td>
+                <td class="align-center">
+                    <button type="button" class="btn-stock-edit" data-id="${item.id}" data-name="${escapeHtml(item.displayName)}" data-stock="${stock}">
+                        ✏️ Ubah Stok
+                    </button>
+                </td>
             </tr>
         `;
     });
@@ -518,6 +555,128 @@ function renderStocks(items) {
 
 if (stocksRefreshBtn) {
     stocksRefreshBtn.addEventListener("click", () => loadStocks());
+}
+
+/* =========================
+   STOCK MODAL & UPDATE
+   ========================= */
+
+function openStockModal(stockId, displayName, currentStock) {
+    if (!stockModal) return;
+    if (stockModalId) stockModalId.value = stockId;
+    if (stockModalProductName) stockModalProductName.innerText = displayName || "Produk";
+    if (stockModalCurrentDisplay) stockModalCurrentDisplay.innerText = `${currentStock} pcs`;
+    if (stockModalNewInput) stockModalNewInput.value = currentStock;
+    if (stockModalReason) stockModalReason.value = "restock";
+    if (stockModalNote) stockModalNote.value = "";
+    if (stockModalError) {
+        stockModalError.style.display = "none";
+        stockModalError.innerText = "";
+    }
+    stockModal.classList.add("active");
+    if (stockModalNewInput) stockModalNewInput.focus();
+}
+
+function closeStockModal() {
+    if (!stockModal) return;
+    stockModal.classList.remove("active");
+}
+
+if (stocksTbody) {
+    stocksTbody.addEventListener("click", (e) => {
+        const btn = e.target.closest(".btn-stock-edit");
+        if (!btn) return;
+        const id = btn.getAttribute("data-id");
+        const name = btn.getAttribute("data-name");
+        const stock = parseInt(btn.getAttribute("data-stock") || "0", 10);
+        openStockModal(id, name, stock);
+    });
+}
+
+if (stockModalClose) {
+    stockModalClose.addEventListener("click", closeStockModal);
+}
+if (stockModalCancel) {
+    stockModalCancel.addEventListener("click", closeStockModal);
+}
+if (stockModal) {
+    stockModal.addEventListener("click", (e) => {
+        if (e.target === stockModal) closeStockModal();
+    });
+}
+
+if (stockStepMinus) {
+    stockStepMinus.addEventListener("click", () => {
+        let val = parseInt(stockModalNewInput.value || "0", 10);
+        if (val > 0) stockModalNewInput.value = val - 1;
+    });
+}
+
+if (stockStepPlus) {
+    stockStepPlus.addEventListener("click", () => {
+        let val = parseInt(stockModalNewInput.value || "0", 10);
+        stockModalNewInput.value = val + 1;
+    });
+}
+
+if (stockModalForm) {
+    stockModalForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const stockId = stockModalId.value;
+        const newStock = parseInt(stockModalNewInput.value, 10);
+        const reason = stockModalReason.value;
+        const note = stockModalNote.value.trim();
+
+        if (isNaN(newStock) || newStock < 0) {
+            if (stockModalError) {
+                stockModalError.innerText = "Stok harus angka bulat >= 0.";
+                stockModalError.style.display = "block";
+            }
+            return;
+        }
+
+        const origBtnText = stockModalSave.innerText;
+        stockModalSave.disabled = true;
+        stockModalSave.innerText = "Menyimpan...";
+
+        try {
+            const response = await fetch(`${API_BASE}/api/admin/stocks/${stockId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${getToken()}`
+                },
+                body: JSON.stringify({
+                    stock: newStock,
+                    reason,
+                    note: note || undefined
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                if (stockModalError) {
+                    stockModalError.innerText = result.message || "Gagal mengubah stok.";
+                    stockModalError.style.display = "block";
+                }
+                return;
+            }
+
+            closeStockModal();
+            loadStocks();
+
+        } catch (err) {
+            console.error("Update stock error:", err);
+            if (stockModalError) {
+                stockModalError.innerText = "Gagal terhubung ke server.";
+                stockModalError.style.display = "block";
+            }
+        } finally {
+            stockModalSave.disabled = false;
+            stockModalSave.innerText = origBtnText;
+        }
+    });
 }
 
 /* =========================
@@ -551,6 +710,7 @@ if (loginForm) {
             setToken(result.token);
             showDashboardView();
             loadOrders();
+            loadPOSettings();
 
         } catch (error) {
             console.error("Login error:", error);
@@ -2656,6 +2816,7 @@ if (financeExportBtn) {
 
         showDashboardView();
         loadOrders();
+        loadPOSettings();
 
     } catch (error) {
         console.error("Init error:", error);
@@ -2815,5 +2976,245 @@ if (settingsQrisImage) {
         if (settingsQrisPreview) {
             settingsQrisPreview.src = settingsQrisImage.value.trim() || "/images/qris.jpeg";
         }
+    });
+}
+
+/* =========================
+   SETTINGS (PRE-ORDER / PO)
+   ========================= */
+
+let currentPOData = null;
+
+async function loadPOSettings() {
+    try {
+        const response = await fetch(`${API_BASE}/api/admin/po/status`, {
+            headers: { "Authorization": `Bearer ${getToken()}` }
+        });
+
+        if (response.status === 401) {
+            clearToken();
+            showLoginView();
+            return;
+        }
+
+        const result = await response.json();
+        if (!response.ok || !result.success) return;
+
+        currentPOData = result.po;
+        const isOpen = result.isOpen === true;
+
+        // 1. Update Header Badge
+        if (headerPoBadge && headerPoText) {
+            if (isOpen) {
+                headerPoBadge.className = "po-header-badge open";
+                headerPoText.innerText = "PO: DIBUKA";
+            } else {
+                headerPoBadge.className = "po-header-badge closed";
+                headerPoText.innerText = "PO: DITUTUP";
+            }
+        }
+
+        // 2. Update Card Badges & Info in Settings Tab
+        if (poCurrentBadge) {
+            poCurrentBadge.className = isOpen ? "po-badge badge-open" : "po-badge badge-closed";
+            poCurrentBadge.innerText = isOpen ? "PO DIBUKA" : "PO DITUTUP";
+        }
+
+        if (poInfoStatus) {
+            poInfoStatus.innerHTML = isOpen
+                ? "<span style='color: #4ade80; font-weight: 700;'>🟢 Pre-Order Sedang Aktif</span>"
+                : "<span style='color: #f87171; font-weight: 700;'>🔴 Pre-Order Sedang Ditutup</span>";
+        }
+
+        if (poInfoClose) {
+            poInfoClose.innerText = (isOpen && currentPOData?.tanggalTutup)
+                ? formatDate(currentPOData.tanggalTutup)
+                : "-";
+        }
+
+        if (poInfoProduction) {
+            poInfoProduction.innerText = (isOpen && currentPOData?.tanggalProduksi)
+                ? formatDate(currentPOData.tanggalProduksi)
+                : "-";
+        }
+
+        if (btnClosePo) {
+            btnClosePo.style.display = isOpen ? "inline-flex" : "none";
+        }
+
+        // 3. Update Form State
+        if (poFormTitle && poSubmitBtn) {
+            if (isOpen) {
+                poFormTitle.innerText = "Perbarui Jadwal Pre-Order Aktif";
+                poSubmitBtn.innerText = "💾 Simpan Perubahan Jadwal";
+
+                // Prefill datetime-local and date inputs in WIB
+                if (poCloseDate && currentPOData?.tanggalTutup) {
+                    const d = parseISOString(currentPOData.tanggalTutup);
+                    const parts = getWIBParts(d);
+                    if (parts) {
+                        poCloseDate.value = `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+                    }
+                }
+
+                if (poProductionDate && currentPOData?.tanggalProduksi) {
+                    const d = parseISOString(currentPOData.tanggalProduksi);
+                    const parts = getWIBParts(d);
+                    if (parts) {
+                        poProductionDate.value = `${parts.year}-${parts.month}-${parts.day}`;
+                    }
+                }
+            } else {
+                poFormTitle.innerText = "Buka Periode Pre-Order Baru";
+                poSubmitBtn.innerText = "🚀 Buka Pre-Order Sekarang";
+
+                // Set default suggestion: tutup besok lusa jam 23:59, produksi 3 hari lagi
+                const now = new Date();
+                const defaultClose = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
+                const defaultProd = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+                const cParts = getWIBParts(defaultClose);
+                const pParts = getWIBParts(defaultProd);
+
+                if (poCloseDate && cParts) {
+                    poCloseDate.value = `${cParts.year}-${cParts.month}-${cParts.day}T23:59`;
+                }
+                if (poProductionDate && pParts) {
+                    poProductionDate.value = `${pParts.year}-${pParts.month}-${pParts.day}`;
+                }
+            }
+        }
+
+    } catch (err) {
+        console.error("Load PO settings error:", err);
+    }
+}
+
+function showPOStatusMsg(msg, type) {
+    if (!poStatusMsg) return;
+    poStatusMsg.innerText = msg;
+    poStatusMsg.className = "settings-status " + type;
+    if (type === "success") {
+        setTimeout(() => {
+            poStatusMsg.innerText = "";
+            poStatusMsg.className = "settings-status";
+        }, 3500);
+    }
+}
+
+async function handlePOSubmit(e) {
+    e.preventDefault();
+
+    const closeVal = poCloseDate ? poCloseDate.value : "";
+    const prodVal = poProductionDate ? poProductionDate.value : "";
+
+    if (!closeVal) {
+        showPOStatusMsg("Batas waktu tutup PO wajib diisi.", "error");
+        return;
+    }
+    if (!prodVal) {
+        showPOStatusMsg("Tanggal produksi / kirim wajib diisi.", "error");
+        return;
+    }
+
+    const closeIso = new Date(closeVal).toISOString();
+    const prodIso = new Date(prodVal + "T00:00:00").toISOString();
+
+    const origBtnText = poSubmitBtn.innerText;
+    poSubmitBtn.disabled = true;
+    poSubmitBtn.innerText = "Menyimpan...";
+
+    try {
+        const isOpen = currentPOData && currentPOData.status === "open";
+        let url = `${API_BASE}/api/admin/po/open`;
+        let method = "POST";
+
+        if (isOpen && currentPOData.id) {
+            url = `${API_BASE}/api/admin/po/${currentPOData.id}`;
+            method = "PUT";
+        }
+
+        const response = await fetch(url, {
+            method,
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${getToken()}`
+            },
+            body: JSON.stringify({
+                tanggalTutup: closeIso,
+                tanggalProduksi: prodIso
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            showPOStatusMsg(result.message || "Gagal menyimpan jadwal PO.", "error");
+            return;
+        }
+
+        showPOStatusMsg("✓ " + (result.message || "Jadwal PO berhasil disimpan!"), "success");
+        await loadPOSettings();
+
+    } catch (err) {
+        console.error("Submit PO error:", err);
+        showPOStatusMsg("Gagal terhubung ke server.", "error");
+    } finally {
+        poSubmitBtn.disabled = false;
+        poSubmitBtn.innerText = origBtnText;
+    }
+}
+
+async function handleClosePO() {
+    const confirmed = confirm("Apakah Anda yakin ingin MENUTUP Pre-Order sekarang?\n\nSetelah ditutup, pengunjung website tidak dapat membuat pesanan baru.");
+    if (!confirmed) return;
+
+    if (btnClosePo) {
+        btnClosePo.disabled = true;
+        btnClosePo.innerText = "Menutup PO...";
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/api/admin/po/close`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${getToken()}`
+            }
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            alert(result.message || "Gagal menutup Pre-Order.");
+            return;
+        }
+
+        alert("Pre-Order berhasil ditutup.");
+        await loadPOSettings();
+
+    } catch (err) {
+        console.error("Close PO error:", err);
+        alert("Gagal terhubung ke server.");
+    } finally {
+        if (btnClosePo) {
+            btnClosePo.disabled = false;
+            btnClosePo.innerText = "🛑 Tutup Pre-Order Sekarang";
+        }
+    }
+}
+
+if (poForm) {
+    poForm.addEventListener("submit", handlePOSubmit);
+}
+
+if (btnClosePo) {
+    btnClosePo.addEventListener("click", handleClosePO);
+}
+
+if (headerPoBadge) {
+    headerPoBadge.addEventListener("click", () => {
+        const tabBtn = document.querySelector('.admin-tab[data-tab="settings"]');
+        if (tabBtn) tabBtn.click();
     });
 }
