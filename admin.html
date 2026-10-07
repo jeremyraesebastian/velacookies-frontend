@@ -191,6 +191,7 @@
                         <input type="date" id="date-filter" class="filter-select date-filter" title="Filter Tanggal">
                         <button type="button" class="btn-clear-date" id="clear-date-btn" title="Hapus filter tanggal" hidden>&times;</button>
                     </div>
+                    <button class="btn-ghost btn-bulk-delete" id="bulk-delete-open-btn" title="Hapus pesanan massal">🗑️ Hapus Massal</button>
                     <button class="btn-ghost" id="refresh-btn">Refresh</button>
                 </div>
 
@@ -572,6 +573,54 @@
         <div class="admin-modal">
             <button class="admin-modal-close" id="order-modal-close" aria-label="Tutup">&times;</button>
             <div class="admin-modal-body" id="order-modal-body"></div>
+        </div>
+    </div>
+
+    <!-- BULK DELETE MODAL -->
+    <div class="admin-modal-overlay" id="bulk-delete-modal">
+        <div class="admin-modal bulk-modal-card">
+            <button class="admin-modal-close" id="bulk-delete-close" aria-label="Tutup">&times;</button>
+            <div class="bulk-modal-header">
+                <h3>🗑️ Hapus Massal Pesanan</h3>
+                <p>Pilih kriteria pesanan yang ingin dihapus dari database.</p>
+            </div>
+            
+            <div class="bulk-modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="bulk-status-select">Status Pesanan</label>
+                    <select id="bulk-status-select" class="filter-select" style="width: 100%;">
+                        <option value="expired">Hanya Expired (Rekomendasi Bersih-bersih)</option>
+                        <option value="failed">Hanya Failed</option>
+                        <option value="pending">Hanya Pending</option>
+                        <option value="success">Hanya Success</option>
+                        <option value="all">Semua Status</option>
+                    </select>
+                </div>
+
+                <div class="bulk-date-row">
+                    <div class="form-group">
+                        <label class="form-label" for="bulk-start-date">Dari Tanggal (Opsional)</label>
+                        <input type="date" id="bulk-start-date" class="filter-select date-filter" style="width: 100%;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="bulk-end-date">Sampai Tanggal (Opsional)</label>
+                        <input type="date" id="bulk-end-date" class="filter-select date-filter" style="width: 100%;">
+                    </div>
+                </div>
+
+                <div class="bulk-preview-box">
+                    <div class="bulk-preview-header">
+                        <span>Pratinjau Pesanan Terpilih:</span>
+                        <strong id="bulk-preview-count">0 pesanan</strong>
+                    </div>
+                    <p class="bulk-preview-sub" id="bulk-preview-note">Memuat pratinjau...</p>
+                </div>
+
+                <div class="bulk-actions">
+                    <button type="button" class="btn-ghost" id="bulk-delete-cancel-btn">Batal</button>
+                    <button type="button" class="action-btn delete" id="bulk-delete-submit-btn" disabled>Hapus Pesanan</button>
+                </div>
+            </div>
         </div>
     </div>
 

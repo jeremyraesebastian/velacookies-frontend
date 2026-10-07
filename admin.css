@@ -2234,3 +2234,85 @@ STOCKS TAB
         font-size: 16px;
     }
 }
+
+/* =========================
+   BULK DELETE MODAL
+   ========================= */
+
+.btn-bulk-delete {
+    border-color: rgba(220, 53, 69, 0.35);
+    color: #ff9ca4;
+}
+
+.btn-bulk-delete:hover {
+    border-color: rgba(220, 53, 69, 0.6);
+    background: rgba(220, 53, 69, 0.15);
+    color: #ffffff;
+}
+
+.bulk-modal-card {
+    max-width: 520px;
+}
+
+.bulk-modal-header {
+    margin-bottom: 20px;
+}
+
+.bulk-modal-header h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--cream);
+    margin-bottom: 6px;
+}
+
+.bulk-modal-header p {
+    font-size: 13px;
+    color: var(--cream-soft);
+}
+
+.bulk-modal-body .form-group {
+    margin-bottom: 14px;
+}
+
+.bulk-date-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.bulk-preview-box {
+    margin-top: 14px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: rgba(8, 6, 5, 0.4);
+    border: 1px solid rgba(216, 168, 78, 0.2);
+}
+
+.bulk-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13.5px;
+    color: var(--cream);
+}
+
+.bulk-preview-count {
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--gold-light);
+}
+
+.bulk-preview-sub {
+    font-size: 12px;
+    color: var(--cream-soft);
+    margin-top: 4px;
+}
+
+.bulk-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(216, 168, 78, 0.15);
+}

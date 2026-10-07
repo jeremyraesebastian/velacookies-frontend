@@ -58,6 +58,18 @@ const orderModal = document.getElementById("order-modal");
 const orderModalBody = document.getElementById("order-modal-body");
 const orderModalClose = document.getElementById("order-modal-close");
 
+/* Bulk delete modal DOM */
+const bulkDeleteModal = document.getElementById("bulk-delete-modal");
+const bulkDeleteOpenBtn = document.getElementById("bulk-delete-open-btn");
+const bulkDeleteCloseBtn = document.getElementById("bulk-delete-close");
+const bulkDeleteCancelBtn = document.getElementById("bulk-delete-cancel-btn");
+const bulkStatusSelect = document.getElementById("bulk-status-select");
+const bulkStartDate = document.getElementById("bulk-start-date");
+const bulkEndDate = document.getElementById("bulk-end-date");
+const bulkPreviewCount = document.getElementById("bulk-preview-count");
+const bulkPreviewNote = document.getElementById("bulk-preview-note");
+const bulkDeleteSubmitBtn = document.getElementById("bulk-delete-submit-btn");
+
 /* Settings tab DOM */
 const settingsForm = document.getElementById("settings-form");
 const settingsQrisOwner = document.getElementById("settings-qris-owner");
@@ -1129,6 +1141,153 @@ async function deleteOrder(orderId, btnEl) {
         btnEl.innerText = originalText;
     }
 }
+
+
+/* =========================
+   BULK DELETE ORDERS
+   ========================= */
+
+function openBulkDeleteModal() {
+    if (!bulkDeleteModal) return;
+    if (bulkStatusSelect) bulkStatusSelect.value = "expired";
+    if (bulkStartDate) bulkStartDate.value = "";
+    if (bulkEndDate) bulkEndDate.value = "";
+    updateBulkPreview();
+    bulkDeleteModal.classList.add("active");
+}
+
+function closeBulkDeleteModal() {
+    if (bulkDeleteModal) bulkDeleteModal.classList.remove("active");
+}
+
+function getMatchingBulkOrders() {
+    const status = bulkStatusSelect?.value || "all";
+    const start = bulkStartDate?.value || "";
+    const end = bulkEndDate?.value || "";
+
+    return allOrders.filter((order) => {
+        if (status !== "all") {
+            const s = order.status || "pending";
+            if (s !== status) return false;
+        }
+
+        const orderDateStr = getLocalDateString(order.createdAt);
+        if (start && orderDateStr < start) return false;
+        if (end && orderDateStr > end) return false;
+
+        return true;
+    });
+}
+
+function updateBulkPreview() {
+    const matching = getMatchingBulkOrders();
+    const count = matching.length;
+
+    if (bulkPreviewCount) {
+        bulkPreviewCount.innerText = `${count} pesanan`;
+    }
+
+    if (bulkDeleteSubmitBtn) {
+        bulkDeleteSubmitBtn.disabled = count === 0;
+    }
+
+    if (bulkPreviewNote) {
+        if (count === 0) {
+            bulkPreviewNote.innerText = "Tidak ada pesanan yang sesuai dengan kriteria yang dipilih.";
+        } else {
+            const hasPending = matching.some((o) => (o.status || "pending") === "pending");
+            if (hasPending) {
+                bulkPreviewNote.innerHTML = `⚠️ Termasuk pesanan berstatus <strong>pending</strong>. Stok pesanan pending akan otomatis dikembalikan ke inventaris.`;
+            } else {
+                bulkPreviewNote.innerText = "Stok untuk pesanan expired/success/failed tidak akan berubah.";
+            }
+        }
+    }
+}
+
+async function executeBulkDelete() {
+    const matching = getMatchingBulkOrders();
+    const count = matching.length;
+
+    if (count === 0) return;
+
+    const status = bulkStatusSelect?.value || "all";
+    const start = bulkStartDate?.value || "";
+    const end = bulkEndDate?.value || "";
+
+    let confirmMsg = `PERINGATAN!\n\nAnda akan menghapus ${count} pesanan secara permanen dari database.\n`;
+    if (status !== "all") {
+        confirmMsg += `• Status: ${status.toUpperCase()}\n`;
+    }
+    if (start || end) {
+        confirmMsg += `• Rentang Tanggal: ${start || "Awal"} s/d ${end || "Sekarang"}\n`;
+    }
+    confirmMsg += `\nTindakan ini tidak dapat dibatalkan. Lanjutkan?`;
+
+    if (!confirm(confirmMsg)) return;
+
+    bulkDeleteSubmitBtn.disabled = true;
+    bulkDeleteSubmitBtn.innerText = "Menghapus...";
+
+    try {
+        const response = await fetch(`${API_BASE}/api/admin/orders/bulk-delete`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${getToken()}`
+            },
+            body: JSON.stringify({
+                status: status,
+                startDate: start,
+                endDate: end
+            })
+        });
+
+        if (response.status === 401) {
+            clearToken();
+            showLoginView();
+            return;
+        }
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            alert(result.message || "Gagal menghapus pesanan.");
+            bulkDeleteSubmitBtn.disabled = false;
+            bulkDeleteSubmitBtn.innerText = "Hapus Pesanan";
+            return;
+        }
+
+        closeBulkDeleteModal();
+
+        alert(`Berhasil! ${result.deletedCount} pesanan telah dihapus.`);
+
+        await loadOrders();
+        loadStocks();
+
+    } catch (error) {
+        console.error("Bulk delete error:", error);
+        alert("Gagal terhubung ke server.");
+    } finally {
+        if (bulkDeleteSubmitBtn) {
+            bulkDeleteSubmitBtn.disabled = false;
+            bulkDeleteSubmitBtn.innerText = "Hapus Pesanan";
+        }
+    }
+}
+
+if (bulkDeleteOpenBtn) bulkDeleteOpenBtn.addEventListener("click", openBulkDeleteModal);
+if (bulkDeleteCloseBtn) bulkDeleteCloseBtn.addEventListener("click", closeBulkDeleteModal);
+if (bulkDeleteCancelBtn) bulkDeleteCancelBtn.addEventListener("click", closeBulkDeleteModal);
+if (bulkDeleteModal) {
+    bulkDeleteModal.addEventListener("click", (e) => {
+        if (e.target === bulkDeleteModal) closeBulkDeleteModal();
+    });
+}
+if (bulkStatusSelect) bulkStatusSelect.addEventListener("change", updateBulkPreview);
+if (bulkStartDate) bulkStartDate.addEventListener("change", updateBulkPreview);
+if (bulkEndDate) bulkEndDate.addEventListener("change", updateBulkPreview);
+if (bulkDeleteSubmitBtn) bulkDeleteSubmitBtn.addEventListener("click", executeBulkDelete);
 
 
 /* =========================
