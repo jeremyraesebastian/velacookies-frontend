@@ -1,6 +1,6 @@
-/* =========================
-   ADMIN PANEL — VELACOOKIES
-   ========================= */
+/* =========================================================
+   ADMIN PANEL — VELACOOKIES (FULL RESTORED + FIGMA EDITION)
+   ========================================================= */
 
 const API_BASE = "https://velacookies-production.up.railway.app";
 const TOKEN_KEY = "velacookies_admin_token";
@@ -18,11 +18,18 @@ const loginError = document.getElementById("login-error");
 const loginSubmit = document.getElementById("login-submit");
 const logoutBtn = document.getElementById("logout-btn");
 
-/* Tab navigation */
+/* Sidebar & Topbar */
+const adminSidebar = document.getElementById("admin-sidebar");
+const sidebarOverlay = document.getElementById("sidebar-overlay");
+const mobileMenuBtn = document.getElementById("mobile-menu-btn");
+const topbarCurrentPage = document.getElementById("topbar-current-page");
+const sidebarOrdersBadge = document.getElementById("sidebar-orders-badge");
 const adminTabs = document.querySelectorAll(".admin-tab");
 const tabContents = document.querySelectorAll(".tab-content");
 
-/* Orders tab DOM */
+/* Overview & Orders DOM */
+const overviewRefreshBtn = document.getElementById("overview-refresh-btn");
+const goToOrdersBtn = document.getElementById("go-to-orders-btn");
 const refreshBtn = document.getElementById("refresh-btn");
 const searchInput = document.getElementById("search-input");
 const locationFilter = document.getElementById("location-filter");
@@ -30,11 +37,38 @@ const statusFilter = document.getElementById("status-filter");
 const dateFilter = document.getElementById("date-filter");
 const clearDateBtn = document.getElementById("clear-date-btn");
 const ordersTbody = document.getElementById("orders-tbody");
+const overviewRecentTbody = document.getElementById("overview-recent-tbody");
 const tableEmpty = document.getElementById("table-empty");
 const tableLoading = document.getElementById("table-loading");
+
+/* Pagination & Inline Detail */
+const ordersPaginationInfo = document.getElementById("orders-pagination-info");
+const ordersPaginationBtns = document.getElementById("orders-pagination-btns");
+const inlineOrderDetailCard = document.getElementById("inline-order-detail-card");
+const inlineOrderDetailBody = document.getElementById("inline-order-detail-body");
+const ordersExportCsvBtn = document.getElementById("orders-export-csv-btn");
+
+/* Summary Metrics */
 const summaryTotalOrders = document.getElementById("summary-total-orders");
 const summaryTotalRevenue = document.getElementById("summary-total-revenue");
 const summaryTodayOrders = document.getElementById("summary-today-orders");
+const summaryTotalPcs = document.getElementById("summary-total-pcs");
+const summaryAvgPcs = document.getElementById("summary-avg-pcs");
+const summaryRevenueSub = document.getElementById("summary-revenue-sub");
+
+/* Orders Tab Status Cards */
+const ordersCardTotal = document.getElementById("orders-card-total");
+const ordersCardTotalSub = document.getElementById("orders-card-total-sub");
+const ordersCardPending = document.getElementById("orders-card-pending");
+const ordersCardPendingSub = document.getElementById("orders-card-pending-sub");
+const ordersCardSuccess = document.getElementById("orders-card-success");
+const ordersCardReview = document.getElementById("orders-card-review");
+const ordersCardReviewSub = document.getElementById("orders-card-review-sub");
+const ordersListSubtitle = document.getElementById("orders-list-subtitle");
+const overviewOrdersCountBadge = document.getElementById("overview-orders-count-badge");
+const overviewPendingSubtitle = document.getElementById("overview-pending-subtitle");
+
+/* Daily Report & Insights */
 const reportDateInput = document.getElementById("report-date");
 const reportTodayBtn = document.getElementById("report-today");
 const reportTotalOrders = document.getElementById("report-total-orders");
@@ -49,16 +83,32 @@ const reportDeltaOrders = document.getElementById("report-delta-orders");
 const reportDeltaItems = document.getElementById("report-delta-items");
 const reportDeltaRevenue = document.getElementById("report-delta-revenue");
 const chart7Day = document.getElementById("chart-7day");
+const overviewVariantBars = document.getElementById("overview-variant-bars");
+const overviewVariantTotalPcs = document.getElementById("overview-variant-total-pcs");
+
+/* Location Strip in Overview */
+const overviewLocationDateLabel = document.getElementById("overview-location-date-label");
+const stripSman1Count = document.getElementById("strip-sman1-count");
+const stripSman1Rev = document.getElementById("strip-sman1-rev");
+const stripSman5Count = document.getElementById("strip-sman5-count");
+const stripSman5Rev = document.getElementById("strip-sman5-rev");
+const stripOthersCount = document.getElementById("strip-others-count");
+const stripOthersRev = document.getElementById("strip-others-rev");
+
+/* Customer Insights */
 const insightTotalCustomers = document.getElementById("insight-total-customers");
 const insightRepeatRate = document.getElementById("insight-repeat-rate");
 const insightRepeatDetail = document.getElementById("insight-repeat-detail");
 const insightNewOldRatio = document.getElementById("insight-new-old-ratio");
 const insightNewOldDetail = document.getElementById("insight-new-old-detail");
+const insightBarNew = document.getElementById("insight-bar-new");
+const insightBarOld = document.getElementById("insight-bar-old");
+
+/* Modals */
 const orderModal = document.getElementById("order-modal");
 const orderModalBody = document.getElementById("order-modal-body");
 const orderModalClose = document.getElementById("order-modal-close");
 
-/* Bulk delete modal DOM */
 const bulkDeleteModal = document.getElementById("bulk-delete-modal");
 const bulkDeleteOpenBtn = document.getElementById("bulk-delete-open-btn");
 const bulkDeleteCloseBtn = document.getElementById("bulk-delete-close");
@@ -70,25 +120,21 @@ const bulkPreviewCount = document.getElementById("bulk-preview-count");
 const bulkPreviewNote = document.getElementById("bulk-preview-note");
 const bulkDeleteSubmitBtn = document.getElementById("bulk-delete-submit-btn");
 
-/* Settings tab DOM */
+/* Settings DOM */
 const settingsForm = document.getElementById("settings-form");
 const settingsQrisOwner = document.getElementById("settings-qris-owner");
 const settingsQrisImage = document.getElementById("settings-qris-image");
 const settingsQrisPreview = document.getElementById("settings-qris-preview");
+const settingsQrisPreviewMsg = document.getElementById("settings-qris-preview-msg");
 const settingsWa = document.getElementById("settings-wa");
 const settingsSubmit = document.getElementById("settings-submit");
 const settingsStatus = document.getElementById("settings-status");
 const settingsUpdated = document.getElementById("settings-updated");
 
-/* Stocks tab DOM */
-const stocksTbody = document.getElementById("stocks-tbody");
-const stocksLoading = document.getElementById("stocks-loading");
-const stocksEmpty = document.getElementById("stocks-empty");
-const stocksRefreshBtn = document.getElementById("stocks-refresh");
-
 /* PO Management DOM */
 const headerPoBadge = document.getElementById("header-po-badge");
 const headerPoText = document.getElementById("header-po-text");
+const sidebarPoDates = document.getElementById("sidebar-po-dates");
 const poCurrentBadge = document.getElementById("po-current-badge");
 const poInfoStatus = document.getElementById("po-info-status");
 const poInfoClose = document.getElementById("po-info-close");
@@ -101,7 +147,32 @@ const poProductionDate = document.getElementById("po-production-date");
 const poSubmitBtn = document.getElementById("po-submit-btn");
 const poStatusMsg = document.getElementById("po-status-msg");
 
-/* Stock Modal DOM */
+/* Stocks Tab & Modal DOM */
+const stocksTbody = document.getElementById("stocks-tbody");
+const stocksLoading = document.getElementById("stocks-loading");
+const stocksEmpty = document.getElementById("stocks-empty");
+const stocksRefreshBtn = document.getElementById("stocks-refresh");
+const stocksSummaryTotalPcs = document.getElementById("stocks-summary-total-pcs");
+const stocksSummarySkuCount = document.getElementById("stocks-summary-sku-count");
+const stocksSummaryLowCount = document.getElementById("stocks-summary-low-count");
+const stocksSummaryOutCount = document.getElementById("stocks-summary-out-count");
+const stockAlertBanner = document.getElementById("stock-alert-banner");
+const stockAlertText = document.getElementById("stock-alert-text");
+const stockHistoryTbody = document.getElementById("stock-history-tbody");
+
+/* Inline Stock Form */
+const inlineStockForm = document.getElementById("inline-stock-form");
+const inlineStockSelect = document.getElementById("inline-stock-select");
+const inlineStockCurrent = document.getElementById("inline-stock-current");
+const inlineStockInput = document.getElementById("inline-stock-input");
+const inlineStepMinus = document.getElementById("inline-step-minus");
+const inlineStepPlus = document.getElementById("inline-step-plus");
+const inlineStockReason = document.getElementById("inline-stock-reason");
+const inlineStockNote = document.getElementById("inline-stock-note");
+const inlineStockSubmit = document.getElementById("inline-stock-submit");
+const inlineStockMsg = document.getElementById("inline-stock-msg");
+
+/* Stock Popup Modal */
 const stockModal = document.getElementById("stock-modal");
 const stockModalClose = document.getElementById("stock-modal-close");
 const stockModalCancel = document.getElementById("stock-modal-cancel");
@@ -117,35 +188,40 @@ const stockModalNote = document.getElementById("stock-modal-note");
 const stockModalSave = document.getElementById("stock-modal-save");
 const stockModalError = document.getElementById("stock-modal-error");
 
-/* Finance tab DOM */
+/* Finance Tab DOM */
 const financeMonthInput = document.getElementById("finance-month");
 const financeRefreshBtn = document.getElementById("finance-refresh");
-
 const finRevenue = document.getElementById("fin-revenue");
 const finPeriodStatus = document.getElementById("fin-period-status");
+const finTotalSpent = document.getElementById("fin-total-spent");
+const finNetRemaining = document.getElementById("fin-net-remaining");
 
 const finHppPct = document.getElementById("fin-hpp-pct");
 const finHppAllocated = document.getElementById("fin-hpp-allocated");
 const finHppSpent = document.getElementById("fin-hpp-spent");
 const finHppRemaining = document.getElementById("fin-hpp-remaining");
 const finHppBar = document.getElementById("fin-hpp-bar");
+const finHppUsageLabel = document.getElementById("fin-hpp-usage-label");
 
 const finCashflowPct = document.getElementById("fin-cashflow-pct");
 const finCashflowAllocated = document.getElementById("fin-cashflow-allocated");
 const finCashflowSpent = document.getElementById("fin-cashflow-spent");
 const finCashflowRemaining = document.getElementById("fin-cashflow-remaining");
 const finCashflowBar = document.getElementById("fin-cashflow-bar");
+const finCashflowUsageLabel = document.getElementById("fin-cashflow-usage-label");
 
 const finProfitPct = document.getElementById("fin-profit-pct");
 const finProfitAllocated = document.getElementById("fin-profit-allocated");
 const finProfitDetail = document.getElementById("fin-profit-detail");
 const finProfitFinal = document.getElementById("fin-profit-final");
 
-/* Finance input tabs */
 const financeTabs = document.querySelectorAll(".finance-tab");
 const financeFormPanels = document.querySelectorAll(".finance-form-panel");
+const financeHistoryFilter = document.getElementById("finance-history-filter");
+const financeHistoryHppSection = document.getElementById("finance-history-hpp-section");
+const financeHistoryCfSection = document.getElementById("finance-history-cf-section");
+const financeHistoryTotalFooter = document.getElementById("finance-history-total-footer");
 
-/* HPP form */
 const hppForm = document.getElementById("hpp-form");
 const hppDate = document.getElementById("hpp-date");
 const hppItem = document.getElementById("hpp-item");
@@ -155,7 +231,6 @@ const hppAmount = document.getElementById("hpp-amount");
 const hppNote = document.getElementById("hpp-note");
 const hppSubmit = document.getElementById("hpp-submit");
 
-/* Cashflow form */
 const cashflowForm = document.getElementById("cashflow-form");
 const cfDate = document.getElementById("cf-date");
 const cfCategory = document.getElementById("cf-category");
@@ -164,7 +239,6 @@ const cfAmount = document.getElementById("cf-amount");
 const cfNote = document.getElementById("cf-note");
 const cfSubmit = document.getElementById("cf-submit");
 
-/* History */
 const hppHistoryTbody = document.getElementById("hpp-history-tbody");
 const hppHistoryEmpty = document.getElementById("hpp-history-empty");
 const hppHistoryMonth = document.getElementById("hpp-history-month");
@@ -178,18 +252,21 @@ const cfHistoryMonth = document.getElementById("cf-history-month");
    ========================= */
 
 let allOrders = [];
+let filteredOrdersList = [];
+let currentOrderPage = 1;
+const ORDERS_PER_PAGE = 8;
+let selectedInlineOrderId = null;
+
+let allStocks = [];
 let currentFinanceMonth = "";
 let currentFinanceSummary = null;
 let cashflowCategories = [];
+let currentPOData = null;
 
 /* =========================
    HELPERS — TIMEZONE (WIB)
    ========================= */
 
-/**
- * Parse ISO string dengan aman.
- * Kalau string gak ada timezone tag (naive), assume UTC.
- */
 function parseISOString(isoString) {
     if (!isoString) return null;
     const hasTz = /[Zz]$/.test(isoString) || /[+-]\d{2}:?\d{2}$/.test(isoString);
@@ -199,9 +276,6 @@ function parseISOString(isoString) {
     return d;
 }
 
-/**
- * Ambil komponen tanggal/jam di timezone Jakarta (WIB).
- */
 function getWIBParts(date) {
     if (!date || isNaN(date.getTime())) return null;
     const parts = new Intl.DateTimeFormat("en-CA", {
@@ -224,13 +298,12 @@ function getWIBParts(date) {
     };
 }
 
-
 /* =========================
    HELPERS — FORMAT
    ========================= */
 
 function formatRupiah(number) {
-    return "Rp" + Number(number).toLocaleString("id-ID");
+    return "Rp" + Number(number || 0).toLocaleString("id-ID");
 }
 
 function formatDate(isoString) {
@@ -249,7 +322,6 @@ function formatDate(isoString) {
 
 function formatDateShort(isoDate) {
     if (!isoDate) return "-";
-    // isoDate = "YYYY-MM-DD" (date only, gak ada timezone)
     const parts = String(isoDate).split("-");
     if (parts.length !== 3) return isoDate;
     const d = new Date(Date.UTC(+parts[0], +parts[1] - 1, +parts[2]));
@@ -270,7 +342,6 @@ function getLocalDateString(isoString) {
 }
 
 function getDateStringOffset(dateString, dayOffset) {
-    // dateString = "YYYY-MM-DD" (date only) — pakai UTC biar konsisten
     const parts = String(dateString).split("-");
     if (parts.length !== 3) return dateString;
     const d = new Date(Date.UTC(+parts[0], +parts[1] - 1, +parts[2]));
@@ -292,7 +363,6 @@ function getTodayDateString() {
     if (!p) return "";
     return `${p.year}-${p.month}-${p.day}`;
 }
-
 
 /* =========================
    HELPERS — LAINNYA
@@ -346,7 +416,7 @@ function getMetrics(orders) {
     orders.forEach((order) => {
         totalRevenue += order.total || 0;
         (order.items || []).forEach((item) => {
-            totalItems += item.quantity;
+            totalItems += item.quantity || 0;
         });
     });
     return { orders: orders.length, items: totalItems, revenue: totalRevenue };
@@ -374,7 +444,6 @@ function escapeHtml(text) {
 function getCustomerType(order) {
     const wa = normalizeWA(order.whatsapp);
     if (!wa) return "baru";
-
     const orderDateObj = parseISOString(order.createdAt);
     if (!orderDateObj) return "baru";
     const orderDate = orderDateObj.getTime();
@@ -389,9 +458,12 @@ function getCustomerType(order) {
     return previousOrders.length > 0 ? "lama" : "baru";
 }
 
+function getOrderTotalCookies(order) {
+    return (order.items || []).reduce((acc, it) => acc + (it.quantity || 0), 0);
+}
 
 /* =========================
-   VIEW SWITCH
+   VIEW & SIDEBAR SWITCH
    ========================= */
 
 function showLoginView() {
@@ -407,280 +479,65 @@ function showDashboardView() {
     dashboardView.hidden = false;
 }
 
+function closeMobileSidebar() {
+    if (adminSidebar) adminSidebar.classList.remove("open");
+    if (sidebarOverlay) sidebarOverlay.classList.remove("active");
+}
 
-/* =========================
-   TAB NAVIGATION (ORDERS / FINANCE)
-   ========================= */
+if (mobileMenuBtn) {
+    mobileMenuBtn.addEventListener("click", () => {
+        adminSidebar.classList.toggle("open");
+        sidebarOverlay.classList.toggle("active");
+    });
+}
+
+if (sidebarOverlay) {
+    sidebarOverlay.addEventListener("click", closeMobileSidebar);
+}
+
+const TAB_LABELS = {
+    overview: "Ringkasan",
+    orders: "Pesanan",
+    finance: "Keuangan",
+    stocks: "Stok",
+    settings: "Pengaturan"
+};
+
+function switchTab(targetTab) {
+    adminTabs.forEach((t) => {
+        t.classList.toggle("active", t.dataset.tab === targetTab);
+    });
+
+    tabContents.forEach((content) => {
+        const isActive = content.dataset.tabContent === targetTab;
+        content.classList.toggle("active", isActive);
+        content.hidden = !isActive;
+    });
+
+    if (topbarCurrentPage) {
+        topbarCurrentPage.innerText = TAB_LABELS[targetTab] || "Ringkasan";
+    }
+
+    closeMobileSidebar();
+
+    if (targetTab === "finance") loadFinance();
+    if (targetTab === "stocks") loadStocks();
+    if (targetTab === "settings") {
+        loadSettings();
+        loadPOSettings();
+    }
+}
 
 adminTabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-        const targetTab = tab.dataset.tab;
-
-        adminTabs.forEach((t) => t.classList.remove("active"));
-        tab.classList.add("active");
-
-        tabContents.forEach((content) => {
-            const isActive = content.dataset.tabContent === targetTab;
-            content.classList.toggle("active", isActive);
-            content.hidden = !isActive;
-        });
-
-        if (targetTab === "finance") {
-            loadFinance();
-        }
-
-        if (targetTab === "stocks") {
-            loadStocks();
-        }
-
-        if (targetTab === "settings") {
-            loadSettings();
-            loadPOSettings();
-        }
-    });
+    tab.addEventListener("click", () => switchTab(tab.dataset.tab));
 });
 
-
-/* =========================
-   STOCKS
-   ========================= */
-
-async function loadStocks() {
-    if (!stocksTbody) return;
-
-    if (stocksLoading) stocksLoading.hidden = false;
-    if (stocksEmpty) stocksEmpty.hidden = true;
-    stocksTbody.innerHTML = "";
-
-    try {
-        const response = await fetch(`${API_BASE}/api/admin/stocks`, {
-            headers: { "Authorization": `Bearer ${getToken()}` }
-        });
-
-        if (response.status === 401) {
-            clearToken();
-            showLoginView();
-            return;
-        }
-
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
-            if (stocksLoading) stocksLoading.hidden = true;
-            if (stocksEmpty) {
-                stocksEmpty.hidden = false;
-                stocksEmpty.innerText = result.message || "Gagal memuat stok.";
-            }
-            return;
-        }
-
-        renderStocks(result.items || []);
-
-    } catch (error) {
-        console.error("Load stocks error:", error);
-        if (stocksLoading) stocksLoading.hidden = true;
-        if (stocksEmpty) {
-            stocksEmpty.hidden = false;
-            stocksEmpty.innerText = "Gagal terhubung ke server.";
-        }
-    }
-}
-
-function renderStocks(items) {
-    if (!stocksTbody) return;
-
-    if (stocksLoading) stocksLoading.hidden = true;
-
-    if (!items || items.length === 0) {
-        if (stocksEmpty) stocksEmpty.hidden = false;
-        stocksTbody.innerHTML = "";
-        return;
-    }
-
-    if (stocksEmpty) stocksEmpty.hidden = true;
-
-    let html = "";
-
-    items.forEach((item) => {
-        const stock = item.stock;
-
-        let statusKey = "available";
-        let statusLabel = "Tersedia";
-        let rowClass = "";
-
-        if (stock <= 0) {
-            statusKey = "out";
-            statusLabel = "Habis";
-            rowClass = "row-out";
-        } else if (stock <= 5) {
-            statusKey = "low";
-            statusLabel = "Stok Terbatas";
-            rowClass = "row-low";
-        }
-
-        const countClass = statusKey === "out" ? "out" : statusKey === "low" ? "low" : "";
-
-        // Pisahkan nama produk & addon
-        let productName = escapeHtml(item.displayName || item.productId);
-        let addonText = "";
-
-        if (item.addonName) {
-            productName = escapeHtml(item.displayName.split(" (+ ")[0]);
-            addonText = `<span class="stocks-product-addon">+ ${escapeHtml(item.addonName)}</span>`;
-        }
-
-        html += `
-            <tr class="${rowClass}">
-                <td>
-                    <span class="stocks-product-name">${productName}</span>
-                    ${addonText}
-                </td>
-                <td class="align-right">
-                    <span class="stocks-count ${countClass}">${stock}</span>
-                </td>
-                <td class="align-center">
-                    <span class="stocks-badge ${statusKey}">${statusLabel}</span>
-                </td>
-                <td class="align-center">
-                    <button type="button" class="btn-stock-edit" data-id="${item.id}" data-name="${escapeHtml(item.displayName)}" data-stock="${stock}">
-                        ✏️ Ubah Stok
-                    </button>
-                </td>
-            </tr>
-        `;
-    });
-
-    stocksTbody.innerHTML = html;
-}
-
-if (stocksRefreshBtn) {
-    stocksRefreshBtn.addEventListener("click", () => loadStocks());
+if (goToOrdersBtn) {
+    goToOrdersBtn.addEventListener("click", () => switchTab("orders"));
 }
 
 /* =========================
-   STOCK MODAL & UPDATE
-   ========================= */
-
-function openStockModal(stockId, displayName, currentStock) {
-    if (!stockModal) return;
-    if (stockModalId) stockModalId.value = stockId;
-    if (stockModalProductName) stockModalProductName.innerText = displayName || "Produk";
-    if (stockModalCurrentDisplay) stockModalCurrentDisplay.innerText = `${currentStock} pcs`;
-    if (stockModalNewInput) stockModalNewInput.value = currentStock;
-    if (stockModalReason) stockModalReason.value = "restock";
-    if (stockModalNote) stockModalNote.value = "";
-    if (stockModalError) {
-        stockModalError.style.display = "none";
-        stockModalError.innerText = "";
-    }
-    stockModal.classList.add("active");
-    if (stockModalNewInput) stockModalNewInput.focus();
-}
-
-function closeStockModal() {
-    if (!stockModal) return;
-    stockModal.classList.remove("active");
-}
-
-if (stocksTbody) {
-    stocksTbody.addEventListener("click", (e) => {
-        const btn = e.target.closest(".btn-stock-edit");
-        if (!btn) return;
-        const id = btn.getAttribute("data-id");
-        const name = btn.getAttribute("data-name");
-        const stock = parseInt(btn.getAttribute("data-stock") || "0", 10);
-        openStockModal(id, name, stock);
-    });
-}
-
-if (stockModalClose) {
-    stockModalClose.addEventListener("click", closeStockModal);
-}
-if (stockModalCancel) {
-    stockModalCancel.addEventListener("click", closeStockModal);
-}
-if (stockModal) {
-    stockModal.addEventListener("click", (e) => {
-        if (e.target === stockModal) closeStockModal();
-    });
-}
-
-if (stockStepMinus) {
-    stockStepMinus.addEventListener("click", () => {
-        let val = parseInt(stockModalNewInput.value || "0", 10);
-        if (val > 0) stockModalNewInput.value = val - 1;
-    });
-}
-
-if (stockStepPlus) {
-    stockStepPlus.addEventListener("click", () => {
-        let val = parseInt(stockModalNewInput.value || "0", 10);
-        stockModalNewInput.value = val + 1;
-    });
-}
-
-if (stockModalForm) {
-    stockModalForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const stockId = stockModalId.value;
-        const newStock = parseInt(stockModalNewInput.value, 10);
-        const reason = stockModalReason.value;
-        const note = stockModalNote.value.trim();
-
-        if (isNaN(newStock) || newStock < 0) {
-            if (stockModalError) {
-                stockModalError.innerText = "Stok harus angka bulat >= 0.";
-                stockModalError.style.display = "block";
-            }
-            return;
-        }
-
-        const origBtnText = stockModalSave.innerText;
-        stockModalSave.disabled = true;
-        stockModalSave.innerText = "Menyimpan...";
-
-        try {
-            const response = await fetch(`${API_BASE}/api/admin/stocks/${stockId}`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${getToken()}`
-                },
-                body: JSON.stringify({
-                    stock: newStock,
-                    reason,
-                    note: note || undefined
-                })
-            });
-
-            const result = await response.json();
-
-            if (!response.ok || !result.success) {
-                if (stockModalError) {
-                    stockModalError.innerText = result.message || "Gagal mengubah stok.";
-                    stockModalError.style.display = "block";
-                }
-                return;
-            }
-
-            closeStockModal();
-            loadStocks();
-
-        } catch (err) {
-            console.error("Update stock error:", err);
-            if (stockModalError) {
-                stockModalError.innerText = "Gagal terhubung ke server.";
-                stockModalError.style.display = "block";
-            }
-        } finally {
-            stockModalSave.disabled = false;
-            stockModalSave.innerText = origBtnText;
-        }
-    });
-}
-
-/* =========================
-   LOGIN
+   LOGIN & LOGOUT
    ========================= */
 
 if (loginForm) {
@@ -717,15 +574,10 @@ if (loginForm) {
             loginError.innerText = "Gagal terhubung ke server.";
         } finally {
             loginSubmit.disabled = false;
-            loginSubmit.innerText = "Masuk";
+            loginSubmit.innerText = "Masuk ke Ruang Kerja";
         }
     });
 }
-
-
-/* =========================
-   LOGOUT
-   ========================= */
 
 if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
@@ -736,15 +588,14 @@ if (logoutBtn) {
     });
 }
 
-
 /* =========================
-   FETCH ORDERS
+   FETCH & RENDER ORDERS
    ========================= */
 
 async function loadOrders() {
-    tableLoading.hidden = false;
-    tableEmpty.hidden = true;
-    ordersTbody.innerHTML = "";
+    if (tableLoading) tableLoading.hidden = false;
+    if (tableEmpty) tableEmpty.hidden = true;
+    if (ordersTbody) ordersTbody.innerHTML = "";
 
     try {
         const response = await fetch(`${API_BASE}/api/orders`, {
@@ -760,9 +611,11 @@ async function loadOrders() {
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-            tableLoading.hidden = true;
-            tableEmpty.hidden = false;
-            tableEmpty.innerText = result.message || "Gagal memuat pesanan.";
+            if (tableLoading) tableLoading.hidden = true;
+            if (tableEmpty) {
+                tableEmpty.hidden = false;
+                tableEmpty.innerText = result.message || "Gagal memuat pesanan.";
+            }
             return;
         }
 
@@ -770,42 +623,78 @@ async function loadOrders() {
         renderSummary();
         renderCustomerInsights();
         applyFilters();
+        renderOverviewRecentOrders();
         renderDailyReport();
 
     } catch (error) {
         console.error("Load orders error:", error);
-        tableLoading.hidden = true;
-        tableEmpty.hidden = false;
-        tableEmpty.innerText = "Gagal terhubung ke server.";
+        if (tableLoading) tableLoading.hidden = true;
+        if (tableEmpty) {
+            tableEmpty.hidden = false;
+            tableEmpty.innerText = "Gagal terhubung ke server.";
+        }
     }
 }
 
-
-/* =========================
-   SUMMARY (ORDERS)
-   ========================= */
-
 function renderSummary() {
-    const successOrders = allOrders.filter(
-        (o) => (o.status || "pending") === "success"
-    );
+    const successOrders = allOrders.filter((o) => (o.status || "pending") === "success");
+    const pendingOrders = allOrders.filter((o) => (o.status || "pending") === "pending");
+    const expiredOrders = allOrders.filter((o) => o.status === "expired");
+    const failedOrders = allOrders.filter((o) => o.status === "failed");
 
-    const totalOrders = successOrders.length;
-
-    const totalRevenue = successOrders.reduce(
-        (sum, o) => sum + (o.total || 0), 0
-    );
+    const metricsSuccess = getMetrics(successOrders);
+    const metricsAll = getMetrics(allOrders);
 
     const todayWIB = getTodayDateString();
-    const todayOrders = successOrders.filter((o) => {
-        return getLocalDateString(o.createdAt) === todayWIB;
-    }).length;
+    const todayOrders = successOrders.filter((o) => getLocalDateString(o.createdAt) === todayWIB).length;
 
-    summaryTotalOrders.innerText = totalOrders;
-    summaryTotalRevenue.innerText = formatRupiah(totalRevenue);
-    summaryTodayOrders.innerText = todayOrders;
+    if (summaryTotalOrders) summaryTotalOrders.innerText = metricsSuccess.orders;
+    if (summaryTotalRevenue) summaryTotalRevenue.innerText = formatRupiah(metricsSuccess.revenue);
+    if (summaryTodayOrders) summaryTodayOrders.innerText = todayOrders;
+    if (summaryTotalPcs) summaryTotalPcs.innerText = `${metricsSuccess.items} pcs`;
+
+    const avgPcs = metricsSuccess.orders > 0
+        ? (metricsSuccess.items / metricsSuccess.orders).toFixed(1).replace(".0", "")
+        : 0;
+    if (summaryAvgPcs) summaryAvgPcs.innerText = `Rata-rata ${avgPcs} cookies per pesanan`;
+    if (summaryRevenueSub) summaryRevenueSub.innerText = `Nilai ${metricsSuccess.orders} pesanan sukses`;
+
+    if (sidebarOrdersBadge) sidebarOrdersBadge.innerText = pendingOrders.length || allOrders.length;
+    if (overviewOrdersCountBadge) overviewOrdersCountBadge.innerText = `${allOrders.length} pesanan`;
+    if (overviewPendingSubtitle) {
+        overviewPendingSubtitle.innerText = `Kelola pesanan masuk. Ada ${pendingOrders.length} pesanan menunggu konfirmasi.`;
+    }
+
+    if (ordersCardTotal) ordersCardTotal.innerText = allOrders.length;
+    if (ordersCardTotalSub) ordersCardTotalSub.innerText = `${metricsAll.items} cookies · Nilai ${formatRupiah(metricsAll.revenue)}`;
+    if (ordersCardPending) ordersCardPending.innerText = pendingOrders.length;
+
+    const claimedCount = pendingOrders.filter((o) => o.customerConfirmed === true).length;
+    if (ordersCardPendingSub) {
+        ordersCardPendingSub.innerText = claimedCount > 0
+            ? `${claimedCount} pelanggan klaim sudah bayar`
+            : "Periksa konfirmasi pelanggan";
+    }
+
+    if (ordersCardSuccess) ordersCardSuccess.innerText = successOrders.length;
+    if (ordersCardReview) ordersCardReview.innerText = expiredOrders.length + failedOrders.length;
+    if (ordersCardReviewSub) {
+        ordersCardReviewSub.innerText = `${expiredOrders.length} kedaluwarsa · ${failedOrders.length} gagal`;
+    }
+    if (ordersListSubtitle) {
+        ordersListSubtitle.innerText = `${allOrders.length} total pesanan · ${pendingOrders.length} menunggu konfirmasi`;
+    }
 }
 
+document.querySelectorAll("[data-quick-status]").forEach((card) => {
+    card.addEventListener("click", () => {
+        if (!statusFilter) return;
+        const val = card.dataset.quickStatus;
+        statusFilter.value = val === "review" ? "expired" : val;
+        currentOrderPage = 1;
+        applyFilters();
+    });
+});
 
 /* =========================
    CUSTOMER INSIGHTS
@@ -814,17 +703,13 @@ function renderSummary() {
 function renderCustomerInsights() {
     if (!insightTotalCustomers) return;
 
-    const successOrders = allOrders.filter(
-        (o) => (o.status || "pending") === "success"
-    );
-
+    const successOrders = allOrders.filter((o) => (o.status || "pending") === "success");
     const customerMap = {};
+
     successOrders.forEach((order) => {
         const wa = normalizeWA(order.whatsapp);
         if (!wa) return;
-        if (!customerMap[wa]) {
-            customerMap[wa] = { orderCount: 0, totalSpent: 0 };
-        }
+        if (!customerMap[wa]) customerMap[wa] = { orderCount: 0, totalSpent: 0 };
         customerMap[wa].orderCount += 1;
         customerMap[wa].totalSpent += order.total || 0;
     });
@@ -832,9 +717,7 @@ function renderCustomerInsights() {
     const customers = Object.values(customerMap);
     const totalCustomers = customers.length;
     const repeatCustomers = customers.filter((c) => c.orderCount > 1).length;
-    const repeatRate = totalCustomers > 0
-        ? Math.round((repeatCustomers / totalCustomers) * 100)
-        : 0;
+    const repeatRate = totalCustomers > 0 ? Math.round((repeatCustomers / totalCustomers) * 100) : 0;
 
     let newOrdersCount = 0;
     let oldOrdersCount = 0;
@@ -845,19 +728,20 @@ function renderCustomerInsights() {
     });
 
     const totalOrdersCount = newOrdersCount + oldOrdersCount;
-    const newPercent = totalOrdersCount > 0
-        ? Math.round((newOrdersCount / totalOrdersCount) * 100)
-        : 0;
+    const newPercent = totalOrdersCount > 0 ? Math.round((newOrdersCount / totalOrdersCount) * 100) : 0;
     const oldPercent = totalOrdersCount > 0 ? 100 - newPercent : 0;
 
     insightTotalCustomers.innerText = totalCustomers;
     insightRepeatRate.innerText = repeatRate + "%";
 
+    if (insightBarNew) insightBarNew.style.width = `${totalOrdersCount > 0 ? newPercent : 50}%`;
+    if (insightBarOld) insightBarOld.style.width = `${totalOrdersCount > 0 ? oldPercent : 50}%`;
+
     if (totalCustomers === 0) {
         insightRepeatDetail.innerText = "Belum ada data";
     } else {
         insightRepeatDetail.innerHTML =
-            `<strong>${repeatCustomers}</strong> dari ${totalCustomers} customer order >1x`;
+            `<strong>${repeatCustomers}</strong> dari ${totalCustomers} customer order &gt;1x`;
     }
 
     insightNewOldRatio.innerText = `${newPercent}% / ${oldPercent}%`;
@@ -870,9 +754,8 @@ function renderCustomerInsights() {
     }
 }
 
-
 /* =========================
-   FILTERS
+   FILTERS & PAGINATION
    ========================= */
 
 function applyFilters() {
@@ -881,9 +764,7 @@ function applyFilters() {
     const statFilter = statusFilter?.value || "all";
     const dateVal = dateFilter?.value || "";
 
-    if (clearDateBtn) {
-        clearDateBtn.hidden = !dateVal;
-    }
+    if (clearDateBtn) clearDateBtn.hidden = !dateVal;
 
     let filtered = allOrders;
 
@@ -896,10 +777,7 @@ function applyFilters() {
     }
 
     if (statFilter !== "all") {
-        filtered = filtered.filter((o) => {
-            const s = o.status || "pending";
-            return s === statFilter;
-        });
+        filtered = filtered.filter((o) => (o.status || "pending") === statFilter);
     }
 
     if (query) {
@@ -911,104 +789,280 @@ function applyFilters() {
         });
     }
 
-    renderOrders(filtered);
+    filteredOrdersList = filtered;
+    const totalPages = Math.max(1, Math.ceil(filteredOrdersList.length / ORDERS_PER_PAGE));
+    if (currentOrderPage > totalPages) currentOrderPage = 1;
+
+    renderOrders(filteredOrdersList);
 }
 
-if (searchInput) searchInput.addEventListener("input", applyFilters);
-if (locationFilter) locationFilter.addEventListener("change", applyFilters);
-if (statusFilter) statusFilter.addEventListener("change", applyFilters);
-if (dateFilter) dateFilter.addEventListener("change", applyFilters);
+if (searchInput) searchInput.addEventListener("input", () => { currentOrderPage = 1; applyFilters(); });
+if (locationFilter) locationFilter.addEventListener("change", () => { currentOrderPage = 1; applyFilters(); });
+if (statusFilter) statusFilter.addEventListener("change", () => { currentOrderPage = 1; applyFilters(); });
+if (dateFilter) dateFilter.addEventListener("change", () => { currentOrderPage = 1; applyFilters(); });
 if (clearDateBtn) {
     clearDateBtn.addEventListener("click", () => {
         if (dateFilter) dateFilter.value = "";
+        currentOrderPage = 1;
         applyFilters();
     });
 }
 if (refreshBtn) refreshBtn.addEventListener("click", () => loadOrders());
+if (overviewRefreshBtn) overviewRefreshBtn.addEventListener("click", () => loadOrders());
 
+function buildOrderRowHtml(order, isOverviewTable = false) {
+    const waLink = `https://wa.me/${normalizeWA(order.whatsapp)}`;
+    const locLabel = getLocationLabel(order.location);
+    const locClass = getLocationClass(order.location);
+    const custType = getCustomerType(order);
+    const statusVal = order.status || "pending";
+    const statusClass = getStatusClass(statusVal);
+    const statusLabel = getStatusLabel(statusVal);
+    const paymentMethod = order.paymentMethod || "cash";
+    const paymentLabel = paymentMethod === "qris" ? "QRIS" : "Cash";
+    const pcsCount = getOrderTotalCookies(order);
+    const isSelected = selectedInlineOrderId === order.orderId && !isOverviewTable;
 
-/* =========================
-   RENDER ORDERS TABLE
-   ========================= */
-
-function renderOrders(orders) {
-    tableLoading.hidden = true;
-
-    if (!orders || orders.length === 0) {
-        ordersTbody.innerHTML = "";
-        tableEmpty.hidden = false;
-        tableEmpty.innerText = "Belum ada pesanan.";
-        return;
+    let paymentSub = statusVal === "success" ? "Lunas" : "Belum lunas";
+    let paymentSubClass = "";
+    if (statusVal === "pending" && order.customerConfirmed) {
+        paymentSub = "✓ Klaim sudah bayar";
+        paymentSubClass = "claimed";
     }
 
-    tableEmpty.hidden = true;
-    let html = "";
+    return `
+        <tr class="${isSelected ? "is-selected-row" : ""}">
+            <td>
+                <span class="cell-order-id">${escapeHtml(order.orderId || "-")}</span>
+                <span class="cell-order-date">${formatDate(order.createdAt)}</span>
+            </td>
+            <td>
+                <div class="cell-customer">
+                    <span class="customer-name">${escapeHtml(order.customerName || "-")}</span>
+                    <span class="customer-badge ${custType}">${custType === "baru" ? "Baru" : "Lama"}</span>
+                </div>
+            </td>
+            <td class="cell-wa">
+                <a href="${waLink}" target="_blank" rel="noopener">${escapeHtml(order.whatsapp || "-")}</a>
+            </td>
+            <td>
+                <span class="location-badge ${locClass}">${escapeHtml(locLabel)}</span>
+                ${order.locationDetail ? `<span class="location-subtext">${escapeHtml(order.locationDetail)}</span>` : ""}
+            </td>
+            <td>
+                <span class="payment-cell-title">${paymentLabel}</span>
+                <span class="payment-cell-sub ${paymentSubClass}">${paymentSub}</span>
+            </td>
+            <td>
+                <span class="status-badge ${statusClass}">${statusLabel}</span>
+            </td>
+            <td class="align-right">
+                <span class="cell-total-amount">${formatRupiah(order.total || 0)}</span>
+                <span class="cell-total-pcs">${pcsCount} cookies</span>
+            </td>
+            <td class="align-right">
+                <button type="button" class="btn-detail ${isSelected ? "is-open" : ""}" data-order-id="${escapeHtml(order.orderId)}" data-overview="${isOverviewTable ? "1" : "0"}">
+                    ${isSelected ? "Terbuka" : "Detail"}
+                </button>
+            </td>
+        </tr>
+    `;
+}
 
-        orders.forEach((order, index) => {
-        const waLink = `https://wa.me/${normalizeWA(order.whatsapp)}`;
-        const locLabel = getLocationLabel(order.location);
-        const locClass = getLocationClass(order.location);
-        const custType = getCustomerType(order);
-        const statusVal = order.status || "pending";
-        const statusClass = getStatusClass(statusVal);
-        const statusLabel = getStatusLabel(statusVal);
-        const paymentMethod = order.paymentMethod || "cash";
-        const paymentLabel = paymentMethod === "qris" ? "QRIS" : "Cash";
-
-        html += `
-            <tr>
-                <td class="cell-order-id">${order.orderId || "-"}</td>
-                <td>${formatDate(order.createdAt)}</td>
-                <td>
-                    <div class="cell-customer">
-                        <span class="customer-name">${escapeHtml(order.customerName || "-")}</span>
-                        <span class="customer-badge ${custType}">
-                            ${custType === "baru" ? "Baru" : "Lama"}
-                        </span>
-                    </div>
-                </td>
-                <td>
-                    <span class="location-badge ${locClass}">
-                        ${escapeHtml(locLabel)}
-                    </span>
-                </td>
-                <td>
-                    <span class="payment-badge payment-${paymentMethod}">
-                        ${paymentLabel}
-                    </span>
-                </td>
-                <td>
-                    <span class="status-badge ${statusClass}">
-                        ${statusLabel}
-                    </span>
-                </td>
-                <td class="cell-wa">
-                    <a href="${waLink}" target="_blank" rel="noopener">
-                        ${escapeHtml(order.whatsapp || "-")}
-                    </a>
-                </td>
-                <td class="cell-total">${formatRupiah(order.total || 0)}</td>
-                <td>
-                    <button class="btn-detail" data-index="${index}">Detail</button>
-                </td>
-            </tr>
-        `;
-    });
-
-    ordersTbody.innerHTML = html;
-
-    ordersTbody.querySelectorAll(".btn-detail").forEach((btn) => {
+function renderOverviewRecentOrders() {
+    if (!overviewRecentTbody) return;
+    const recent = allOrders.slice(0, 6);
+    if (recent.length === 0) {
+        overviewRecentTbody.innerHTML = `<tr><td colspan="8" class="empty-state-sm">Belum ada pesanan.</td></tr>`;
+        return;
+    }
+    overviewRecentTbody.innerHTML = recent.map((o) => buildOrderRowHtml(o, true)).join("");
+    overviewRecentTbody.querySelectorAll(".btn-detail").forEach((btn) => {
         btn.addEventListener("click", () => {
-            const idx = Number(btn.dataset.index);
-            openOrderModal(orders[idx]);
+            const ord = allOrders.find((o) => o.orderId === btn.dataset.orderId);
+            if (ord) openOrderModal(ord);
         });
     });
 }
 
+function renderOrders(orders) {
+    if (tableLoading) tableLoading.hidden = true;
+
+    if (!orders || orders.length === 0) {
+        if (ordersTbody) ordersTbody.innerHTML = "";
+        if (tableEmpty) {
+            tableEmpty.hidden = false;
+            tableEmpty.innerText = "Belum ada pesanan.";
+        }
+        if (ordersPaginationInfo) ordersPaginationInfo.innerText = "Menampilkan 0 pesanan";
+        if (ordersPaginationBtns) ordersPaginationBtns.innerHTML = "";
+        if (inlineOrderDetailCard) inlineOrderDetailCard.hidden = true;
+        return;
+    }
+
+    if (tableEmpty) tableEmpty.hidden = true;
+
+    const totalItems = orders.length;
+    const totalPages = Math.ceil(totalItems / ORDERS_PER_PAGE);
+    const startIdx = (currentOrderPage - 1) * ORDERS_PER_PAGE;
+    const pageOrders = orders.slice(startIdx, startIdx + ORDERS_PER_PAGE);
+
+    if (!selectedInlineOrderId || !orders.some((o) => o.orderId === selectedInlineOrderId)) {
+        selectedInlineOrderId = pageOrders[0]?.orderId || null;
+    }
+
+    ordersTbody.innerHTML = pageOrders.map((o) => buildOrderRowHtml(o, false)).join("");
+
+    ordersTbody.querySelectorAll(".btn-detail").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const orderId = btn.dataset.orderId;
+            selectedInlineOrderId = orderId;
+            renderOrders(orders);
+            const targetOrder = allOrders.find((o) => o.orderId === orderId);
+            renderInlineOrderDetail(targetOrder);
+        });
+    });
+
+    if (ordersPaginationInfo) {
+        const endNum = Math.min(startIdx + ORDERS_PER_PAGE, totalItems);
+        ordersPaginationInfo.innerText = `Menampilkan ${startIdx + 1}–${endNum} dari ${totalItems} pesanan`;
+    }
+
+    if (ordersPaginationBtns) {
+        let pHtml = `<button type="button" class="page-btn" data-page="${currentOrderPage - 1}" ${currentOrderPage <= 1 ? "disabled" : ""}>Sebelumnya</button>`;
+        for (let p = 1; p <= totalPages; p++) {
+            if (totalPages <= 6 || p === 1 || p === totalPages || Math.abs(p - currentOrderPage) <= 1) {
+                pHtml += `<button type="button" class="page-btn ${p === currentOrderPage ? "active" : ""}" data-page="${p}">${p}</button>`;
+            }
+        }
+        pHtml += `<button type="button" class="page-btn" data-page="${currentOrderPage + 1}" ${currentOrderPage >= totalPages ? "disabled" : ""}>Berikutnya</button>`;
+        ordersPaginationBtns.innerHTML = pHtml;
+
+        ordersPaginationBtns.querySelectorAll(".page-btn").forEach((b) => {
+            b.addEventListener("click", () => {
+                const targetPage = Number(b.dataset.page);
+                if (targetPage >= 1 && targetPage <= totalPages) {
+                    currentOrderPage = targetPage;
+                    renderOrders(orders);
+                }
+            });
+        });
+    }
+
+    const activeOrder = allOrders.find((o) => o.orderId === selectedInlineOrderId);
+    renderInlineOrderDetail(activeOrder);
+}
 
 /* =========================
-   ORDER DETAIL MODAL
+   INLINE ORDER DETAIL & MODAL
    ========================= */
+
+function renderInlineOrderDetail(order) {
+    if (!inlineOrderDetailCard || !inlineOrderDetailBody) return;
+    if (!order) {
+        inlineOrderDetailCard.hidden = true;
+        return;
+    }
+
+    inlineOrderDetailCard.hidden = false;
+
+    const locLabel = getLocationLabel(order.location);
+    const custType = getCustomerType(order);
+    const statusVal = order.status || "pending";
+    const statusClass = getStatusClass(statusVal);
+    const statusLabel = getStatusLabel(statusVal);
+    const paymentMethod = order.paymentMethod || "cash";
+    const paymentLabel = paymentMethod === "qris" ? "QRIS" : "Cash (COD)";
+    const locFieldLabel = order.location === "others" ? "Alamat" : "Kelas / Detail";
+
+    const itemsHtml = (order.items || []).map((item) => `
+        <div class="inline-item-row">
+            <span>
+                ${item.quantity}x ${escapeHtml(item.name)}
+                ${item.addonName ? `<small style="display:block;color:var(--gold-text);">+ ${escapeHtml(item.addonName)}</small>` : ""}
+            </span>
+            <strong>${formatRupiah(item.subtotal || (item.price * item.quantity))}</strong>
+        </div>
+    `).join("");
+
+    inlineOrderDetailBody.innerHTML = `
+        <div class="card-header-row">
+            <div>
+                <h2 class="card-title">Detail pesanan · ${escapeHtml(order.orderId)}</h2>
+                <p class="card-subtitle">Pesanan terpilih dari daftar di atas · Dibuat ${formatDate(order.createdAt)} WIB</p>
+            </div>
+            <button type="button" class="btn-outline-sm" id="inline-open-modal-btn">Buka Pop-up Detail ↗</button>
+        </div>
+
+        <div class="inline-detail-grid">
+            <div class="inline-detail-col">
+                <div class="page-title-row" style="margin-bottom:10px;">
+                    <strong>${escapeHtml(order.customerName || "-")}</strong>
+                    <span class="customer-badge ${custType}">${custType === "baru" ? "Customer Baru" : "Customer Lama"}</span>
+                </div>
+                <div class="meta-kv-row"><span>WhatsApp</span><strong>${escapeHtml(order.whatsapp || "-")}</strong></div>
+                <div class="meta-kv-row"><span>Lokasi</span><strong>${escapeHtml(locLabel)}</strong></div>
+                <div class="meta-kv-row"><span>${locFieldLabel}</span><strong>${escapeHtml(order.locationDetail || "-")}</strong></div>
+                <div class="meta-kv-row"><span>Catatan</span><strong>${escapeHtml(order.note || "-")}</strong></div>
+                <div class="mt-12">
+                    <a href="https://wa.me/${normalizeWA(order.whatsapp)}" target="_blank" rel="noopener" class="btn-outline-sm">
+                        Hubungi via WhatsApp
+                    </a>
+                </div>
+            </div>
+
+            <div class="inline-detail-col">
+                <h4>Produk &amp; tambahan</h4>
+                <div class="inline-items-list">
+                    ${itemsHtml || "<span>-</span>"}
+                </div>
+                <div class="inline-total-row">
+                    <span>Total pesanan</span>
+                    <strong>${formatRupiah(order.total || 0)}</strong>
+                </div>
+            </div>
+
+            <div class="inline-detail-col">
+                <div class="page-title-row" style="margin-bottom:8px;">
+                    <span class="badge-pill badge-gold">${paymentLabel}</span>
+                    <span class="status-badge ${statusClass}">${statusLabel}</span>
+                </div>
+                <p class="text-muted-sm" style="margin-bottom:12px;">
+                    ${order.customerConfirmed
+                        ? `✓ Customer klaim sudah bayar (${formatDate(order.customerConfirmedAt)}). Cocokkan penerimaan sebelum konfirmasi.`
+                        : "Pastikan pembayaran telah diterima sebelum menandai pesanan sukses."}
+                </p>
+                <div class="inline-actions-stack">
+                    ${statusVal !== "success"
+                        ? `<button type="button" class="btn-primary inline-action-btn" data-action="success" data-order-id="${escapeHtml(order.orderId)}">✓ Tandai Sukses</button>`
+                        : ""}
+                    <div class="inline-actions-row">
+                        ${statusVal !== "pending"
+                            ? `<button type="button" class="btn-outline-sm inline-action-btn" data-action="pending" data-order-id="${escapeHtml(order.orderId)}">Tandai Pending</button>`
+                            : ""}
+                        ${statusVal !== "expired"
+                            ? `<button type="button" class="btn-outline-sm inline-action-btn" data-action="expired" data-order-id="${escapeHtml(order.orderId)}">× Tandai Expired</button>`
+                            : ""}
+                        <button type="button" class="btn-outline-sm btn-danger-outline inline-action-btn" data-action="delete" data-order-id="${escapeHtml(order.orderId)}">Hapus Pesanan</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const popupBtn = document.getElementById("inline-open-modal-btn");
+    if (popupBtn) popupBtn.addEventListener("click", () => openOrderModal(order));
+
+    inlineOrderDetailBody.querySelectorAll(".inline-action-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const action = btn.dataset.action;
+            const orderId = btn.dataset.orderId;
+            if (!action || !orderId) return;
+            if (action === "delete") deleteOrder(orderId, btn);
+            else updateOrderStatus(orderId, action, btn);
+        });
+    });
+}
 
 function openOrderModal(order) {
     if (!order) return;
@@ -1019,7 +1073,7 @@ function openOrderModal(order) {
             <div class="detail-item">
                 <span class="item-name">
                     ${item.quantity}x ${escapeHtml(item.name)}
-                    ${item.addonName ? `<span class="item-addon">+ ${escapeHtml(item.addonName)}</span>` : ""}
+                    ${item.addonName ? `<span class="item-addon" style="display:block;font-size:11.5px;color:var(--gold-text);">+ ${escapeHtml(item.addonName)}</span>` : ""}
                 </span>
                 <span class="item-price">
                     ${formatRupiah(item.subtotal || (item.price * item.quantity))}
@@ -1041,7 +1095,7 @@ function openOrderModal(order) {
 
     const locDetail = order.locationDetail
         ? `<div class="detail-row">
-               <span class="label">Alamat</span>
+               <span class="label">${order.location === "others" ? "Alamat" : "Kelas / Alamat"}</span>
                <span class="value">${escapeHtml(order.locationDetail)}</span>
            </div>`
         : "";
@@ -1069,7 +1123,7 @@ function openOrderModal(order) {
             </span>
         </div>
 
-                <div class="detail-row">
+        <div class="detail-row">
             <span class="label">Lokasi</span>
             <span class="value">
                 <span class="location-badge ${locClass}">${escapeHtml(locLabel)}</span>
@@ -1088,7 +1142,7 @@ function openOrderModal(order) {
                 ? `<div class="detail-row">
                        <span class="label">Konfirmasi</span>
                        <span class="value">
-                           <span class="confirmed-badge">Customer klaim sudah bayar</span>
+                           <span class="badge-pill badge-green">✓ Customer klaim sudah bayar</span>
                        </span>
                    </div>`
                 : ""
@@ -1112,7 +1166,7 @@ function openOrderModal(order) {
 
         <div class="detail-items">
             <h4>Produk</h4>
-            ${itemsHtml || "<p style='color:var(--cream-soft);font-size:13px;'>-</p>"}
+            ${itemsHtml || "<p style='color:var(--text-muted);font-size:13px;'>-</p>"}
         </div>
 
         <div class="detail-total">
@@ -1121,21 +1175,21 @@ function openOrderModal(order) {
         </div>
 
         <div class="modal-actions">
-            <p class="modal-actions-label">Ubah Status</p>
+            <p class="mini-label" style="margin-bottom:4px;">Ubah Status</p>
 
             ${statusVal !== "success"
                 ? `<button class="action-btn success" data-action="success" data-order-id="${order.orderId}">✓ Tandai Sukses</button>`
                 : ""}
 
             ${statusVal !== "pending"
-                ? `<button class="action-btn pending" data-action="pending" data-order-id="${order.orderId}">⏳ Tandai Pending</button>`
+                ? `<button class="action-btn pending" data-action="pending" data-order-id="${order.orderId}">Tandai Pending</button>`
                 : ""}
 
             ${statusVal !== "expired"
                 ? `<button class="action-btn expired" data-action="expired" data-order-id="${order.orderId}">× Tandai Expired</button>`
                 : ""}
 
-            <button class="action-btn delete" data-action="delete" data-order-id="${order.orderId}">🗑️ Hapus Pesanan</button>
+            <button class="action-btn delete" data-action="delete" data-order-id="${order.orderId}">Hapus Pesanan</button>
         </div>
     `;
 
@@ -1157,7 +1211,7 @@ function openOrderModal(order) {
 }
 
 function closeOrderModal() {
-    orderModal.classList.remove("active");
+    if (orderModal) orderModal.classList.remove("active");
 }
 
 if (orderModalClose) orderModalClose.addEventListener("click", closeOrderModal);
@@ -1167,9 +1221,8 @@ if (orderModal) {
     });
 }
 
-
 /* =========================
-   UPDATE ORDER STATUS
+   UPDATE & DELETE ORDER
    ========================= */
 
 async function updateOrderStatus(orderId, newStatus, btnEl) {
@@ -1213,8 +1266,10 @@ async function updateOrderStatus(orderId, newStatus, btnEl) {
         }
 
         applyFilters();
+        renderOverviewRecentOrders();
         renderSummary();
         renderCustomerInsights();
+        renderDailyReport();
 
         btnEl.innerText = "✓ Berhasil";
         setTimeout(() => {
@@ -1228,11 +1283,6 @@ async function updateOrderStatus(orderId, newStatus, btnEl) {
         btnEl.innerText = originalText;
     }
 }
-
-
-/* =========================
-   DELETE ORDER
-   ========================= */
 
 async function deleteOrder(orderId, btnEl) {
     if (!orderId) return;
@@ -1278,16 +1328,15 @@ async function deleteOrder(orderId, btnEl) {
             return;
         }
 
-        /* Hapus order dari state lokal */
         allOrders = allOrders.filter((o) => o.orderId !== orderId);
 
         closeOrderModal();
         applyFilters();
+        renderOverviewRecentOrders();
         renderSummary();
         renderCustomerInsights();
         renderDailyReport();
 
-        /* Jika pesanan pending, stok dikembalikan, reload data stok */
         if (isPending) {
             loadStocks();
         }
@@ -1301,7 +1350,6 @@ async function deleteOrder(orderId, btnEl) {
         btnEl.innerText = originalText;
     }
 }
-
 
 /* =========================
    BULK DELETE ORDERS
@@ -1357,7 +1405,7 @@ function updateBulkPreview() {
         } else {
             const hasPending = matching.some((o) => (o.status || "pending") === "pending");
             if (hasPending) {
-                bulkPreviewNote.innerHTML = `⚠️ Termasuk pesanan berstatus <strong>pending</strong>. Stok pesanan pending akan otomatis dikembalikan ke inventaris.`;
+                bulkPreviewNote.innerHTML = `Termasuk pesanan berstatus <strong>pending</strong>. Stok pesanan pending akan otomatis dikembalikan ke inventaris.`;
             } else {
                 bulkPreviewNote.innerText = "Stok untuk pesanan expired/success/failed tidak akan berubah.";
             }
@@ -1449,9 +1497,8 @@ if (bulkStartDate) bulkStartDate.addEventListener("change", updateBulkPreview);
 if (bulkEndDate) bulkEndDate.addEventListener("change", updateBulkPreview);
 if (bulkDeleteSubmitBtn) bulkDeleteSubmitBtn.addEventListener("click", executeBulkDelete);
 
-
 /* =========================
-   DAILY REPORT
+   DAILY REPORT & 7-DAY CHART
    ========================= */
 
 function setReportDateToToday() {
@@ -1500,15 +1547,22 @@ function renderDailyReport() {
         reportDeltaOrders.innerText = "";
         reportDeltaItems.innerText = "";
         reportDeltaRevenue.innerText = "";
-        reportTbody.innerHTML = "";
-        reportLocationTbody.innerHTML = "";
-        reportEmpty.hidden = false;
-        reportLocationEmpty.hidden = false;
-        reportEmpty.innerText = "Pilih tanggal untuk melihat laporan.";
-        reportLocationEmpty.innerText = "Pilih tanggal untuk melihat laporan.";
+        if (reportTbody) reportTbody.innerHTML = "";
+        if (overviewVariantBars) overviewVariantBars.innerHTML = "";
+        if (reportLocationTbody) reportLocationTbody.innerHTML = "";
+        if (reportEmpty) {
+            reportEmpty.hidden = false;
+            reportEmpty.innerText = "Pilih tanggal untuk melihat laporan.";
+        }
+        if (reportLocationEmpty) {
+            reportLocationEmpty.hidden = false;
+            reportLocationEmpty.innerText = "Pilih tanggal untuk melihat laporan.";
+        }
         render7DayChart();
         return;
     }
+
+    if (overviewLocationDateLabel) overviewLocationDateLabel.innerText = formatDateShort(selectedDate);
 
     const dayOrders = allOrders.filter(
         (order) =>
@@ -1530,22 +1584,35 @@ function renderDailyReport() {
     renderDelta(reportDeltaItems, currentMetrics.items, previousMetrics.items);
     renderDelta(reportDeltaRevenue, currentMetrics.revenue, previousMetrics.revenue);
 
+    if (overviewVariantTotalPcs) overviewVariantTotalPcs.innerText = `${currentMetrics.items} pcs`;
+
     if (dayOrders.length === 0) {
         reportTotalOrders.innerText = "0";
         reportTotalItems.innerText = "0";
         reportTotalRevenue.innerText = formatRupiah(0);
-        reportTbody.innerHTML = "";
-        reportLocationTbody.innerHTML = "";
-        reportEmpty.hidden = false;
-        reportLocationEmpty.hidden = false;
-        reportEmpty.innerText = "Belum ada order di tanggal ini.";
-        reportLocationEmpty.innerText = "Belum ada order di tanggal ini.";
+        if (reportTbody) reportTbody.innerHTML = "";
+        if (overviewVariantBars) overviewVariantBars.innerHTML = "";
+        if (reportLocationTbody) reportLocationTbody.innerHTML = "";
+        if (reportEmpty) {
+            reportEmpty.hidden = false;
+            reportEmpty.innerText = "Belum ada order di tanggal ini.";
+        }
+        if (reportLocationEmpty) {
+            reportLocationEmpty.hidden = false;
+            reportLocationEmpty.innerText = "Belum ada order di tanggal ini.";
+        }
+        if (stripSman1Count) stripSman1Count.innerText = "0 pesanan";
+        if (stripSman1Rev) stripSman1Rev.innerText = formatRupiah(0);
+        if (stripSman5Count) stripSman5Count.innerText = "0 pesanan";
+        if (stripSman5Rev) stripSman5Rev.innerText = formatRupiah(0);
+        if (stripOthersCount) stripOthersCount.innerText = "0 pesanan";
+        if (stripOthersRev) stripOthersRev.innerText = formatRupiah(0);
         render7DayChart();
         return;
     }
 
-    reportEmpty.hidden = true;
-    reportLocationEmpty.hidden = true;
+    if (reportEmpty) reportEmpty.hidden = true;
+    if (reportLocationEmpty) reportLocationEmpty.hidden = true;
 
     const variantMap = {};
     const locationMap = {};
@@ -1596,6 +1663,17 @@ function renderDailyReport() {
         });
     });
 
+    /* Update Location Strip in Overview */
+    const s1 = locationMap["sman1"] || { count: 0, subtotal: 0 };
+    const s5 = locationMap["sman5"] || { count: 0, subtotal: 0 };
+    const ot = locationMap["others"] || { count: 0, subtotal: 0 };
+    if (stripSman1Count) stripSman1Count.innerText = `${s1.count} pesanan`;
+    if (stripSman1Rev) stripSman1Rev.innerText = formatRupiah(s1.subtotal);
+    if (stripSman5Count) stripSman5Count.innerText = `${s5.count} pesanan`;
+    if (stripSman5Rev) stripSman5Rev.innerText = formatRupiah(s5.subtotal);
+    if (stripOthersCount) stripOthersCount.innerText = `${ot.count} pesanan`;
+    if (stripOthersRev) stripOthersRev.innerText = formatRupiah(ot.subtotal);
+
     reportTotalOrders.innerText = currentMetrics.orders;
     reportTotalItems.innerText = currentMetrics.items;
     reportTotalRevenue.innerText = formatRupiah(currentMetrics.revenue);
@@ -1604,6 +1682,22 @@ function renderDailyReport() {
         if (b.qty !== a.qty) return b.qty - a.qty;
         return a.name.localeCompare(b.name);
     });
+
+    const maxVarQty = Math.max(...variants.map((v) => v.qty), 1);
+    if (overviewVariantBars) {
+        overviewVariantBars.innerHTML = variants.map((v) => `
+            <div class="variant-bar-item">
+                <div class="variant-bar-top">
+                    <strong>${escapeHtml(v.name)}</strong>
+                    <span>${formatRupiah(v.subtotal)}</span>
+                </div>
+                <span class="variant-bar-sub">${v.qty} pcs</span>
+                <div class="variant-bar-track">
+                    <div class="variant-bar-fill" style="width:${Math.round((v.qty / maxVarQty) * 100)}%;"></div>
+                </div>
+            </div>
+        `).join("");
+    }
 
     let html = "";
     variants.forEach((v) => {
@@ -1615,7 +1709,7 @@ function renderDailyReport() {
             </tr>
         `;
     });
-    reportTbody.innerHTML = html;
+    if (reportTbody) reportTbody.innerHTML = html;
 
     const locOrder = { "sman1": 1, "sman5": 2, "others": 3, "unknown": 99 };
     const locations = Object.entries(locationMap)
@@ -1656,15 +1750,10 @@ function renderDailyReport() {
         });
     });
 
-    reportLocationTbody.innerHTML = locHtml;
+    if (reportLocationTbody) reportLocationTbody.innerHTML = locHtml;
 
     render7DayChart();
 }
-
-
-/* =========================
-   7-DAY CHART
-   ========================= */
 
 function render7DayChart() {
     if (!chart7Day) return;
@@ -1692,7 +1781,6 @@ function render7DayChart() {
         const heightPercent = (day.count / maxCount) * 100;
         const isActive = day.date === baseDate;
 
-        // Ambil day & month dari string (gak butuh Date object)
         const parts = day.date.split("-");
         const dayNum = parts[2];
         const monthNum = parts[1];
@@ -1718,9 +1806,8 @@ function render7DayChart() {
     });
 }
 
-
 /* =========================
-   EXPORT CSV
+   EXPORT CSV (100% RESTORED)
    ========================= */
 
 function exportDailyCSV() {
@@ -1745,7 +1832,6 @@ function exportDailyCSV() {
         return `"${str}"`;
     }
 
-    /* Kelompokkan pesanan berdasarkan lokasi */
     const groups = [
         {
             key: "sman1",
@@ -1764,7 +1850,6 @@ function exportDailyCSV() {
         }
     ];
 
-    /* Urutkan pesanan di sekolah berdasarkan kelas (locationDetail) */
     groups.forEach((g) => {
         g.orders.sort((a, b) => {
             const locA = (a.locationDetail || "").toLowerCase();
@@ -1783,7 +1868,6 @@ function exportDailyCSV() {
 
     const lines = [];
 
-    /* Header ringkasan laporan */
     lines.push([`LAPORAN PESANAN VELACOOKIES — TANGGAL ${selectedDate}`].map(csvCell).join(","));
     lines.push([`Total Pesanan: ${dayOrders.length} Pesanan`].map(csvCell).join(","));
     lines.push("");
@@ -1807,15 +1891,12 @@ function exportDailyCSV() {
         grandTotalRevenue += groupTotal;
         grandTotalPcs += groupPcs;
 
-        /* Baris judul kelompok lokasi */
         lines.push([
             `=== LOKASI: ${group.title} (${group.orders.length} Pesanan | ${groupPcs} Pcs | Rp${groupTotal.toLocaleString("id-ID")}) ===`
         ].map(csvCell).join(","));
 
-        /* Header kolom */
         lines.push(headers.map(csvCell).join(","));
 
-        /* Baris data pesanan */
         group.orders.forEach((order) => {
             const itemsText = (order.items || [])
                 .map((item) => {
@@ -1847,16 +1928,14 @@ function exportDailyCSV() {
             lines.push(row.map(csvCell).join(","));
         });
 
-        /* Subtotal per lokasi */
         lines.push([
             `SUBTOTAL ${group.title}`, "", "", "", "", "", "", "", "", "",
             `${groupPcs} pcs`, groupTotal
         ].map(csvCell).join(","));
 
-        lines.push(""); /* Baris kosong antar kelompok */
+        lines.push("");
     });
 
-    /* Grand total */
     lines.push([
         "GRAND TOTAL KESELURUHAN", "", "", "", "", "", "", "", "", "",
         `${grandTotalPcs} pcs`, grandTotalRevenue
@@ -1879,6 +1958,7 @@ function exportDailyCSV() {
 }
 
 if (reportExportBtn) reportExportBtn.addEventListener("click", exportDailyCSV);
+if (ordersExportCsvBtn) ordersExportCsvBtn.addEventListener("click", exportDailyCSV);
 
 if (reportDateInput) {
     reportDateInput.addEventListener("change", renderDailyReport);
@@ -1893,9 +1973,385 @@ if (reportTodayBtn) {
     });
 }
 
+/* =========================
+   STOCKS (INLINE + MODAL)
+   ========================= */
+
+async function loadStocks() {
+    if (!stocksTbody) return;
+
+    if (stocksLoading) stocksLoading.hidden = false;
+    if (stocksEmpty) stocksEmpty.hidden = true;
+    stocksTbody.innerHTML = "";
+
+    try {
+        const [stocksRes, historyRes] = await Promise.all([
+            fetch(`${API_BASE}/api/admin/stocks`, { headers: { "Authorization": `Bearer ${getToken()}` } }),
+            fetch(`${API_BASE}/api/admin/stocks/history?limit=15`, { headers: { "Authorization": `Bearer ${getToken()}` } })
+        ]);
+
+        if (stocksRes.status === 401) {
+            clearToken();
+            showLoginView();
+            return;
+        }
+
+        const result = await stocksRes.json();
+        const historyData = historyRes.ok ? await historyRes.json() : { items: [] };
+
+        if (!stocksRes.ok || !result.success) {
+            if (stocksLoading) stocksLoading.hidden = true;
+            if (stocksEmpty) {
+                stocksEmpty.hidden = false;
+                stocksEmpty.innerText = result.message || "Gagal memuat stok.";
+            }
+            return;
+        }
+
+        allStocks = result.items || [];
+        renderStocks(allStocks);
+        renderStockHistory(historyData.items || []);
+
+    } catch (error) {
+        console.error("Load stocks error:", error);
+        if (stocksLoading) stocksLoading.hidden = true;
+        if (stocksEmpty) {
+            stocksEmpty.hidden = false;
+            stocksEmpty.innerText = "Gagal terhubung ke server.";
+        }
+    }
+}
+
+function renderStocks(items) {
+    if (!stocksTbody) return;
+    if (stocksLoading) stocksLoading.hidden = true;
+
+    let totalPcs = 0;
+    let lowCount = 0;
+    let outCount = 0;
+
+    (items || []).forEach((it) => {
+        totalPcs += Math.max(0, it.stock || 0);
+        if (it.stock <= 0) outCount += 1;
+        else if (it.stock <= 5) lowCount += 1;
+    });
+
+    if (stocksSummaryTotalPcs) stocksSummaryTotalPcs.innerText = `${totalPcs} pcs`;
+    if (stocksSummarySkuCount) stocksSummarySkuCount.innerText = (items || []).length;
+    if (stocksSummaryLowCount) stocksSummaryLowCount.innerText = `${lowCount} item`;
+    if (stocksSummaryOutCount) stocksSummaryOutCount.innerText = `${outCount} item`;
+
+    if (stockAlertBanner && stockAlertText) {
+        if (lowCount > 0 || outCount > 0) {
+            stockAlertBanner.hidden = false;
+            stockAlertText.innerText = `Perhatian: Ada ${outCount} SKU habis dan ${lowCount} SKU dengan stok terbatas (≤5 pcs).`;
+        } else {
+            stockAlertBanner.hidden = true;
+        }
+    }
+
+    if (!items || items.length === 0) {
+        if (stocksEmpty) stocksEmpty.hidden = false;
+        stocksTbody.innerHTML = "";
+        return;
+    }
+
+    if (stocksEmpty) stocksEmpty.hidden = true;
+
+    if (inlineStockSelect) {
+        const prevVal = inlineStockSelect.value;
+        inlineStockSelect.innerHTML = items.map((it) =>
+            `<option value="${it.id}" data-stock="${it.stock}">${escapeHtml(it.displayName)} (${it.stock} pcs)</option>`
+        ).join("");
+        if (prevVal && items.some((i) => String(i.id) === String(prevVal))) {
+            inlineStockSelect.value = prevVal;
+        }
+        syncInlineStockForm();
+    }
+
+    let html = "";
+
+    items.forEach((item) => {
+        const stock = item.stock;
+
+        let statusKey = "available";
+        let statusLabel = "Tersedia";
+        let rowClass = "";
+
+        if (stock <= 0) {
+            statusKey = "out";
+            statusLabel = "Habis";
+            rowClass = "row-out";
+        } else if (stock <= 5) {
+            statusKey = "low";
+            statusLabel = "Stok Terbatas";
+            rowClass = "row-low";
+        }
+
+        const countClass = statusKey === "out" ? "out" : statusKey === "low" ? "low" : "";
+
+        let productName = escapeHtml(item.displayName || item.productId);
+        let addonText = "";
+
+        if (item.addonName) {
+            productName = escapeHtml(item.displayName.split(" (+ ")[0]);
+            addonText = `<span class="stocks-product-addon">+ ${escapeHtml(item.addonName)}</span>`;
+        }
+
+        html += `
+            <tr class="${rowClass}">
+                <td>
+                    <span class="stocks-product-name">${productName}</span>
+                    ${addonText}
+                </td>
+                <td class="align-right">
+                    <span class="stocks-count ${countClass}">${stock}</span>
+                </td>
+                <td class="align-center">
+                    <span class="stocks-badge ${statusKey}">${statusLabel}</span>
+                </td>
+                <td class="align-right">
+                    <button type="button" class="btn-stock-edit" data-id="${item.id}" data-name="${escapeHtml(item.displayName)}" data-stock="${stock}">
+                        Ubah Stok
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+
+    stocksTbody.innerHTML = html;
+}
+
+function renderStockHistory(historyItems) {
+    if (!stockHistoryTbody) return;
+    if (!historyItems || historyItems.length === 0) {
+        stockHistoryTbody.innerHTML = `<tr><td colspan="5" class="empty-state-sm">Belum ada riwayat perubahan stok.</td></tr>`;
+        return;
+    }
+
+    const reasonMap = {
+        order: "Pesanan baru",
+        order_restored: "Order Restored / Expired",
+        order_deleted: "Pesanan dihapus",
+        bulk_order_deleted: "Hapus massal",
+        restock: "Restock",
+        admin_adjust: "Penyesuaian Admin"
+    };
+
+    stockHistoryTbody.innerHTML = historyItems.map((h) => {
+        const sign = h.changeAmount > 0 ? `+${h.changeAmount}` : h.changeAmount;
+        const colorClass = h.changeAmount > 0 ? "text-green" : "";
+        const skuLabel = h.addonName ? `${h.productId} (+ ${h.addonName})` : h.productId;
+        return `
+            <tr>
+                <td>${formatDate(h.createdAt)}</td>
+                <td><strong>${escapeHtml(skuLabel)}</strong></td>
+                <td>${escapeHtml(reasonMap[h.reason] || h.reason)} ${h.orderId ? `(${escapeHtml(h.orderId)})` : ""} ${h.note ? `· ${escapeHtml(h.note)}` : ""}</td>
+                <td class="align-right"><strong class="${colorClass}">${sign}</strong></td>
+                <td class="align-right">${h.stockAfter} pcs</td>
+            </tr>
+        `;
+    }).join("");
+}
+
+function syncInlineStockForm() {
+    if (!inlineStockSelect) return;
+    const selectedItem = allStocks.find((it) => String(it.id) === String(inlineStockSelect.value));
+    if (!selectedItem) return;
+    if (inlineStockCurrent) inlineStockCurrent.innerText = `${selectedItem.stock} pcs`;
+    if (inlineStockInput) inlineStockInput.value = selectedItem.stock;
+}
+
+if (inlineStockSelect) inlineStockSelect.addEventListener("change", syncInlineStockForm);
+if (inlineStepMinus) {
+    inlineStepMinus.addEventListener("click", () => {
+        const v = parseInt(inlineStockInput.value || "0", 10);
+        if (v > 0) inlineStockInput.value = v - 1;
+    });
+}
+if (inlineStepPlus) {
+    inlineStepPlus.addEventListener("click", () => {
+        const v = parseInt(inlineStockInput.value || "0", 10);
+        inlineStockInput.value = v + 1;
+    });
+}
+
+if (inlineStockForm) {
+    inlineStockForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const stockId = inlineStockSelect.value;
+        const newStock = parseInt(inlineStockInput.value, 10);
+        const reason = inlineStockReason.value;
+        const note = inlineStockNote.value.trim();
+
+        if (!stockId || isNaN(newStock) || newStock < 0) return;
+
+        inlineStockSubmit.disabled = true;
+        inlineStockSubmit.innerText = "Menyimpan...";
+
+        try {
+            const response = await fetch(`${API_BASE}/api/admin/stocks/${stockId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${getToken()}`
+                },
+                body: JSON.stringify({ stock: newStock, reason, note: note || undefined })
+            });
+
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                if (inlineStockMsg) {
+                    inlineStockMsg.innerText = result.message || "Gagal mengubah stok.";
+                    inlineStockMsg.className = "settings-status error mt-8";
+                }
+                return;
+            }
+
+            inlineStockNote.value = "";
+            if (inlineStockMsg) {
+                inlineStockMsg.innerText = "✓ Stok berhasil diupdate!";
+                inlineStockMsg.className = "settings-status success mt-8";
+                setTimeout(() => { inlineStockMsg.innerText = ""; }, 3000);
+            }
+            loadStocks();
+
+        } catch (err) {
+            console.error("Inline stock update error:", err);
+        } finally {
+            inlineStockSubmit.disabled = false;
+            inlineStockSubmit.innerText = "✓ Simpan perubahan stok";
+        }
+    });
+}
+
+/* POP-UP STOCK MODAL (RESTORED 100%) */
+function openStockModal(stockId, displayName, currentStock) {
+    if (!stockModal) return;
+    if (stockModalId) stockModalId.value = stockId;
+    if (stockModalProductName) stockModalProductName.innerText = displayName || "Produk";
+    if (stockModalCurrentDisplay) stockModalCurrentDisplay.innerText = `${currentStock} pcs`;
+    if (stockModalNewInput) stockModalNewInput.value = currentStock;
+    if (stockModalReason) stockModalReason.value = "restock";
+    if (stockModalNote) stockModalNote.value = "";
+    if (stockModalError) {
+        stockModalError.style.display = "none";
+        stockModalError.innerText = "";
+    }
+    stockModal.classList.add("active");
+    if (stockModalNewInput) stockModalNewInput.focus();
+}
+
+function closeStockModal() {
+    if (!stockModal) return;
+    stockModal.classList.remove("active");
+}
+
+if (stocksTbody) {
+    stocksTbody.addEventListener("click", (e) => {
+        const btn = e.target.closest(".btn-stock-edit");
+        if (!btn) return;
+        const id = btn.getAttribute("data-id");
+        const name = btn.getAttribute("data-name");
+        const stock = parseInt(btn.getAttribute("data-stock") || "0", 10);
+
+        /* Sinkronkan ke form samping sekaligus buka modal pop-up */
+        if (inlineStockSelect) {
+            inlineStockSelect.value = id;
+            syncInlineStockForm();
+        }
+        openStockModal(id, name, stock);
+    });
+}
+
+if (stockModalClose) stockModalClose.addEventListener("click", closeStockModal);
+if (stockModalCancel) stockModalCancel.addEventListener("click", closeStockModal);
+if (stockModal) {
+    stockModal.addEventListener("click", (e) => {
+        if (e.target === stockModal) closeStockModal();
+    });
+}
+
+if (stockStepMinus) {
+    stockStepMinus.addEventListener("click", () => {
+        let val = parseInt(stockModalNewInput.value || "0", 10);
+        if (val > 0) stockModalNewInput.value = val - 1;
+    });
+}
+
+if (stockStepPlus) {
+    stockStepPlus.addEventListener("click", () => {
+        let val = parseInt(stockModalNewInput.value || "0", 10);
+        stockModalNewInput.value = val + 1;
+    });
+}
+
+if (stockModalForm) {
+    stockModalForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const stockId = stockModalId.value;
+        const newStock = parseInt(stockModalNewInput.value, 10);
+        const reason = stockModalReason.value;
+        const note = stockModalNote.value.trim();
+
+        if (isNaN(newStock) || newStock < 0) {
+            if (stockModalError) {
+                stockModalError.innerText = "Stok harus angka bulat >= 0.";
+                stockModalError.style.display = "block";
+            }
+            return;
+        }
+
+        const origBtnText = stockModalSave.innerText;
+        stockModalSave.disabled = true;
+        stockModalSave.innerText = "Menyimpan...";
+
+        try {
+            const response = await fetch(`${API_BASE}/api/admin/stocks/${stockId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${getToken()}`
+                },
+                body: JSON.stringify({
+                    stock: newStock,
+                    reason,
+                    note: note || undefined
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                if (stockModalError) {
+                    stockModalError.innerText = result.message || "Gagal mengubah stok.";
+                    stockModalError.style.display = "block";
+                }
+                return;
+            }
+
+            closeStockModal();
+            loadStocks();
+
+        } catch (err) {
+            console.error("Update stock error:", err);
+            if (stockModalError) {
+                stockModalError.innerText = "Gagal terhubung ke server.";
+                stockModalError.style.display = "block";
+            }
+        } finally {
+            stockModalSave.disabled = false;
+            stockModalSave.innerText = origBtnText;
+        }
+    });
+}
+
+if (stocksRefreshBtn) {
+    stocksRefreshBtn.addEventListener("click", () => loadStocks());
+}
 
 /* =========================
-   FINANCE — LOAD DATA
+   FINANCE — LOAD & RENDER
    ========================= */
 
 async function loadFinance() {
@@ -1975,11 +2431,6 @@ function populateCategorySelect() {
     if (currentVal) cfCategory.value = currentVal;
 }
 
-
-/* =========================
-   FINANCE — RENDER SUMMARY
-   ========================= */
-
 function renderFinanceSummary(s) {
     if (!s) return;
 
@@ -1992,42 +2443,51 @@ function renderFinanceSummary(s) {
     };
     finPeriodStatus.innerText = statusMap[s.periodStatus] || "—";
 
+    const spent = (s.hppSpent || 0) + (s.cashflowSpent || 0);
+    if (finTotalSpent) finTotalSpent.innerText = formatRupiah(spent);
+    if (finNetRemaining) finNetRemaining.innerText = formatRupiah(s.profitFinal);
+    if (financeHistoryTotalFooter) financeHistoryTotalFooter.innerText = formatRupiah(spent);
+
     finHppPct.innerText = s.hppPct + "%";
     finHppAllocated.innerText = formatRupiah(s.hppAllocated);
     finHppSpent.innerText = formatRupiah(s.hppSpent);
     finHppRemaining.innerText = formatRupiah(s.hppRemaining);
-    updateProgressBar(finHppBar, s.hppSpent, s.hppAllocated);
+    updateProgressBar(finHppBar, s.hppSpent, s.hppAllocated, finHppUsageLabel);
 
     finCashflowPct.innerText = s.cashflowPct + "%";
     finCashflowAllocated.innerText = formatRupiah(s.cashflowAllocated);
     finCashflowSpent.innerText = formatRupiah(s.cashflowSpent);
     finCashflowRemaining.innerText = formatRupiah(s.cashflowRemaining);
-    updateProgressBar(finCashflowBar, s.cashflowSpent, s.cashflowAllocated);
+    updateProgressBar(finCashflowBar, s.cashflowSpent, s.cashflowAllocated, finCashflowUsageLabel);
 
     finProfitPct.innerText = s.profitPct + "%";
     finProfitAllocated.innerText = formatRupiah(s.profitAllocated);
-
-    const spent = (s.hppSpent || 0) + (s.cashflowSpent || 0);
     finProfitDetail.innerText = `−${formatRupiah(spent)}`;
     finProfitFinal.innerText = formatRupiah(s.profitFinal);
 }
 
-function updateProgressBar(el, spent, allocated) {
+function updateProgressBar(el, spent, allocated, labelEl) {
     if (!el) return;
     if (allocated <= 0) {
         el.style.width = "0%";
         el.classList.remove("over");
+        if (labelEl) labelEl.innerText = "0% terpakai";
         return;
     }
+    const rawPct = ((spent / allocated) * 100).toFixed(1).replace(".0", "");
     const pct = Math.min((spent / allocated) * 100, 100);
     el.style.width = pct + "%";
     el.classList.toggle("over", spent > allocated);
+    if (labelEl) labelEl.innerText = `${rawPct}% terpakai`;
 }
 
-
-/* =========================
-   FINANCE — HISTORY: HPP
-   ========================= */
+if (financeHistoryFilter) {
+    financeHistoryFilter.addEventListener("change", () => {
+        const v = financeHistoryFilter.value;
+        if (financeHistoryHppSection) financeHistoryHppSection.hidden = (v === "cashflow");
+        if (financeHistoryCfSection) financeHistoryCfSection.hidden = (v === "hpp");
+    });
+}
 
 async function loadHppHistory() {
     if (!hppHistoryTbody) return;
@@ -2061,10 +2521,14 @@ async function loadHppHistory() {
             html += `
                 <tr>
                     <td>${formatDateShort(item.purchaseDate)}</td>
-                    <td>${escapeHtml(item.itemName)}</td>
-                    <td>${escapeHtml(qtyText)}</td>
-                    <td class="align-right cell-amount">${formatRupiah(item.amount)}</td>
                     <td>
+                        <strong>${escapeHtml(item.itemName)}</strong>
+                        ${item.note ? `<small style="display:block;color:var(--text-muted);">${escapeHtml(item.note)}</small>` : ""}
+                    </td>
+                    <td>${escapeHtml(qtyText)}</td>
+                    <td><span class="badge-pill badge-green">HPP</span></td>
+                    <td class="align-right cell-amount">${formatRupiah(item.amount)}</td>
+                    <td class="align-right">
                         <button class="btn-delete-small" data-hpp-id="${item.id}">Hapus</button>
                     </td>
                 </tr>
@@ -2083,11 +2547,6 @@ async function loadHppHistory() {
         console.error("Load HPP history error:", error);
     }
 }
-
-
-/* =========================
-   FINANCE — HISTORY: CASHFLOW
-   ========================= */
 
 async function loadCashflowHistory() {
     if (!cfHistoryTbody) return;
@@ -2118,9 +2577,13 @@ async function loadCashflowHistory() {
                 <tr>
                     <td>${formatDateShort(item.transactionDate)}</td>
                     <td>${escapeHtml(item.categoryName || "-")}</td>
-                    <td>${escapeHtml(item.description)}</td>
-                    <td class="align-right cell-amount">${formatRupiah(item.amount)}</td>
                     <td>
+                        <strong>${escapeHtml(item.description)}</strong>
+                        ${item.note ? `<small style="display:block;color:var(--text-muted);">${escapeHtml(item.note)}</small>` : ""}
+                    </td>
+                    <td><span class="badge-pill badge-gold">Cashflow</span></td>
+                    <td class="align-right cell-amount">${formatRupiah(item.amount)}</td>
+                    <td class="align-right">
                         <button class="btn-delete-small" data-cf-id="${item.id}">Hapus</button>
                     </td>
                 </tr>
@@ -2139,11 +2602,6 @@ async function loadCashflowHistory() {
         console.error("Load cashflow history error:", error);
     }
 }
-
-
-/* =========================
-   FINANCE — FORM: HPP
-   ========================= */
 
 if (hppForm) {
     hppForm.addEventListener("submit", async (e) => {
@@ -2217,11 +2675,6 @@ if (hppForm) {
     });
 }
 
-
-/* =========================
-   FINANCE — FORM: CASHFLOW
-   ========================= */
-
 if (cashflowForm) {
     cashflowForm.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -2292,11 +2745,6 @@ if (cashflowForm) {
     });
 }
 
-
-/* =========================
-   FINANCE — DELETE
-   ========================= */
-
 async function deleteHppPurchase(id) {
     if (!confirm("Hapus pembelian ini?")) return;
 
@@ -2355,11 +2803,6 @@ async function deleteCashflowTransaction(id) {
     }
 }
 
-
-/* =========================
-   FINANCE — INPUT TABS
-   ========================= */
-
 financeTabs.forEach((tab) => {
     tab.addEventListener("click", () => {
         const target = tab.dataset.financeTab;
@@ -2374,11 +2817,6 @@ financeTabs.forEach((tab) => {
     });
 });
 
-
-/* =========================
-   FINANCE — EVENT LISTENERS
-   ========================= */
-
 if (financeMonthInput) {
     financeMonthInput.value = getCurrentMonthString();
     financeMonthInput.addEventListener("change", () => {
@@ -2391,9 +2829,8 @@ if (financeRefreshBtn) {
     financeRefreshBtn.addEventListener("click", () => loadFinance());
 }
 
-
 /* =========================
-   FINANCE — EXPORT EXCEL
+   FINANCE — EXPORT EXCEL (100% RESTORED STYLING)
    ========================= */
 
 const financeExportBtn = document.getElementById("finance-export");
@@ -2788,45 +3225,8 @@ if (financeExportBtn) {
     financeExportBtn.addEventListener("click", exportFinanceExcel);
 }
 
-
 /* =========================
-   INIT
-   ========================= */
-
-(async function init() {
-    if (hppDate) hppDate.value = getTodayDateString();
-    if (cfDate) cfDate.value = getTodayDateString();
-
-    const token = getToken();
-    if (!token) {
-        showLoginView();
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE}/api/admin/me`, {
-            headers: { "Authorization": `Bearer ${token}` }
-        });
-
-        if (!response.ok) {
-            clearToken();
-            showLoginView();
-            return;
-        }
-
-        showDashboardView();
-        loadOrders();
-        loadPOSettings();
-
-    } catch (error) {
-        console.error("Init error:", error);
-        clearToken();
-        showLoginView();
-    }
-})();
-
-/* =========================
-   SETTINGS (PAYMENT)
+   SETTINGS (PAYMENT & PO — 100% RESTORED)
    ========================= */
 
 async function loadSettings() {
@@ -2853,6 +3253,102 @@ async function loadSettings() {
     }
 }
 
+/* =========================================================
+   PREVIEW QRIS
+   ========================================================= */
+
+const QRIS_DEFAULT_URL = "/images/qris.jpeg";
+let qrisPreviewToken = 0;
+let qrisPreviewTimer = null;
+
+// "frontend\images\qris.jpeg" -> "frontend/images/qris.jpeg"
+function normalizeQrisPath(rawValue) {
+    return String(rawValue || "").trim().replace(/\\/g, "/");
+}
+
+// Path yang disarankan untuk website asli: tanpa "frontend/", diawali "/"
+function suggestQrisPath(rawValue) {
+    const value = normalizeQrisPath(rawValue);
+    return "/" + value.replace(/^\.?\/+/, "").replace(/^frontend\//i, "");
+}
+
+// Daftar URL yang dicoba berurutan sampai ada yang berhasil dimuat
+function buildQrisCandidates(rawValue) {
+    const value = normalizeQrisPath(rawValue) || QRIS_DEFAULT_URL;
+
+    // URL lengkap / data URI dipakai apa adanya
+    if (/^(https?:)?\/\//i.test(value) || /^(data|blob):/i.test(value)) {
+        return [value];
+    }
+
+    const noLead = value.replace(/^\.?\/+/, "");
+    const noFrontend = noLead.replace(/^frontend\//i, "");
+
+    return [...new Set([
+        value,
+        "/" + noLead,
+        noLead,
+        "/" + noFrontend,
+        noFrontend
+    ])];
+}
+
+function probeImage(url) {
+    return new Promise((resolve) => {
+        const probe = new Image();
+        probe.onload = () => resolve(true);
+        probe.onerror = () => resolve(false);
+        probe.src = url;
+    });
+}
+
+function setQrisPreviewMessage(text, type) {
+    if (!settingsQrisPreviewMsg) return;
+    settingsQrisPreviewMsg.textContent = text || "";
+    settingsQrisPreviewMsg.className = "form-help qris-preview-msg" + (type ? " is-" + type : "");
+    settingsQrisPreviewMsg.hidden = !text;
+}
+
+async function updateQrisPreview(rawValue) {
+    if (!settingsQrisPreview) return;
+
+    const token = ++qrisPreviewToken;
+    const raw = String(rawValue || "").trim();
+    const candidates = buildQrisCandidates(raw);
+
+    for (let i = 0; i < candidates.length; i++) {
+        const ok = await probeImage(candidates[i]);
+        if (token !== qrisPreviewToken) return; // sudah ada input yang lebih baru
+
+        if (!ok) continue;
+
+        settingsQrisPreview.alt = "QRIS Preview";
+        settingsQrisPreview.src = candidates[i];
+
+        if (i === 0 || !raw) {
+            setQrisPreviewMessage("", "");
+        } else if (/\\/.test(raw) || /^\/?frontend[\\/]/i.test(raw)) {
+            setQrisPreviewMessage(
+                `Path "${raw}" memakai format folder lokal. Preview tampil, tetapi di website asli gambar bisa gagal dimuat. Gunakan: ${suggestQrisPath(raw)}`,
+                "warning"
+            );
+        } else {
+            setQrisPreviewMessage(
+                `Path "${raw}" tidak terbaca langsung dari halaman admin ini, jadi preview memakai ${candidates[i]}. Cek lagi jika gambar di halaman pembayaran tidak muncul.`,
+                "warning"
+            );
+        }
+        return;
+    }
+
+    settingsQrisPreview.removeAttribute("src");
+    settingsQrisPreview.alt = "Gambar tidak ditemukan";
+    setQrisPreviewMessage(
+        `Gambar tidak ditemukan di "${raw || QRIS_DEFAULT_URL}". Pastikan file ada di folder images/ dan path benar, contoh: /images/qris.jpeg`,
+        "error"
+    );
+}
+
 function renderSettings(settings) {
     if (!settings) return;
 
@@ -2864,9 +3360,7 @@ function renderSettings(settings) {
         settingsQrisImage.value = settings.qrisImageUrl || "";
     }
 
-    if (settingsQrisPreview) {
-        settingsQrisPreview.src = settings.qrisImageUrl || "/images/qris.jpeg";
-    }
+    updateQrisPreview(settings.qrisImageUrl);
 
     if (settingsWa) {
         settingsWa.value = settings.adminWaNumber || "";
@@ -2973,17 +3467,10 @@ if (settingsForm) {
 
 if (settingsQrisImage) {
     settingsQrisImage.addEventListener("input", () => {
-        if (settingsQrisPreview) {
-            settingsQrisPreview.src = settingsQrisImage.value.trim() || "/images/qris.jpeg";
-        }
+        clearTimeout(qrisPreviewTimer);
+        qrisPreviewTimer = setTimeout(() => updateQrisPreview(settingsQrisImage.value), 350);
     });
 }
-
-/* =========================
-   SETTINGS (PRE-ORDER / PO)
-   ========================= */
-
-let currentPOData = null;
 
 async function loadPOSettings() {
     try {
@@ -3003,18 +3490,17 @@ async function loadPOSettings() {
         currentPOData = result.po;
         const isOpen = result.isOpen === true;
 
-        // 1. Update Header Badge
         if (headerPoBadge && headerPoText) {
-            if (isOpen) {
-                headerPoBadge.className = "po-header-badge open";
-                headerPoText.innerText = "PO: DIBUKA";
-            } else {
-                headerPoBadge.className = "po-header-badge closed";
-                headerPoText.innerText = "PO: DITUTUP";
-            }
+            headerPoBadge.classList.toggle("closed", !isOpen);
+            headerPoText.innerText = isOpen ? "Pre-order dibuka" : "Pre-order ditutup";
         }
 
-        // 2. Update Card Badges & Info in Settings Tab
+        if (sidebarPoDates) {
+            sidebarPoDates.innerText = (isOpen && currentPOData?.tanggalTutup)
+                ? `Tutup: ${formatDate(currentPOData.tanggalTutup)}`
+                : "Tidak ada batch aktif";
+        }
+
         if (poCurrentBadge) {
             poCurrentBadge.className = isOpen ? "po-badge badge-open" : "po-badge badge-closed";
             poCurrentBadge.innerText = isOpen ? "PO DIBUKA" : "PO DITUTUP";
@@ -3022,8 +3508,8 @@ async function loadPOSettings() {
 
         if (poInfoStatus) {
             poInfoStatus.innerHTML = isOpen
-                ? "<span style='color: #4ade80; font-weight: 700;'>🟢 Pre-Order Sedang Aktif</span>"
-                : "<span style='color: #f87171; font-weight: 700;'>🔴 Pre-Order Sedang Ditutup</span>";
+                ? "<span style='color: var(--green-text); font-weight: 700;'>Pre-Order Sedang Aktif</span>"
+                : "<span style='color: var(--danger); font-weight: 700;'>Pre-Order Sedang Ditutup</span>";
         }
 
         if (poInfoClose) {
@@ -3042,13 +3528,11 @@ async function loadPOSettings() {
             btnClosePo.style.display = isOpen ? "inline-flex" : "none";
         }
 
-        // 3. Update Form State
         if (poFormTitle && poSubmitBtn) {
             if (isOpen) {
                 poFormTitle.innerText = "Perbarui Jadwal Pre-Order Aktif";
-                poSubmitBtn.innerText = "💾 Simpan Perubahan Jadwal";
+                poSubmitBtn.innerText = "Simpan Perubahan Jadwal";
 
-                // Prefill datetime-local and date inputs in WIB
                 if (poCloseDate && currentPOData?.tanggalTutup) {
                     const d = parseISOString(currentPOData.tanggalTutup);
                     const parts = getWIBParts(d);
@@ -3066,9 +3550,8 @@ async function loadPOSettings() {
                 }
             } else {
                 poFormTitle.innerText = "Buka Periode Pre-Order Baru";
-                poSubmitBtn.innerText = "🚀 Buka Pre-Order Sekarang";
+                poSubmitBtn.innerText = "Buka Pre-Order Sekarang";
 
-                // Set default suggestion: tutup besok lusa jam 23:59, produksi 3 hari lagi
                 const now = new Date();
                 const defaultClose = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
                 const defaultProd = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
@@ -3199,7 +3682,7 @@ async function handleClosePO() {
     } finally {
         if (btnClosePo) {
             btnClosePo.disabled = false;
-            btnClosePo.innerText = "🛑 Tutup Pre-Order Sekarang";
+            btnClosePo.innerText = "Tutup PO Sekarang";
         }
     }
 }
@@ -3213,8 +3696,41 @@ if (btnClosePo) {
 }
 
 if (headerPoBadge) {
-    headerPoBadge.addEventListener("click", () => {
-        const tabBtn = document.querySelector('.admin-tab[data-tab="settings"]');
-        if (tabBtn) tabBtn.click();
-    });
+    headerPoBadge.addEventListener("click", () => switchTab("settings"));
 }
+
+/* =========================
+   INIT
+   ========================= */
+
+(async function init() {
+    if (hppDate) hppDate.value = getTodayDateString();
+    if (cfDate) cfDate.value = getTodayDateString();
+
+    const token = getToken();
+    if (!token) {
+        showLoginView();
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/api/admin/me`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            clearToken();
+            showLoginView();
+            return;
+        }
+
+        showDashboardView();
+        loadOrders();
+        loadPOSettings();
+
+    } catch (error) {
+        console.error("Init error:", error);
+        clearToken();
+        showLoginView();
+    }
+})();
