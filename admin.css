@@ -1855,6 +1855,8 @@ textarea {
     margin-top: 4px;
 }
 
+.qris-preview-info { min-width: 0; }
+.qris-preview-msg { overflow-wrap: anywhere; }
 .qris-preview-msg.is-warning { color: var(--gold-text); }
 .qris-preview-msg.is-error { color: var(--danger); }
 
@@ -2117,6 +2119,15 @@ textarea {
 
     .admin-topbar {
         padding: 12px 16px;
+    }
+
+    /* Topbar HP: sisakan nama halaman saja, tombol tidak terpecah baris */
+    .breadcrumb span {
+        display: none;
+    }
+
+    .admin-topbar .btn-outline-sm {
+        white-space: nowrap;
     }
 
     .metrics-grid-3,
