@@ -4,7 +4,7 @@ console.log("Velacookies website loaded!");
    CONFIG
    ========================= */
 
-const API_BASE = "https://velacookies-production.up.railway.app";
+const API_BASE = "https://velacookies-backend.hostless.app";
 
 
 /* =========================

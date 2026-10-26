@@ -2,7 +2,7 @@
    ADMIN PANEL — VELACOOKIES (FULL RESTORED + FIGMA EDITION)
    ========================================================= */
 
-const API_BASE = "https://velacookies-production.up.railway.app";
+const API_BASE = "https://velacookies-backend.hostless.app";
 const TOKEN_KEY = "velacookies_admin_token";
 
 /* =========================
