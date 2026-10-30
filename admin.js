@@ -1,5 +1,5 @@
 /* =========================================================
-   ADMIN PANEL — VELACOOKIES (FULL RESTORED + FIGMA EDITION)
+   ADMIN PANEL — VELACOOKIES (FULL EDITION + WA AI CHATBOT)
    ========================================================= */
 
 const API_BASE = "https://velacookies-backend.hostless.app";
@@ -125,7 +125,6 @@ const settingsForm = document.getElementById("settings-form");
 const settingsQrisOwner = document.getElementById("settings-qris-owner");
 const settingsQrisImage = document.getElementById("settings-qris-image");
 const settingsQrisPreview = document.getElementById("settings-qris-preview");
-const settingsQrisPreviewMsg = document.getElementById("settings-qris-preview-msg");
 const settingsWa = document.getElementById("settings-wa");
 const settingsSubmit = document.getElementById("settings-submit");
 const settingsStatus = document.getElementById("settings-status");
@@ -246,6 +245,66 @@ const cfHistoryTbody = document.getElementById("cf-history-tbody");
 const cfHistoryEmpty = document.getElementById("cf-history-empty");
 const cfHistoryMonth = document.getElementById("cf-history-month");
 
+/* WhatsApp Chatbot & Verification DOM */
+const sidebarWaBadge = document.getElementById("sidebar-wa-badge");
+const waBotStatusPill = document.getElementById("wa-bot-status-pill");
+const waMetricTotal = document.getElementById("wa-metric-total");
+const waMetricVerify = document.getElementById("wa-metric-verify");
+const waMetricDp = document.getElementById("wa-metric-dp");
+const waMetricHuman = document.getElementById("wa-metric-human");
+
+const waSubtabInboxBtn = document.getElementById("wa-subtab-inbox-btn");
+const waSubtabGatewayBtn = document.getElementById("wa-subtab-gateway-btn");
+const waPanelInbox = document.getElementById("wa-subview-inbox");
+const waPanelGateway = document.getElementById("wa-subview-gateway");
+
+const waConvCountLabel = document.getElementById("wa-conv-count-label");
+const waConvFilterSelect = document.getElementById("wa-conv-filter-select");
+const waConvSearch = document.getElementById("wa-conv-search");
+const waConvList = document.getElementById("wa-conv-list");
+
+const waActiveAvatar = document.getElementById("wa-active-avatar");
+const waActiveCustomerName = document.getElementById("wa-active-name");
+const waActiveOrderPill = document.getElementById("wa-active-order-pill");
+const waActiveModePill = document.getElementById("wa-active-mode-pill");
+const waActiveCustomerSub = document.getElementById("wa-active-phone");
+const waToggleModeBtn = document.getElementById("wa-toggle-mode-btn");
+const waOpenExternalLink = document.getElementById("wa-open-external-link");
+const waMessagesViewport = document.getElementById("wa-messages-viewport");
+const waReplyForm = document.getElementById("wa-reply-form");
+const waReplyInput = document.getElementById("wa-reply-input");
+const waReplySubmitBtn = document.getElementById("wa-reply-submit");
+
+const waOrderContextBody = document.getElementById("wa-order-context-body");
+const waWebhookUrlDisplay = document.getElementById("wa-webhook-url-display");
+
+const waGatewayForm = document.getElementById("wa-gateway-form");
+const waSettingProvider = document.getElementById("wa-setting-provider");
+const waSettingSender = document.getElementById("wa-setting-number");
+const waSettingToken = document.getElementById("wa-setting-secret");
+const waSettingAutoReply = document.getElementById("wa-setting-bot-active");
+const waSettingAutoRedirect = document.getElementById("wa-setting-auto-notify");
+const waSettingTemplateApproved = document.getElementById("wa-setting-approve-tpl");
+const waSettingTemplateRejected = document.getElementById("wa-setting-reject-tpl");
+const waGatewaySaveBtn = document.getElementById("wa-gateway-save-btn");
+const waGatewaySaveFeedback = document.getElementById("wa-gateway-status");
+
+const waOpenTestModalBtn = document.getElementById("wa-open-test-modal-btn");
+const waRefreshBtn = document.getElementById("wa-refresh-btn");
+const waTestModal = document.getElementById("wa-test-modal");
+const waTestModalClose = document.getElementById("wa-test-modal-close");
+const waTestCancelBtn = document.getElementById("wa-test-cancel-btn");
+const waTestForm = document.getElementById("wa-test-form");
+const waTestPreset = document.getElementById("wa-test-preset");
+const waTestName = document.getElementById("wa-test-name");
+const waTestPhone = document.getElementById("wa-test-phone");
+const waTestMessage = document.getElementById("wa-test-message");
+const waTestAttachReceipt = document.getElementById("wa-test-attach-receipt");
+const waTestReceiptFields = document.getElementById("wa-test-receipt-options");
+const waTestReceiptAmount = document.getElementById("wa-test-receipt-amount");
+const waTestReceiptBank = document.getElementById("wa-test-receipt-bank");
+const waTestSubmitBtn = document.getElementById("wa-test-submit-btn");
+
 
 /* =========================
    STATE
@@ -262,6 +321,15 @@ let currentFinanceMonth = "";
 let currentFinanceSummary = null;
 let cashflowCategories = [];
 let currentPOData = null;
+
+/* WA Chatbot State */
+let waConversationsCache = [];
+let waSelectedConvId = null;
+let waActiveFilter = "all";
+let waSearchQuery = "";
+let waCurrentSettings = null;
+let waActiveConvObject = null;
+
 
 /* =========================
    HELPERS — TIMEZONE (WIB)
@@ -500,6 +568,7 @@ const TAB_LABELS = {
     orders: "Pesanan",
     finance: "Keuangan",
     stocks: "Stok",
+    whatsapp: "Chatbot WA",
     settings: "Pengaturan"
 };
 
@@ -522,6 +591,7 @@ function switchTab(targetTab) {
 
     if (targetTab === "finance") loadFinance();
     if (targetTab === "stocks") loadStocks();
+    if (targetTab === "whatsapp") loadWaWorkspace();
     if (targetTab === "settings") {
         loadSettings();
         loadPOSettings();
@@ -568,6 +638,7 @@ if (loginForm) {
             showDashboardView();
             loadOrders();
             loadPOSettings();
+            loadWaWorkspace({ silent: true });
 
         } catch (error) {
             console.error("Login error:", error);
@@ -843,7 +914,7 @@ function buildOrderRowHtml(order, isOverviewTable = false) {
                 </div>
             </td>
             <td class="cell-wa">
-                <a href="${waLink}" target="_blank" rel="noopener">${escapeHtml(order.whatsapp || "-")}</a>
+                <a href="${waLink}" target="_blank" rel="noopener">💬 ${escapeHtml(order.whatsapp || "-")}</a>
             </td>
             <td>
                 <span class="location-badge ${locClass}">${escapeHtml(locLabel)}</span>
@@ -1006,7 +1077,7 @@ function renderInlineOrderDetail(order) {
                 <div class="meta-kv-row"><span>Catatan</span><strong>${escapeHtml(order.note || "-")}</strong></div>
                 <div class="mt-12">
                     <a href="https://wa.me/${normalizeWA(order.whatsapp)}" target="_blank" rel="noopener" class="btn-outline-sm">
-                        Hubungi via WhatsApp
+                        💬 Hubungi via WhatsApp
                     </a>
                 </div>
             </div>
@@ -1038,12 +1109,12 @@ function renderInlineOrderDetail(order) {
                         : ""}
                     <div class="inline-actions-row">
                         ${statusVal !== "pending"
-                            ? `<button type="button" class="btn-outline-sm inline-action-btn" data-action="pending" data-order-id="${escapeHtml(order.orderId)}">Tandai Pending</button>`
+                            ? `<button type="button" class="btn-outline-sm inline-action-btn" data-action="pending" data-order-id="${escapeHtml(order.orderId)}">⏳ Tandai Pending</button>`
                             : ""}
                         ${statusVal !== "expired"
                             ? `<button type="button" class="btn-outline-sm inline-action-btn" data-action="expired" data-order-id="${escapeHtml(order.orderId)}">× Tandai Expired</button>`
                             : ""}
-                        <button type="button" class="btn-outline-sm btn-danger-outline inline-action-btn" data-action="delete" data-order-id="${escapeHtml(order.orderId)}">Hapus Pesanan</button>
+                        <button type="button" class="btn-outline-sm btn-danger-outline inline-action-btn" data-action="delete" data-order-id="${escapeHtml(order.orderId)}">🗑️ Hapus Pesanan</button>
                     </div>
                 </div>
             </div>
@@ -1182,14 +1253,14 @@ function openOrderModal(order) {
                 : ""}
 
             ${statusVal !== "pending"
-                ? `<button class="action-btn pending" data-action="pending" data-order-id="${order.orderId}">Tandai Pending</button>`
+                ? `<button class="action-btn pending" data-action="pending" data-order-id="${order.orderId}">⏳ Tandai Pending</button>`
                 : ""}
 
             ${statusVal !== "expired"
                 ? `<button class="action-btn expired" data-action="expired" data-order-id="${order.orderId}">× Tandai Expired</button>`
                 : ""}
 
-            <button class="action-btn delete" data-action="delete" data-order-id="${order.orderId}">Hapus Pesanan</button>
+            <button class="action-btn delete" data-action="delete" data-order-id="${order.orderId}">🗑️ Hapus Pesanan</button>
         </div>
     `;
 
@@ -1405,7 +1476,7 @@ function updateBulkPreview() {
         } else {
             const hasPending = matching.some((o) => (o.status || "pending") === "pending");
             if (hasPending) {
-                bulkPreviewNote.innerHTML = `Termasuk pesanan berstatus <strong>pending</strong>. Stok pesanan pending akan otomatis dikembalikan ke inventaris.`;
+                bulkPreviewNote.innerHTML = `⚠️ Termasuk pesanan berstatus <strong>pending</strong>. Stok pesanan pending akan otomatis dikembalikan ke inventaris.`;
             } else {
                 bulkPreviewNote.innerText = "Stok untuk pesanan expired/success/failed tidak akan berubah.";
             }
@@ -1663,7 +1734,6 @@ function renderDailyReport() {
         });
     });
 
-    /* Update Location Strip in Overview */
     const s1 = locationMap["sman1"] || { count: 0, subtotal: 0 };
     const s5 = locationMap["sman5"] || { count: 0, subtotal: 0 };
     const ot = locationMap["others"] || { count: 0, subtotal: 0 };
@@ -2112,7 +2182,7 @@ function renderStocks(items) {
                 </td>
                 <td class="align-right">
                     <button type="button" class="btn-stock-edit" data-id="${item.id}" data-name="${escapeHtml(item.displayName)}" data-stock="${stock}">
-                        Ubah Stok
+                        ✏️ Ubah Stok
                     </button>
                 </td>
             </tr>
@@ -2225,7 +2295,6 @@ if (inlineStockForm) {
     });
 }
 
-/* POP-UP STOCK MODAL (RESTORED 100%) */
 function openStockModal(stockId, displayName, currentStock) {
     if (!stockModal) return;
     if (stockModalId) stockModalId.value = stockId;
@@ -2255,7 +2324,6 @@ if (stocksTbody) {
         const name = btn.getAttribute("data-name");
         const stock = parseInt(btn.getAttribute("data-stock") || "0", 10);
 
-        /* Sinkronkan ke form samping sekaligus buka modal pop-up */
         if (inlineStockSelect) {
             inlineStockSelect.value = id;
             syncInlineStockForm();
@@ -2830,7 +2898,7 @@ if (financeRefreshBtn) {
 }
 
 /* =========================
-   FINANCE — EXPORT EXCEL (100% RESTORED STYLING)
+   FINANCE — EXPORT EXCEL (100% FULL STYLING)
    ========================= */
 
 const financeExportBtn = document.getElementById("finance-export");
@@ -3225,6 +3293,651 @@ if (financeExportBtn) {
     financeExportBtn.addEventListener("click", exportFinanceExcel);
 }
 
+
+/* =========================================================
+   CHATBOT WHATSAPP & VERIFIKASI BUKTI BAYAR (FULL ENGINE)
+   ========================================================= */
+
+if (waWebhookUrlDisplay) {
+    waWebhookUrlDisplay.innerText = `${API_BASE}/api/wa/webhook`;
+}
+
+function switchWaSubtab(subtab) {
+    const isInbox = subtab !== "gateway";
+    if (waSubtabInboxBtn) waSubtabInboxBtn.classList.toggle("active", isInbox);
+    if (waSubtabGatewayBtn) waSubtabGatewayBtn.classList.toggle("active", !isInbox);
+    if (waPanelInbox) waPanelInbox.hidden = !isInbox;
+    if (waPanelGateway) waPanelGateway.hidden = isInbox;
+}
+
+if (waSubtabInboxBtn) {
+    waSubtabInboxBtn.addEventListener("click", () => switchWaSubtab("inbox"));
+}
+if (waSubtabGatewayBtn) {
+    waSubtabGatewayBtn.addEventListener("click", () => switchWaSubtab("gateway"));
+}
+
+async function loadWaWorkspace(options = {}) {
+    const token = getToken();
+    if (!token) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/api/admin/wa/overview`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.status === 401) return;
+
+        const data = await res.json();
+        if (!res.ok || !data.success) return;
+
+        waConversationsCache = Array.isArray(data.conversations) ? data.conversations : [];
+        const metrics = data.metrics || {};
+
+        if (waMetricTotal) waMetricTotal.innerText = String(metrics.totalConversations || 0);
+        if (waMetricVerify) waMetricVerify.innerText = String(metrics.awaitingVerificationCount || 0);
+        if (waMetricDp) waMetricDp.innerText = String(metrics.dpAwaitingCount || 0);
+        if (waMetricHuman) waMetricHuman.innerText = String(metrics.needsHumanCount || 0);
+
+        if (waBotStatusPill) {
+            const isBotOn = metrics.botActive !== false;
+            waBotStatusPill.innerText = isBotOn ? "AI Aktif · Gemini 2.5 Flash" : "Bot AI Nonaktif (Manual)";
+            waBotStatusPill.className = isBotOn ? "badge-pill badge-green" : "badge-pill badge-gold";
+        }
+
+        const actionNeededCount =
+            Number(metrics.awaitingVerificationCount || 0) + Number(metrics.needsHumanCount || 0);
+        if (sidebarWaBadge) {
+            if (actionNeededCount > 0) {
+                sidebarWaBadge.hidden = false;
+                sidebarWaBadge.innerText = String(actionNeededCount);
+            } else {
+                sidebarWaBadge.hidden = true;
+            }
+        }
+
+        populateWaGatewayForm(data.settings);
+        renderWaConversationList();
+
+        if (!waSelectedConvId && waConversationsCache.length > 0) {
+            waSelectedConvId = waConversationsCache[0].convId;
+        }
+
+        if (waSelectedConvId && !options.silent) {
+            await selectWaConversation(waSelectedConvId, { silent: true });
+        }
+    } catch (err) {
+        console.error("Load WA workspace error:", err);
+    }
+}
+
+function populateWaGatewayForm(settings) {
+    if (!settings) return;
+    waCurrentSettings = settings;
+    if (waSettingProvider && settings.provider) waSettingProvider.value = settings.provider;
+    if (waSettingSender && settings.senderNumber) waSettingSender.value = settings.senderNumber;
+    if (waSettingToken && settings.webhookSecret) waSettingToken.value = settings.webhookSecret;
+    if (waSettingAutoReply) waSettingAutoReply.checked = settings.botActive !== false;
+    if (waSettingAutoRedirect) waSettingAutoRedirect.checked = settings.autoNotifyOnApprove !== false;
+    if (waSettingTemplateApproved && settings.approveTemplate) {
+        waSettingTemplateApproved.value = settings.approveTemplate;
+    }
+    if (waSettingTemplateRejected && settings.rejectTemplate) {
+        waSettingTemplateRejected.value = settings.rejectTemplate;
+    }
+}
+
+function getWaFilteredConversations() {
+    return waConversationsCache.filter((c) => {
+        if (waActiveFilter === "awaiting_verification") {
+            const vs = c.verificationStatus || "";
+            const hasProof = c.order && (c.order.paymentProofUrl || c.order.customerConfirmed);
+            if (vs !== "awaiting_verification" && vs !== "dp_awaiting_verification" && !hasProof) return false;
+        } else if (waActiveFilter === "waiting_proof") {
+            const vs = c.verificationStatus || "";
+            if (vs !== "awaiting_proof" && vs !== "dp_awaiting_verification" && vs !== "unconfirmed") return false;
+        } else if (waActiveFilter === "needs_human") {
+            if (!c.needsHuman && c.botMode !== "manual") return false;
+        } else if (waActiveFilter === "verified") {
+            if (c.verificationStatus !== "verified" && (!c.order || c.order.status !== "success")) return false;
+        }
+
+        if (waSearchQuery) {
+            const q = waSearchQuery.toLowerCase();
+            const name = (c.customerName || "").toLowerCase();
+            const phone = (c.phone || "").toLowerCase();
+            const oid = (c.orderId || "").toLowerCase();
+            const msg = (c.lastMessagePreview || "").toLowerCase();
+            return name.includes(q) || phone.includes(q) || oid.includes(q) || msg.includes(q);
+        }
+
+        return true;
+    });
+}
+
+function renderWaConversationList() {
+    if (!waConvList) return;
+    const list = getWaFilteredConversations();
+
+    if (waConvCountLabel) {
+        waConvCountLabel.innerText = `${list.length} percakapan ditampilkan`;
+    }
+
+    if (list.length === 0) {
+        waConvList.innerHTML = `<p class="empty-state-sm">Belum ada percakapan WhatsApp yang cocok.</p>`;
+        return;
+    }
+
+    waConvList.innerHTML = list.map((c) => {
+        const isActive = String(c.convId) === String(waSelectedConvId);
+        const modeBadge = c.botMode === "manual"
+            ? `<span class="badge-pill badge-gold">👤 Manual</span>`
+            : `<span class="badge-pill badge-green">🤖 AI</span>`;
+
+        const orderBadge = c.orderId
+            ? `<span class="badge-pill badge-gold">${escapeHtml(c.orderId)}</span>`
+            : "";
+
+        let verifBadge = "";
+        if (c.order && c.order.status === "success") {
+            verifBadge = `<span class="status-badge status-success">✓ Lunas</span>`;
+        } else if (c.order && (c.order.paymentProofUrl || c.order.customerConfirmed)) {
+            verifBadge = `<span class="status-badge status-pending">⏳ Cek Struk</span>`;
+        }
+
+        return `
+            <button type="button" class="wa-conv-item ${isActive ? "active" : ""}" data-conv-id="${escapeHtml(c.convId)}">
+                <div class="wa-conv-item-top">
+                    <span class="wa-conv-item-name">${escapeHtml(c.customerName || "Pelanggan")}</span>
+                    <span class="wa-conv-item-time">${formatDate(c.lastMessageAt)}</span>
+                </div>
+                <div class="wa-conv-item-preview">${escapeHtml(c.lastMessagePreview || "-")}</div>
+                <div class="wa-conv-item-badges">
+                    ${modeBadge}
+                    ${orderBadge}
+                    ${verifBadge}
+                </div>
+            </button>
+        `;
+    }).join("");
+
+    waConvList.querySelectorAll(".wa-conv-item").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            selectWaConversation(btn.dataset.convId);
+        });
+    });
+}
+
+async function selectWaConversation(convId) {
+    if (!convId) return;
+    waSelectedConvId = String(convId);
+    renderWaConversationList();
+
+    try {
+        const res = await fetch(`${API_BASE}/api/admin/wa/conversations/${encodeURIComponent(convId)}`, {
+            headers: { "Authorization": `Bearer ${getToken()}` }
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) return;
+
+        const conv = data.conversation;
+        const order = data.order;
+        const messages = data.messages || [];
+        waActiveConvObject = conv;
+
+        /* Update Chat Header */
+        if (waActiveAvatar) {
+            const initials = (conv.customerName || "VC").trim().slice(0, 2).toUpperCase();
+            waActiveAvatar.innerText = initials;
+        }
+        if (waActiveCustomerName) waActiveCustomerName.innerText = conv.customerName || "Pelanggan";
+        if (waActiveCustomerSub) waActiveCustomerSub.innerText = conv.phone || "—";
+
+        if (waActiveOrderPill) {
+            if (conv.orderId) {
+                waActiveOrderPill.hidden = false;
+                waActiveOrderPill.innerText = conv.orderId;
+            } else {
+                waActiveOrderPill.hidden = true;
+            }
+        }
+
+        if (waToggleModeBtn) {
+            const isManual = conv.botMode === "manual";
+            waToggleModeBtn.innerText = isManual ? "👤 Mode Manual Admin" : "🤖 Mode AI Aktif";
+        }
+
+        if (waOpenExternalLink) {
+            waOpenExternalLink.href = `https://wa.me/${normalizeWA(conv.phone)}`;
+        }
+
+        renderWaMessages(messages);
+        renderWaOrderContext(conv, order);
+    } catch (err) {
+        console.error("Select WA conversation error:", err);
+    }
+}
+
+function renderWaMessages(messages) {
+    if (!waMessagesViewport) return;
+
+    if (!messages || messages.length === 0) {
+        waMessagesViewport.innerHTML = `<p class="empty-state-sm">Belum ada pesan di percakapan ini.</p>`;
+        return;
+    }
+
+    waMessagesViewport.innerHTML = messages.map((m) => {
+        const senderRole = m.sender === "customer" ? "customer" : m.sender === "admin" ? "admin" : "bot";
+        const senderLabel = senderRole === "customer" ? "Pelanggan" : senderRole === "admin" ? "Admin Velacookies" : "🤖 Bot AI Velacookies";
+        const mediaHtml = m.mediaUrl
+            ? `<img src="${escapeHtml(m.mediaUrl)}" alt="Bukti Transfer" class="wa-bubble-media">`
+            : "";
+
+        return `
+            <div class="wa-bubble wa-bubble-${senderRole}">
+                <div class="wa-bubble-meta">
+                    <strong>${senderLabel}</strong>
+                    <span>${formatDate(m.createdAt)}</span>
+                </div>
+                <div>${escapeHtml(m.text)}</div>
+                ${mediaHtml}
+            </div>
+        `;
+    }).join("");
+
+    waMessagesViewport.scrollTop = waMessagesViewport.scrollHeight;
+}
+
+function renderWaOrderContext(conv, order) {
+    if (!waOrderContextBody) return;
+
+    if (!order) {
+        waOrderContextBody.innerHTML = `
+            <div class="wa-context-card">
+                <h3 class="card-title">Belum Terhubung ke Order</h3>
+                <p class="card-subtitle mt-8">Percakapan ini belum memiliki kode pesanan <code>VC-XXXX</code> yang cocok.</p>
+                <div class="form-group mt-14">
+                    <label class="form-label">Tautkan Kode Order Manual</label>
+                    <div style="display:flex;gap:6px;">
+                        <input type="text" id="wa-manual-link-order-input" class="form-input" placeholder="VC-0001" value="${escapeHtml(conv?.linkedOrderId || "")}">
+                        <button type="button" class="btn-outline-sm" id="wa-manual-link-order-btn">Tautkan</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const linkBtn = document.getElementById("wa-manual-link-order-btn");
+        const linkInput = document.getElementById("wa-manual-link-order-input");
+        if (linkBtn && linkInput && conv) {
+            linkBtn.addEventListener("click", async () => {
+                const code = linkInput.value.trim().toUpperCase();
+                await fetch(`${API_BASE}/api/admin/wa/conversations/${conv.id}/mode`, {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify({ linkedOrderId: code })
+                });
+                await loadWaWorkspace();
+            });
+        }
+        return;
+    }
+
+    const rules = order.paymentRules || {};
+    const ai = order.aiReceiptAnalysis;
+    const statusClass = getStatusClass(order.status || "pending");
+    const statusLabel = getStatusLabel(order.status || "pending");
+
+    const itemsListHtml = (order.items || []).map((it) => `
+        <div class="meta-kv-row">
+            <span>${it.quantity}x ${escapeHtml(it.name)}${it.addonName ? ` (+${escapeHtml(it.addonName)})` : ""}</span>
+            <strong>${formatRupiah(it.subtotal)}</strong>
+        </div>
+    `).join("");
+
+    const aiBoxHtml = ai ? `
+        <div class="wa-ai-analysis-box">
+            <div class="page-title-row" style="justify-content:space-between;margin-bottom:6px;">
+                <strong style="font-size:12.5px;">🤖 Hasil Pemeriksaan Struk AI</strong>
+                <span class="badge-pill ${ai.isSufficient ? "badge-green" : "badge-gold"}">${escapeHtml(ai.matchLabel || "Dicek AI")}</span>
+            </div>
+            <div class="meta-kv-row"><span>Nominal Terbaca</span><strong>${formatRupiah(ai.detectedAmount)}</strong></div>
+            <div class="meta-kv-row"><span>Tagihan / Syarat</span><strong>${formatRupiah(ai.expectedAmount)}</strong></div>
+            <div class="meta-kv-row"><span>Pengirim / Bank</span><strong>${escapeHtml(ai.bankOrWallet || "-")}</strong></div>
+            <div class="meta-kv-row"><span>Skor Keyakinan</span><strong>${ai.confidenceScore || 95}%</strong></div>
+            ${order.paymentProofUrl ? `<img src="${escapeHtml(order.paymentProofUrl)}" alt="Struk Pembayaran" class="wa-proof-preview-img">` : ""}
+        </div>
+    ` : `
+        <div class="wa-ai-analysis-box">
+            <span class="text-muted-sm">Belum ada foto struk pembayaran yang diunggah pelanggan di chat ini.</span>
+        </div>
+    `;
+
+    waOrderContextBody.innerHTML = `
+        <div class="wa-context-card">
+            <div class="page-title-row" style="justify-content:space-between;margin-bottom:8px;">
+                <strong style="font-size:16px;">Order ${escapeHtml(order.orderId)}</strong>
+                <span class="status-badge ${statusClass}">${statusLabel}</span>
+            </div>
+            <div class="meta-kv-row"><span>Pelanggan</span><strong>${escapeHtml(order.customerName)}</strong></div>
+            <div class="meta-kv-row"><span>Metode</span><strong>${order.paymentMethod === "qris" ? "QRIS" : "Cash (COD)"}</strong></div>
+            <div class="meta-kv-row"><span>Lokasi</span><strong>${escapeHtml(getLocationLabel(order.location))} ${order.locationDetail ? `(${escapeHtml(order.locationDetail)})` : ""}</strong></div>
+            ${rules.requiresDp50 ? `<div class="meta-kv-row"><span>Syarat DP 50% COD</span><strong class="text-green">${formatRupiah(rules.dpRequiredAmount)}</strong></div>` : ""}
+            <hr style="border:none;border-top:1px solid var(--surface-border);margin:8px 0;">
+            ${itemsListHtml}
+            <div class="inline-total-row">
+                <span>Total Tagihan</span>
+                <strong>${formatRupiah(order.total)}</strong>
+            </div>
+        </div>
+
+        ${aiBoxHtml}
+
+        <div class="modal-actions mt-12">
+            ${order.status !== "success" ? `
+                <button type="button" class="btn-primary btn-full" id="wa-ctx-approve-btn" data-order-id="${escapeHtml(order.orderId)}">
+                    ✓ Setujui Pembayaran &amp; Kirim WA Lunas
+                </button>
+            ` : `
+                <div class="badge-pill badge-green" style="text-align:center;padding:8px;">✓ Pembayaran Sudah Disetujui (Lunas)</div>
+            `}
+            <button type="button" class="btn-outline btn-danger-outline btn-full" id="wa-ctx-reject-btn" data-order-id="${escapeHtml(order.orderId)}">
+                × Tolak Bukti / Minta Kirim Ulang
+            </button>
+        </div>
+    `;
+
+    const approveBtn = document.getElementById("wa-ctx-approve-btn");
+    const rejectBtn = document.getElementById("wa-ctx-reject-btn");
+
+    if (approveBtn) {
+        approveBtn.addEventListener("click", () => verifyOrderProof(order.orderId, "approve", approveBtn));
+    }
+    if (rejectBtn) {
+        rejectBtn.addEventListener("click", () => {
+            const reason = prompt("Masukkan alasan penolakan struk (akan dikirim ke WA pelanggan):", "Nominal belum sesuai atau foto struk kurang jelas");
+            if (reason) verifyOrderProof(order.orderId, "reject", rejectBtn, reason);
+        });
+    }
+}
+
+async function verifyOrderProof(orderId, decision, btnEl, reason = "") {
+    if (!orderId || !decision) return;
+    const token = getToken();
+    if (!token) return;
+
+    const origText = btnEl ? btnEl.innerText : "";
+    if (btnEl) {
+        btnEl.disabled = true;
+        btnEl.innerText = "Memproses...";
+    }
+
+    try {
+        const res = await fetch(`${API_BASE}/api/admin/orders/${encodeURIComponent(orderId)}/verify-proof`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ decision, reason })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            alert(data.message || "Gagal memverifikasi bukti pembayaran.");
+            if (btnEl) {
+                btnEl.disabled = false;
+                btnEl.innerText = origText;
+            }
+            return;
+        }
+
+        await loadOrders();
+        await loadWaWorkspace();
+    } catch (err) {
+        console.error("Verify order proof error:", err);
+        if (btnEl) {
+            btnEl.disabled = false;
+            btnEl.innerText = origText;
+        }
+    }
+}
+
+/* Admin Manual Reply in WA Thread */
+if (waReplyForm) {
+    waReplyForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (!waSelectedConvId) {
+            alert("Pilih percakapan terlebih dahulu.");
+            return;
+        }
+        const text = waReplyInput.value.trim();
+        if (!text) return;
+
+        waReplySubmitBtn.disabled = true;
+        try {
+            const res = await fetch(`${API_BASE}/api/admin/wa/conversations/${encodeURIComponent(waSelectedConvId)}/reply`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${getToken()}`
+                },
+                body: JSON.stringify({ text, switchToManual: true })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                waReplyInput.value = "";
+                await loadWaWorkspace();
+            }
+        } catch (err) {
+            console.error("Send WA reply error:", err);
+        } finally {
+            waReplySubmitBtn.disabled = false;
+        }
+    });
+}
+
+/* Toggle Bot AI vs Manual Admin Mode */
+if (waToggleModeBtn) {
+    waToggleModeBtn.addEventListener("click", async () => {
+        if (!waSelectedConvId || !waActiveConvObject) return;
+        const nextMode = waActiveConvObject.botMode === "manual" ? "ai" : "manual";
+
+        try {
+            const res = await fetch(`${API_BASE}/api/admin/wa/conversations/${encodeURIComponent(waSelectedConvId)}/mode`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${getToken()}`
+                },
+                body: JSON.stringify({ botMode: nextMode })
+            });
+            if (res.ok) {
+                await loadWaWorkspace();
+            }
+        } catch (err) {
+            console.error("Toggle WA mode error:", err);
+        }
+    });
+}
+
+/* Filter & Search Listeners for WA Inbox */
+if (waConvFilterSelect) {
+    waConvFilterSelect.addEventListener("change", () => {
+        waActiveFilter = waConvFilterSelect.value;
+        renderWaConversationList();
+    });
+}
+
+document.querySelectorAll("[data-wa-filter]").forEach((card) => {
+    card.addEventListener("click", () => {
+        waActiveFilter = card.dataset.waFilter || "all";
+        if (waConvFilterSelect) waConvFilterSelect.value = waActiveFilter;
+        switchWaSubtab("inbox");
+        renderWaConversationList();
+    });
+});
+
+if (waConvSearch) {
+    waConvSearch.addEventListener("input", () => {
+        waSearchQuery = waConvSearch.value.trim();
+        renderWaConversationList();
+    });
+}
+
+if (waRefreshBtn) {
+    waRefreshBtn.addEventListener("click", () => loadWaWorkspace());
+}
+
+/* Save WA Gateway Settings */
+if (waGatewayForm) {
+    waGatewayForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (waGatewaySaveBtn) waGatewaySaveBtn.disabled = true;
+
+        try {
+            const payload = {
+                provider: waSettingProvider?.value || "fonnte",
+                senderNumber: waSettingSender?.value.trim() || "6285117122454",
+                webhookSecret: waSettingToken?.value.trim() || "vc-webhook-karawang-2026",
+                botActive: Boolean(waSettingAutoReply?.checked),
+                autoNotifyOnApprove: Boolean(waSettingAutoRedirect?.checked),
+                approveTemplate: waSettingTemplateApproved?.value.trim() || "",
+                rejectTemplate: waSettingTemplateRejected?.value.trim() || ""
+            };
+
+            const res = await fetch(`${API_BASE}/api/admin/wa/settings`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${getToken()}`
+                },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                if (waGatewaySaveFeedback) {
+                    waGatewaySaveFeedback.innerText = "✓ Konfigurasi tersimpan!";
+                    waGatewaySaveFeedback.className = "settings-status success";
+                    setTimeout(() => { waGatewaySaveFeedback.innerText = ""; }, 3000);
+                }
+                await loadWaWorkspace({ silent: true });
+            }
+        } catch (err) {
+            console.error("Save WA gateway error:", err);
+        } finally {
+            if (waGatewaySaveBtn) waGatewaySaveBtn.disabled = false;
+        }
+    });
+}
+
+/* WA Test / Webhook Simulator Modal */
+function openWaTestModal() {
+    if (!waTestModal) return;
+    const latestOrder = allOrders[0];
+    if (latestOrder && waTestPreset?.value === "qris_proof") {
+        if (waTestName) waTestName.value = latestOrder.customerName || "Alya Putri";
+        if (waTestPhone) waTestPhone.value = latestOrder.whatsapp || "081234567890";
+        if (waTestMessage) {
+            waTestMessage.value = `Halo Velacookies! Saya sudah transfer via QRIS:\nOrder ID: ${latestOrder.orderId}\nNama: ${latestOrder.customerName}\nTotal: ${formatRupiah(latestOrder.total)}`;
+        }
+        if (waTestReceiptAmount) waTestReceiptAmount.value = latestOrder.total || 55000;
+    }
+    waTestModal.classList.add("active");
+}
+
+function closeWaTestModal() {
+    if (waTestModal) waTestModal.classList.remove("active");
+}
+
+if (waOpenTestModalBtn) waOpenTestModalBtn.addEventListener("click", openWaTestModal);
+if (waTestModalClose) waTestModalClose.addEventListener("click", closeWaTestModal);
+if (waTestCancelBtn) waTestCancelBtn.addEventListener("click", closeWaTestModal);
+
+if (waTestAttachReceipt && waTestReceiptFields) {
+    waTestAttachReceipt.addEventListener("change", () => {
+        waTestReceiptFields.hidden = !waTestAttachReceipt.checked;
+    });
+}
+
+if (waTestPreset) {
+    waTestPreset.addEventListener("change", () => {
+        const preset = waTestPreset.value;
+        const latestOrder = allOrders[0];
+        const sampleId = latestOrder ? latestOrder.orderId : "VC-0001";
+        const sampleTotal = latestOrder ? latestOrder.total : 55000;
+
+        if (preset === "qris_proof") {
+            waTestMessage.value = `Halo Velacookies! Saya sudah transfer via QRIS untuk Order ID: ${sampleId}. Berikut bukti transfernya ya.`;
+            waTestAttachReceipt.checked = true;
+            if (waTestReceiptFields) waTestReceiptFields.hidden = false;
+            if (waTestReceiptAmount) waTestReceiptAmount.value = sampleTotal;
+        } else if (preset === "cod_dp") {
+            waTestMessage.value = `Halo Kak, saya mau konfirmasi metode COD untuk Order ID: ${sampleId}. Apakah perlu DP 50%?`;
+            waTestAttachReceipt.checked = false;
+            if (waTestReceiptFields) waTestReceiptFields.hidden = true;
+        } else if (preset === "stock_ask") {
+            waTestMessage.value = "Halo kak! Stok Scoopable Nutella Cookies dan Lotus Biscoff hari ini masih ready berapa pcs ya?";
+            waTestAttachReceipt.checked = false;
+            if (waTestReceiptFields) waTestReceiptFields.hidden = true;
+        } else if (preset === "want_order") {
+            waTestMessage.value = "Kak saya mau pesan Chocochip 2 pcs dan Biscoff 1 pcs antar ke SMAN 1 Karawang dong.";
+            waTestAttachReceipt.checked = false;
+            if (waTestReceiptFields) waTestReceiptFields.hidden = true;
+        } else if (preset === "human") {
+            waTestMessage.value = "Tolong sambungkan dengan Admin manusia ya kak, saya mau tanya soal pengantaran pesanan saya.";
+            waTestAttachReceipt.checked = false;
+            if (waTestReceiptFields) waTestReceiptFields.hidden = true;
+        }
+    });
+}
+
+if (waTestForm) {
+    waTestForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        waTestSubmitBtn.disabled = true;
+        waTestSubmitBtn.innerText = "Mengirim ke Bot...";
+
+        try {
+            const attachReceipt = Boolean(waTestAttachReceipt?.checked);
+            const payload = {
+                customerName: waTestName.value.trim(),
+                phone: waTestPhone.value.trim(),
+                message: waTestMessage.value.trim(),
+                attachSampleReceipt: attachReceipt,
+                sampleReceiptAmount: attachReceipt ? Number(waTestReceiptAmount.value || 55000) : undefined,
+                simulatedReceiptMeta: attachReceipt ? {
+                    detectedAmount: Number(waTestReceiptAmount.value || 55000),
+                    senderName: waTestName.value.trim(),
+                    bankOrWallet: waTestReceiptBank.value.trim() || "BCA Mobile · QRIS"
+                } : null
+            };
+
+            const res = await fetch(`${API_BASE}/api/wa/webhook`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${getToken()}` },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                closeWaTestModal();
+                waSelectedConvId = data.conversationId || waSelectedConvId;
+                await loadOrders();
+                await loadWaWorkspace();
+            } else {
+                alert(data.message || "Gagal menjalankan simulasi.");
+            }
+        } catch (err) {
+            console.error("WA simulation error:", err);
+            alert("Gagal terhubung ke server.");
+        } finally {
+            waTestSubmitBtn.disabled = false;
+            waTestSubmitBtn.innerText = "🚀 Kirim Simulasi ke Bot";
+        }
+    });
+}
+
+
 /* =========================
    SETTINGS (PAYMENT & PO — 100% RESTORED)
    ========================= */
@@ -3253,102 +3966,6 @@ async function loadSettings() {
     }
 }
 
-/* =========================================================
-   PREVIEW QRIS
-   ========================================================= */
-
-const QRIS_DEFAULT_URL = "/images/qris.jpeg";
-let qrisPreviewToken = 0;
-let qrisPreviewTimer = null;
-
-// "frontend\images\qris.jpeg" -> "frontend/images/qris.jpeg"
-function normalizeQrisPath(rawValue) {
-    return String(rawValue || "").trim().replace(/\\/g, "/");
-}
-
-// Path yang disarankan untuk website asli: tanpa "frontend/", diawali "/"
-function suggestQrisPath(rawValue) {
-    const value = normalizeQrisPath(rawValue);
-    return "/" + value.replace(/^\.?\/+/, "").replace(/^frontend\//i, "");
-}
-
-// Daftar URL yang dicoba berurutan sampai ada yang berhasil dimuat
-function buildQrisCandidates(rawValue) {
-    const value = normalizeQrisPath(rawValue) || QRIS_DEFAULT_URL;
-
-    // URL lengkap / data URI dipakai apa adanya
-    if (/^(https?:)?\/\//i.test(value) || /^(data|blob):/i.test(value)) {
-        return [value];
-    }
-
-    const noLead = value.replace(/^\.?\/+/, "");
-    const noFrontend = noLead.replace(/^frontend\//i, "");
-
-    return [...new Set([
-        value,
-        "/" + noLead,
-        noLead,
-        "/" + noFrontend,
-        noFrontend
-    ])];
-}
-
-function probeImage(url) {
-    return new Promise((resolve) => {
-        const probe = new Image();
-        probe.onload = () => resolve(true);
-        probe.onerror = () => resolve(false);
-        probe.src = url;
-    });
-}
-
-function setQrisPreviewMessage(text, type) {
-    if (!settingsQrisPreviewMsg) return;
-    settingsQrisPreviewMsg.textContent = text || "";
-    settingsQrisPreviewMsg.className = "form-help qris-preview-msg" + (type ? " is-" + type : "");
-    settingsQrisPreviewMsg.hidden = !text;
-}
-
-async function updateQrisPreview(rawValue) {
-    if (!settingsQrisPreview) return;
-
-    const token = ++qrisPreviewToken;
-    const raw = String(rawValue || "").trim();
-    const candidates = buildQrisCandidates(raw);
-
-    for (let i = 0; i < candidates.length; i++) {
-        const ok = await probeImage(candidates[i]);
-        if (token !== qrisPreviewToken) return; // sudah ada input yang lebih baru
-
-        if (!ok) continue;
-
-        settingsQrisPreview.alt = "QRIS Preview";
-        settingsQrisPreview.src = candidates[i];
-
-        if (i === 0 || !raw) {
-            setQrisPreviewMessage("", "");
-        } else if (/\\/.test(raw) || /^\/?frontend[\\/]/i.test(raw)) {
-            setQrisPreviewMessage(
-                `Path "${raw}" memakai format folder lokal. Preview tampil, tetapi di website asli gambar bisa gagal dimuat. Gunakan: ${suggestQrisPath(raw)}`,
-                "warning"
-            );
-        } else {
-            setQrisPreviewMessage(
-                `Path "${raw}" tidak terbaca langsung dari halaman admin ini, jadi preview memakai ${candidates[i]}. Cek lagi jika gambar di halaman pembayaran tidak muncul.`,
-                "warning"
-            );
-        }
-        return;
-    }
-
-    settingsQrisPreview.removeAttribute("src");
-    settingsQrisPreview.alt = "Gambar tidak ditemukan";
-    setQrisPreviewMessage(
-        `Gambar tidak ditemukan di "${raw || QRIS_DEFAULT_URL}". Pastikan file ada di folder images/ dan path benar, contoh: /images/qris.jpeg`,
-        "error"
-    );
-}
-
 function renderSettings(settings) {
     if (!settings) return;
 
@@ -3360,7 +3977,9 @@ function renderSettings(settings) {
         settingsQrisImage.value = settings.qrisImageUrl || "";
     }
 
-    updateQrisPreview(settings.qrisImageUrl);
+    if (settingsQrisPreview) {
+        settingsQrisPreview.src = settings.qrisImageUrl || "/images/qris.jpeg";
+    }
 
     if (settingsWa) {
         settingsWa.value = settings.adminWaNumber || "";
@@ -3467,8 +4086,9 @@ if (settingsForm) {
 
 if (settingsQrisImage) {
     settingsQrisImage.addEventListener("input", () => {
-        clearTimeout(qrisPreviewTimer);
-        qrisPreviewTimer = setTimeout(() => updateQrisPreview(settingsQrisImage.value), 350);
+        if (settingsQrisPreview) {
+            settingsQrisPreview.src = settingsQrisImage.value.trim() || "/images/qris.jpeg";
+        }
     });
 }
 
@@ -3508,8 +4128,8 @@ async function loadPOSettings() {
 
         if (poInfoStatus) {
             poInfoStatus.innerHTML = isOpen
-                ? "<span style='color: var(--green-text); font-weight: 700;'>Pre-Order Sedang Aktif</span>"
-                : "<span style='color: var(--danger); font-weight: 700;'>Pre-Order Sedang Ditutup</span>";
+                ? "<span style='color: var(--green-text); font-weight: 700;'>🟢 Pre-Order Sedang Aktif</span>"
+                : "<span style='color: var(--danger); font-weight: 700;'>🔴 Pre-Order Sedang Ditutup</span>";
         }
 
         if (poInfoClose) {
@@ -3531,7 +4151,7 @@ async function loadPOSettings() {
         if (poFormTitle && poSubmitBtn) {
             if (isOpen) {
                 poFormTitle.innerText = "Perbarui Jadwal Pre-Order Aktif";
-                poSubmitBtn.innerText = "Simpan Perubahan Jadwal";
+                poSubmitBtn.innerText = "💾 Simpan Perubahan Jadwal";
 
                 if (poCloseDate && currentPOData?.tanggalTutup) {
                     const d = parseISOString(currentPOData.tanggalTutup);
@@ -3550,7 +4170,7 @@ async function loadPOSettings() {
                 }
             } else {
                 poFormTitle.innerText = "Buka Periode Pre-Order Baru";
-                poSubmitBtn.innerText = "Buka Pre-Order Sekarang";
+                poSubmitBtn.innerText = "🚀 Buka Pre-Order Sekarang";
 
                 const now = new Date();
                 const defaultClose = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
@@ -3682,7 +4302,7 @@ async function handleClosePO() {
     } finally {
         if (btnClosePo) {
             btnClosePo.disabled = false;
-            btnClosePo.innerText = "Tutup PO Sekarang";
+            btnClosePo.innerText = "🛑 Tutup PO Sekarang";
         }
     }
 }
@@ -3727,6 +4347,7 @@ if (headerPoBadge) {
         showDashboardView();
         loadOrders();
         loadPOSettings();
+        loadWaWorkspace({ silent: true });
 
     } catch (error) {
         console.error("Init error:", error);

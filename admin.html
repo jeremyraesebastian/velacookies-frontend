@@ -15,12 +15,14 @@
     <div class="login-view" id="login-view">
         <div class="login-card">
             <div class="login-brand">
+                <div class="brand-monogram">V.</div>
                 <div>
                     <strong>VELACOOKIES</strong>
+                    <span>BAKED WITH LOVE</span>
                 </div>
             </div>
             <h1>Ruang Kerja Admin</h1>
-            <p class="login-sub">Masuk untuk mengelola pesanan, stok, keuangan, dan jadwal Pre-Order.</p>
+            <p class="login-sub">Masuk untuk mengelola pesanan, stok, keuangan, chatbot WA, dan jadwal Pre-Order.</p>
 
             <form id="login-form">
                 <div class="form-group">
@@ -49,8 +51,10 @@
         <aside class="admin-sidebar" id="admin-sidebar">
             <div class="sidebar-top">
                 <div class="sidebar-brand">
+                    <span class="brand-monogram">V.</span>
                     <div class="brand-titles">
                         <strong>VELACOOKIES</strong>
+                        <small>BAKED WITH LOVE</small>
                     </div>
                 </div>
 
@@ -77,6 +81,11 @@
                         <span class="nav-text">Stok</span>
                         <span class="nav-dot"></span>
                     </button>
+                    <button type="button" class="admin-tab" data-tab="whatsapp" id="sidebar-tab-whatsapp">
+                        <span class="nav-icon">💬</span>
+                        <span class="nav-text">Chatbot WA</span>
+                        <span class="nav-badge" id="sidebar-wa-badge" hidden>0</span>
+                    </button>
                     <button type="button" class="admin-tab" data-tab="settings">
                         <span class="nav-icon">⚙</span>
                         <span class="nav-text">Pengaturan</span>
@@ -100,7 +109,7 @@
             </div>
 
             <div class="sidebar-footer">
-                <p class="sidebar-tagline">Baked with love</p>
+                <p class="sidebar-tagline">A little joy, every day.</p>
                 <small>© 2026 VelaCookies</small>
             </div>
         </aside>
@@ -123,6 +132,13 @@
                     <a href="index.html" target="_blank" rel="noopener" class="btn-outline-sm">
                         <span>↗</span> Lihat toko
                     </a>
+                    <div class="admin-profile-pill">
+                        <span class="profile-avatar" id="topbar-avatar">AD</span>
+                        <div class="profile-meta">
+                            <strong id="topbar-admin-name">Admin</strong>
+                            <small>Administrator</small>
+                        </div>
+                    </div>
                     <button type="button" class="btn-outline-sm btn-logout-top" id="logout-btn">Logout</button>
                 </div>
             </header>
@@ -170,7 +186,7 @@
                         <div class="metric-card">
                             <div class="metric-card-top">
                                 <span class="metric-label">Cookies terjual</span>
-                                <span class="metric-icon">◉</span>
+                                <span class="metric-icon">🍪</span>
                             </div>
                             <strong class="metric-value" id="summary-total-pcs">0 pcs</strong>
                             <span class="metric-sub" id="summary-avg-pcs">Rata-rata 0 cookies per pesanan</span>
@@ -270,6 +286,7 @@
                                         <h2 class="card-title">Wawasan pelanggan</h2>
                                         <p class="card-subtitle">Nomor WA unik dari pesanan sukses</p>
                                     </div>
+                                    <span class="metric-icon">👥</span>
                                 </div>
 
                                 <div class="customer-big-stat">
@@ -373,7 +390,7 @@
                             <p class="page-subtitle">Semua pesanan, dari konfirmasi pembayaran hingga siap dinikmati.</p>
                         </div>
                         <div class="page-header-actions">
-                            <button type="button" class="btn-outline btn-danger-outline" id="bulk-delete-open-btn">Hapus Massal</button>
+                            <button type="button" class="btn-outline btn-danger-outline" id="bulk-delete-open-btn">🗑️ Hapus Massal</button>
                             <button type="button" class="btn-primary" id="refresh-btn">↻ Segarkan Pesanan</button>
                         </div>
                     </div>
@@ -418,11 +435,12 @@
                         <!-- FILTER TOOLBAR -->
                         <div class="admin-toolbar">
                             <div class="search-wrap">
+                                <span class="search-icon">🔍</span>
                                 <input type="search" id="search-input" class="search-input" placeholder="Cari ID pesanan, nama, atau WhatsApp...">
                             </div>
 
                             <select id="location-filter" class="filter-select">
-                                <option value="all">Semua lokasi</option>
+                                <option value="all">📍 Semua lokasi</option>
                                 <option value="sman1">SMAN 1 Karawang</option>
                                 <option value="sman5">SMAN 5 Karawang</option>
                                 <option value="others">Lainnya</option>
@@ -808,6 +826,7 @@
 
                     <!-- LOW STOCK ALERT BANNER -->
                     <div class="stock-alert-banner" id="stock-alert-banner" hidden>
+                        <span>⚠️</span>
                         <p id="stock-alert-text">Beberapa varian memiliki stok menipis atau habis.</p>
                     </div>
 
@@ -919,7 +938,218 @@
 
 
                 <!-- ============================================
-                     TAB 5: PENGATURAN TOKO (SETTINGS)
+                     TAB 5: CHATBOT WHATSAPP & VERIFIKASI BUKTI BAYAR
+                     ============================================ -->
+                <section class="tab-content" data-tab-content="whatsapp" hidden>
+
+                    <div class="page-header">
+                        <div>
+                            <div class="page-title-row">
+                                <h1 class="page-title">Chatbot WhatsApp &amp; Verifikasi AI</h1>
+                                <span class="badge-pill badge-green" id="wa-bot-status-pill">AI Aktif · Gemini 2.5 Flash</span>
+                            </div>
+                            <p class="page-subtitle">Pantau percakapan pelanggan dari website, cek bukti transfer QRIS &amp; DP COD otomatis, dan setujui pesanan dalam satu klik.</p>
+                        </div>
+                        <div class="page-header-actions">
+                            <button type="button" class="btn-outline" id="wa-open-test-modal-btn">⚡ Uji Coba Pesan / Struk</button>
+                            <button type="button" class="btn-primary" id="wa-refresh-btn">↻ Segarkan Inbox</button>
+                        </div>
+                    </div>
+
+                    <!-- 4 SUMMARY METRICS -->
+                    <div class="metrics-grid-4">
+                        <div class="metric-card metric-card-primary clickable-card" id="wa-card-filter-all" data-wa-filter="all">
+                            <span class="metric-label">Total Percakapan WA</span>
+                            <strong class="metric-value" id="wa-metric-total">0</strong>
+                            <span class="metric-sub">Terhubung ke nomor pelanggan</span>
+                        </div>
+                        <div class="metric-card clickable-card" id="wa-card-filter-verify" data-wa-filter="awaiting_verification">
+                            <span class="metric-label">Menunggu Verifikasi Struk</span>
+                            <strong class="metric-value" id="wa-metric-verify">0</strong>
+                            <span class="metric-sub">Bukti QRIS / DP siap disetujui</span>
+                        </div>
+                        <div class="metric-card clickable-card" id="wa-card-filter-dp" data-wa-filter="waiting_proof">
+                            <span class="metric-label">Pantauan Bukti &amp; DP COD</span>
+                            <strong class="metric-value" id="wa-metric-dp">0</strong>
+                            <span class="metric-sub">Order QRIS / COD ≥3 pcs belum kirim struk</span>
+                        </div>
+                        <div class="metric-card clickable-card" id="wa-card-filter-human" data-wa-filter="needs_human">
+                            <span class="metric-label">Mode Manual / Handover</span>
+                            <strong class="metric-value" id="wa-metric-human">0</strong>
+                            <span class="metric-sub">Diambil alih langsung oleh Admin</span>
+                        </div>
+                    </div>
+
+                    <!-- SUB-NAVIGATION BAR -->
+                    <div class="wa-subnav-bar">
+                        <div class="wa-subnav-tabs">
+                            <button type="button" class="wa-subtab active" data-wa-subtab="inbox" id="wa-subtab-inbox-btn">
+                                💬 Live Inbox &amp; Verifikasi Order
+                            </button>
+                            <button type="button" class="wa-subtab" data-wa-subtab="gateway" id="wa-subtab-gateway-btn">
+                                ⚙ Koneksi WA Gateway &amp; Template Notifikasi
+                            </button>
+                        </div>
+                        <div class="wa-filter-pills">
+                            <select id="wa-conv-filter-select" class="filter-select" aria-label="Filter Percakapan">
+                                <option value="all">Semua Percakapan</option>
+                                <option value="awaiting_verification">⏳ Menunggu Approval Struk</option>
+                                <option value="waiting_proof">📸 Belum Kirim Bukti</option>
+                                <option value="needs_human">👤 Mode Manual Admin</option>
+                                <option value="verified">✓ Sudah Diverifikasi</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- SUB-VIEW 1: 3-COLUMN INBOX & ORDER VERIFICATION WORKSPACE -->
+                    <div id="wa-subview-inbox" class="wa-workspace-grid">
+
+                        <!-- LEFT COLUMN: CONVERSATION LIST -->
+                        <div class="surface-card wa-conv-list-card">
+                            <div class="wa-col-header">
+                                <div>
+                                    <h2 class="card-title">Daftar Chat</h2>
+                                    <p class="card-subtitle" id="wa-conv-count-label">Memuat percakapan...</p>
+                                </div>
+                            </div>
+                            <div class="wa-conv-search-box">
+                                <input type="search" id="wa-conv-search" class="search-input" style="padding-left:12px;" placeholder="Cari nama, WA, atau VC-XXXX...">
+                            </div>
+                            <div class="wa-conv-list" id="wa-conv-list" role="list"></div>
+                        </div>
+
+                        <!-- MIDDLE COLUMN: CHAT THREAD & HANDOVER -->
+                        <div class="surface-card wa-chat-thread-card">
+                            <div class="wa-chat-header" id="wa-chat-header">
+                                <div class="wa-chat-header-info">
+                                    <div class="wa-avatar" id="wa-active-avatar">VC</div>
+                                    <div>
+                                        <div class="wa-chat-title-row">
+                                            <strong id="wa-active-name">Pilih percakapan</strong>
+                                            <span class="badge-pill badge-gold" id="wa-active-order-pill" hidden>VC-0000</span>
+                                            <span class="badge-pill badge-green" id="wa-active-mode-pill" hidden>AI</span>
+                                        </div>
+                                        <span class="text-muted-sm" id="wa-active-phone">—</span>
+                                    </div>
+                                </div>
+                                <div class="wa-chat-header-controls">
+                                    <button type="button" class="btn-outline-sm" id="wa-toggle-mode-btn" title="Ubah antara balasan AI otomatis atau manual Admin">
+                                        🤖 Mode AI Aktif
+                                    </button>
+                                    <a href="#" target="_blank" rel="noopener" class="btn-outline-sm" id="wa-open-external-link">
+                                        Buka WA ↗
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="wa-messages-viewport" id="wa-messages-viewport">
+                                <p class="empty-state-sm">Pilih salah satu percakapan di sebelah kiri untuk melihat riwayat pesan dan bukti pembayaran.</p>
+                            </div>
+
+                            <form class="wa-reply-bar" id="wa-reply-form">
+                                <input type="text" id="wa-reply-input" class="form-input" placeholder="Ketik pesan balasan manual sebagai Admin Velacookies..." required>
+                                <button type="submit" class="btn-primary" id="wa-reply-submit">Kirim Balasan</button>
+                            </form>
+                        </div>
+
+                        <!-- RIGHT COLUMN: LINKED ORDER VC-XXXX & AI RECEIPT VERIFICATION -->
+                        <div class="surface-card wa-order-context-card">
+                            <div id="wa-order-context-body">
+                                <p class="empty-state-sm">Rincian order VC-XXXX dan hasil pemeriksaan struk AI akan tampil di sini.</p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- SUB-VIEW 2: WHATSAPP GATEWAY & NOTIFICATION SETTINGS -->
+                    <div id="wa-subview-gateway" class="settings-split-grid" hidden>
+                        <div class="surface-card">
+                            <h2 class="card-title">Koneksi WhatsApp Gateway</h2>
+                            <p class="card-subtitle">Hubungkan endpoint webhook ini ke penyedia WhatsApp API (Fonnte, Wablas, atau WhatsApp Cloud API Resmi) untuk nomor bisnis Velacookies.</p>
+
+                            <div class="wa-webhook-endpoint-box mt-14">
+                                <span class="mini-label">URL WEBHOOK MASUK (POST)</span>
+                                <code id="wa-webhook-url-display">/api/wa/webhook</code>
+                                <p class="form-help">Tempelkan URL ini di dashboard Fonnte / Wablas pada menu Webhook URL agar setiap chat &amp; foto bukti bayar pelanggan langsung masuk ke Admin Panel ini.</p>
+                            </div>
+
+                            <form id="wa-gateway-form" class="mt-16">
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label class="form-label" for="wa-setting-provider">Provider WhatsApp Gateway</label>
+                                        <select id="wa-setting-provider" class="form-input">
+                                            <option value="fonnte">Fonnte (Rekomendasi UMKM Indonesia)</option>
+                                            <option value="wablas">Wablas WhatsApp Gateway</option>
+                                            <option value="meta_cloud">WhatsApp Cloud API (Official Meta)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="wa-setting-number">Nomor WhatsApp Bot Terhubung</label>
+                                        <input type="text" id="wa-setting-number" class="form-input" value="6285117122454">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="wa-setting-secret">Webhook Secret / Token Verifikasi Gateway</label>
+                                    <input type="text" id="wa-setting-secret" class="form-input" placeholder="vc-webhook-karawang-2026">
+                                    <span class="form-help">Digunakan untuk memvalidasi request masuk dari provider gateway WhatsApp.</span>
+                                </div>
+
+                                <div class="wa-toggle-checks">
+                                    <label class="wa-checkbox-row" for="wa-setting-bot-active">
+                                        <input type="checkbox" id="wa-setting-bot-active" checked>
+                                        <div>
+                                            <strong>Aktifkan Balasan Otomatis AI (Gemini 2.5 Flash)</strong>
+                                            <span>Bot otomatis mengenali format Order ID VC-XXXX dari website, mengecek foto bukti bayar, dan menjawab info stok/PO.</span>
+                                        </div>
+                                    </label>
+
+                                    <label class="wa-checkbox-row" for="wa-setting-auto-notify">
+                                        <input type="checkbox" id="wa-setting-auto-notify" checked>
+                                        <div>
+                                            <strong>Kirim WA Otomatis Saat Admin Klik "Setujui"</strong>
+                                            <span>Otomatis mengirim pesan konfirmasi lunas ke WhatsApp pelanggan begitu status order diubah menjadi Success / Disetujui.</span>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <div class="settings-actions mt-16">
+                                    <button type="submit" class="btn-primary" id="wa-gateway-save-btn">✓ Simpan Konfigurasi Gateway</button>
+                                    <span class="settings-status" id="wa-gateway-status"></span>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="surface-card">
+                            <h2 class="card-title">Template Pesan Konfirmasi Otomatis</h2>
+                            <p class="card-subtitle">Gunakan variabel <code>{name}</code>, <code>{orderId}</code>, <code>{total}</code>, dan <code>{reason}</code>.</p>
+
+                            <div class="form-group mt-14">
+                                <label class="form-label" for="wa-setting-approve-tpl">Pesan Saat Pembayaran Disetujui (Tombol Setujui)</label>
+                                <textarea id="wa-setting-approve-tpl" class="form-input" rows="4"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="wa-setting-reject-tpl">Pesan Saat Bukti Bayar Ditolak / Minta Kirim Ulang</label>
+                                <textarea id="wa-setting-reject-tpl" class="form-input" rows="4"></textarea>
+                            </div>
+
+                            <div class="wa-rules-summary-box mt-14">
+                                <strong>Aturan Bisnis Velacookies yang Ditanamkan di Bot:</strong>
+                                <ul>
+                                    <li><strong>Website-First Ordering:</strong> Pelanggan yang belum punya kode <code>VC-XXXX</code> diarahkan checkout di <code>velacookies.store</code> agar stok 6 SKU terkunci akurat.</li>
+                                    <li><strong>Deteksi Format QRIS &amp; Struk AI:</strong> Mengekstrak nominal transfer dari foto bukti bayar dan mencocokkannya dengan tagihan order.</li>
+                                    <li><strong>Aturan COD &amp; DP 50%:</strong> Order COD &lt; 3 pcs tanpa DP; Order COD ≥ 3 pcs otomatis diminta bukti transfer DP 50%.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
+
+
+                <!-- ============================================
+                     TAB 6: PENGATURAN TOKO (SETTINGS)
                      ============================================ -->
                 <section class="tab-content" data-tab-content="settings" hidden>
 
@@ -946,6 +1176,7 @@
                                 <p class="card-subtitle">Kelola QRIS dan kontak admin yang dipakai di halaman pembayaran dan WhatsApp.</p>
 
                                 <div class="store-identity-banner mt-14">
+                                    <div class="brand-monogram-lg">V.</div>
                                     <div>
                                         <strong>VelaCookies</strong>
                                         <p>Cookies rumahan, dibuat dengan sepenuh hati.</p>
@@ -978,6 +1209,21 @@
                                 </form>
                             </div>
 
+                            <!-- CARD: ADMINISTRATOR -->
+                            <div class="surface-card mt-20">
+                                <h2 class="card-title">Administrator</h2>
+                                <p class="card-subtitle">Informasi penanggung jawab ruang kerja VelaCookies.</p>
+
+                                <div class="admin-Account-box mt-14">
+                                    <div class="profile-avatar-lg">AD</div>
+                                    <div class="admin-account-info">
+                                        <strong>Administrator Utama</strong>
+                                        <span>Akses pengelolaan penuh · Sesi token 8 jam</span>
+                                    </div>
+                                    <span class="badge-pill badge-green">Aktif</span>
+                                </div>
+                            </div>
+
                         </div>
 
                         <!-- RIGHT COLUMN: PRE-ORDER & PRATINJAU QRIS -->
@@ -987,7 +1233,7 @@
                             <div class="surface-card" id="po-settings-card">
                                 <div class="card-header-row">
                                     <div>
-                                        <h2 class="card-title">Status &amp; Jadwal Pre-Order (PO)</h2>
+                                        <h2 class="card-title">📅 Status &amp; Jadwal Pre-Order (PO)</h2>
                                         <p class="card-subtitle">Atur status buka/tutup Pre-Order serta jadwal batas pemesanan dan produksi.</p>
                                     </div>
                                     <span class="po-badge" id="po-current-badge">Memuat status...</span>
@@ -999,7 +1245,7 @@
                                         <p class="text-muted-sm">Saat ditutup, pelanggan tidak dapat membuat pesanan baru.</p>
                                     </div>
                                     <button type="button" class="btn-danger-sm" id="btn-close-po" style="display: none;">
-                                        Tutup Pre-Order Sekarang
+                                        🛑 Tutup Pre-Order Sekarang
                                     </button>
                                 </div>
 
@@ -1031,7 +1277,7 @@
                                     </div>
 
                                     <div class="settings-actions">
-                                        <button type="submit" class="btn-primary" id="po-submit-btn">Buka Pre-Order</button>
+                                        <button type="submit" class="btn-primary" id="po-submit-btn">🚀 Buka Pre-Order</button>
                                         <span class="settings-status" id="po-status-msg"></span>
                                     </div>
                                 </form>
@@ -1049,7 +1295,6 @@
                                     <div class="qris-preview-info">
                                         <strong>Metode Aktif: QRIS &amp; Cash (COD)</strong>
                                         <p>Ganti file di folder <code>images/</code> atau ubah URL gambar di atas jika ingin mengganti kode QR.</p>
-                                        <p class="form-help qris-preview-msg" id="settings-qris-preview-msg" hidden></p>
                                     </div>
                                 </div>
                             </div>
@@ -1088,7 +1333,7 @@
         <div class="admin-modal bulk-modal-card">
             <button class="admin-modal-close" id="bulk-delete-close" aria-label="Tutup">&times;</button>
             <div class="bulk-modal-header">
-                <h3>Hapus Massal Pesanan</h3>
+                <h3>🗑️ Hapus Massal Pesanan</h3>
                 <p>Pilih kriteria pesanan yang ingin dihapus dari database.</p>
             </div>
 
@@ -1138,7 +1383,7 @@
         <div class="admin-modal bulk-modal-card">
             <button class="admin-modal-close" id="stock-modal-close" aria-label="Tutup">&times;</button>
             <div class="bulk-modal-header">
-                <h3>Ubah Stok Produk</h3>
+                <h3>🍪 Ubah Stok Produk</h3>
                 <p id="stock-modal-product-name">Memuat nama produk...</p>
             </div>
 
@@ -1174,9 +1419,77 @@
 
                 <div class="bulk-actions">
                     <button type="button" class="btn-outline" id="stock-modal-cancel">Batal</button>
-                    <button type="submit" class="btn-primary" id="stock-modal-save">Simpan Stok</button>
+                    <button type="submit" class="btn-primary" id="stock-modal-save">💾 Simpan Stok</button>
                 </div>
                 <p id="stock-modal-error" class="settings-status error" style="display: none;"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================
+         WA SIMULATOR / TEST WEBHOOK MODAL
+         ===================================================== -->
+    <div class="admin-modal-overlay" id="wa-test-modal">
+        <div class="admin-modal bulk-modal-card">
+            <button class="admin-modal-close" id="wa-test-modal-close" aria-label="Tutup">&times;</button>
+            <div class="bulk-modal-header">
+                <h3>⚡ Simulasi Pesan &amp; Struk Pelanggan</h3>
+                <p>Uji bagaimana Chatbot AI merespons pesan WhatsApp atau memeriksa foto bukti bayar QRIS/DP.</p>
+            </div>
+
+            <form id="wa-test-form" class="bulk-modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="wa-test-preset">Pilih Skenario Uji Cepat</label>
+                    <select id="wa-test-preset" class="form-input">
+                        <option value="qris_proof">1. Konfirmasi Order QRIS + Kirim Struk Lunas</option>
+                        <option value="cod_dp">2. Order COD ≥ 3 pcs (Tanya Info DP 50%)</option>
+                        <option value="stock_ask">3. Pelanggan Tanya Stok &amp; Harga Menu</option>
+                        <option value="want_order">4. Pelanggan Mau Order Manual di Chat WA</option>
+                        <option value="human">5. Pelanggan Minta Bantuan Admin Manusia</option>
+                    </select>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label" for="wa-test-name">Nama Pengirim</label>
+                        <input type="text" id="wa-test-name" class="form-input" value="Alya Putri" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="wa-test-phone">Nomor WA Pengirim</label>
+                        <input type="text" id="wa-test-phone" class="form-input" value="081234567890" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="wa-test-message">Isi Pesan WhatsApp</label>
+                    <textarea id="wa-test-message" class="form-input" rows="3" required>Halo Velacookies! Saya sudah transfer via QRIS untuk Order ID: VC-0001. Berikut bukti transfernya ya.</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="wa-checkbox-row" for="wa-test-attach-receipt">
+                        <input type="checkbox" id="wa-test-attach-receipt" checked>
+                        <div>
+                            <strong>Lampirkan Simulasi Gambar Struk Transfer QRIS</strong>
+                            <span>Sistem akan men-generate gambar struk otomatis untuk dianalisis oleh AI.</span>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="form-row-2" id="wa-test-receipt-options">
+                    <div class="form-group">
+                        <label class="form-label" for="wa-test-receipt-amount">Nominal di Struk (Rp)</label>
+                        <input type="number" id="wa-test-receipt-amount" class="form-input" value="55000" min="1000">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="wa-test-receipt-bank">Bank / E-Wallet Pengirim</label>
+                        <input type="text" id="wa-test-receipt-bank" class="form-input" value="BCA Mobile · QRIS">
+                    </div>
+                </div>
+
+                <div class="bulk-actions">
+                    <button type="button" class="btn-outline" id="wa-test-cancel-btn">Batal</button>
+                    <button type="submit" class="btn-primary" id="wa-test-submit-btn">🚀 Kirim Simulasi ke Bot</button>
+                </div>
             </form>
         </div>
     </div>
