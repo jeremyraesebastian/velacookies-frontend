@@ -69,7 +69,7 @@
                     <span class="payment-status-label" id="payment-status-label">Menunggu Pembayaran</span>
                 </div>
 
-                <h1 class="payment-title">Pembayaran QRIS</h1>
+                <h1 class="payment-title" id="payment-title">Pembayaran QRIS</h1>
 
                 <div class="payment-meta">
                     <div class="payment-meta-row">
@@ -87,8 +87,9 @@
                 </div>
 
                 <div class="payment-total-box">
-                    <span class="payment-total-label">Total Pembayaran</span>
+                    <span class="payment-total-label" id="payment-total-label">Total Pembayaran</span>
                     <strong class="payment-total-value" id="payment-total">Rp0</strong>
+                    <span class="payment-total-subnote" id="payment-total-subnote" hidden></span>
                 </div>
 
             </div>
@@ -119,51 +120,98 @@
 
 
             <!-- =========================
-                 INSTRUKSI
+                 INSTRUKSI & UPLOAD BUKTI
                  ========================= -->
 
             <div class="payment-card">
 
-                <h2 class="payment-section-title">Cara Bayar</h2>
+                <h2 class="payment-section-title">Cara Bayar &amp; Konfirmasi</h2>
 
                 <ol class="payment-steps">
                     <li>Buka aplikasi <strong>m-banking</strong>, <strong>GoPay</strong>, <strong>OVO</strong>, <strong>DANA</strong>, atau aplikasi apapun yang mendukung QRIS.</li>
                     <li>Pilih menu <strong>Scan QR</strong>, lalu arahkan ke QR di atas.</li>
-                    <li>Masukkan nominal <strong>sesuai total</strong> di atas.</li>
-                    <li>Konfirmasi pembayaran.</li>
-                    <li>Centang kotak persetujuan di bawah, lalu klik tombol <strong>"Saya Sudah Bayar & Chat Admin"</strong>.</li>
+                    <li>Masukkan nominal <strong>sesuai nominal pembayaran</strong> di atas, selesaikan transaksi, lalu simpan <strong>screenshot bukti transfer</strong>.</li>
+                    <li><strong>Unggah foto bukti pembayaran</strong> pada kotak di bawah ini sampai berstatus terunggah.</li>
+                    <li>Centang kotak persetujuan, lalu klik tombol <strong>"Saya Sudah Bayar &amp; Chat Admin"</strong> untuk mengirim konfirmasi di WhatsApp.</li>
                 </ol>
+
+                <!-- KOTAK UPLOAD BUKTI BAYAR (PHASE 2) -->
+                <div class="payment-upload-box" id="payment-upload-box">
+                    <div class="payment-upload-header">
+                        <div class="payment-upload-title-wrap">
+                            <span class="payment-upload-icon">📸</span>
+                            <div>
+                                <strong class="payment-upload-title">Unggah Bukti Pembayaran</strong>
+                                <span class="payment-upload-subtitle">Format JPG, PNG, atau WEBP (otomatis dikompres ≤ 2.5 MB)</span>
+                            </div>
+                        </div>
+                        <span class="payment-upload-badge" id="payment-upload-badge">Wajib Diunggah</span>
+                    </div>
+
+                    <input
+                        type="file"
+                        id="payment-proof-input"
+                        accept="image/jpeg,image/png,image/webp"
+                        hidden
+                    >
+
+                    <div class="payment-upload-dropzone" id="payment-upload-dropzone" role="button" tabindex="0" aria-label="Pilih foto bukti pembayaran">
+                        <div class="payment-upload-empty" id="payment-upload-empty">
+                            <div class="payment-upload-cloud">📤</div>
+                            <p class="payment-upload-cta">Klik untuk Pilih Foto Struk / Bukti Transfer</p>
+                            <p class="payment-upload-hint">atau tarik &amp; lepas screenshot bukti bayar ke sini</p>
+                        </div>
+
+                        <div class="payment-upload-preview-wrap" id="payment-upload-preview-wrap" hidden>
+                            <img id="payment-proof-preview-img" class="payment-proof-preview-img" alt="Preview Bukti Pembayaran" hidden>
+                            <div class="payment-upload-saved-banner" id="payment-upload-saved-banner" hidden>
+                                <span>📄 Bukti pembayaran sudah tersimpan di sistem kami dan sedang menunggu verifikasi Admin.</span>
+                            </div>
+                            <div class="payment-upload-filebar">
+                                <span class="payment-upload-filename" id="payment-proof-file-info">Bukti pembayaran terunggah</span>
+                                <button type="button" class="payment-upload-change-btn" id="payment-proof-change-btn">
+                                    🔄 Ganti Foto
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="payment-upload-status" id="payment-upload-status" hidden></div>
+                </div>
 
                 <div class="payment-warning-box">
                     <div class="payment-warning-icon">⚠️</div>
                     <div class="payment-warning-content">
-                        <strong>Wajib Konfirmasi via WhatsApp</strong>
+                        <strong>Wajib Unggah Bukti Bayar &amp; Konfirmasi via WhatsApp</strong>
                         <p>
-                            Pesanan kamu <strong>BELUM akan diproses</strong> sampai kamu konfirmasi ke WhatsApp admin
-                            dan <strong>kirim bukti pembayaran</strong> (screenshot / struk transfer) ke WA.
+                            Pesanan kamu <strong>BELUM akan diproses</strong> sampai kamu <strong>mengunggah foto bukti pembayaran</strong> di atas,
+                            lalu klik tombol di bawah untuk konfirmasi ke WhatsApp Admin.
                         </p>
                     </div>
                 </div>
 
-                <label class="payment-checkbox-label">
+                <label class="payment-checkbox-label" id="payment-checkbox-label">
                     <input
                         type="checkbox"
                         id="payment-confirm-checkbox"
                         class="payment-checkbox"
                     >
                     <span class="payment-checkbox-text">
-                        Saya sudah baca dan akan <strong>mengirim bukti pembayaran</strong> ke WhatsApp admin
-                        setelah klik tombol di bawah.
+                        Saya sudah transfer sesuai nominal tagihan dan sudah <strong>mengunggah bukti pembayaran</strong> yang benar di atas.
                     </span>
                 </label>
 
+                <p class="payment-gate-hint" id="payment-gate-hint">
+                    📌 Unggah foto bukti pembayaran di atas &amp; centang kotak persetujuan untuk mengaktifkan tombol konfirmasi.
+                </p>
+
                 <div class="payment-actions">
                     <button class="payment-btn payment-btn-primary" id="payment-confirm-btn" disabled>
-                        ✓ Saya Sudah Bayar & Chat Admin
+                        ✓ Saya Sudah Bayar &amp; Chat Admin
                     </button>
 
                     <button class="payment-btn payment-btn-wa" id="payment-wa-btn">
-                        📱 Chat Admin Dulu (Belum Bayar)
+                        📱 Chat Admin Dulu (Tanya / Kendala)
                     </button>
                 </div>
 
@@ -211,9 +259,9 @@
 
                     <p>
                         <strong>PENTING:</strong> Setelah kamu scan dan bayar via QRIS,
-                        kamu <strong>WAJIB</strong> centang kotak persetujuan lalu klik tombol
-                        <strong>"Saya Sudah Bayar & Chat Admin"</strong>.
-                        Tombol itu akan otomatis membuka WhatsApp dengan detail pesanan kamu.
+                        kamu <strong>WAJIB mengunggah foto bukti pembayaran</strong> di halaman ini,
+                        lalu centang kotak persetujuan dan klik tombol
+                        <strong>"Saya Sudah Bayar &amp; Chat Admin"</strong>.
                     </p>
 
                     <p>
@@ -221,10 +269,10 @@
                     </p>
 
                     <ul class="payment-description-list">
-                        <li>Kamu konfirmasi pembayaran via WhatsApp</li>
-                        <li>Kamu kirimkan bukti pembayaran (screenshot / struk transfer)</li>
-                        <li>Admin verifikasi nominal transfer sesuai dengan total pesanan</li>
-                        <li>Admin ubah status pesanan menjadi "Success"</li>
+                        <li>Kamu mengunggah foto bukti pembayaran (screenshot / struk transfer) di halaman ini</li>
+                        <li>Kamu mengirim chat konfirmasi pembayaran ke WhatsApp Admin</li>
+                        <li>Admin memverifikasi nominal transfer sesuai dengan tagihan pesanan</li>
+                        <li>Admin menyetujui pesanan menjadi "Success" (Lunas)</li>
                     </ul>
 
                     <p>
@@ -266,15 +314,14 @@
 
             <div class="payment-modal-check">✓</div>
 
-            <h3>Konfirmasi Terkirim!</h3>
+            <h3>Konfirmasi &amp; Bukti Bayar Terkirim!</h3>
 
             <p>
-                Terima kasih sudah konfirmasi pembayaran.
-                Admin akan memverifikasi pesanan kamu.
+                Terima kasih! Bukti pembayaran kamu sudah masuk ke sistem dan sedang menunggu verifikasi Admin Velacookies.
             </p>
 
             <p class="payment-modal-note">
-                Jangan lupa kirim bukti pembayaran (screenshot / struk transfer) ke WhatsApp admin ya.
+                Jika jendela WhatsApp belum terbuka otomatis, klik tombol di bawah untuk mengirim pesan konfirmasi ke Admin ya.
             </p>
 
             <div class="payment-modal-actions">
@@ -282,7 +329,7 @@
                     📱 Chat Admin Sekarang
                 </button>
                 <button class="payment-btn payment-btn-ghost" id="payment-modal-close">
-                    Nanti Saja
+                    Tutup
                 </button>
             </div>
 

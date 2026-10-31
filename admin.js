@@ -255,8 +255,10 @@ const waMetricHuman = document.getElementById("wa-metric-human");
 
 const waSubtabInboxBtn = document.getElementById("wa-subtab-inbox-btn");
 const waSubtabGatewayBtn = document.getElementById("wa-subtab-gateway-btn");
+const waSubtabKnowledgeBtn = document.getElementById("wa-subtab-knowledge-btn");
 const waPanelInbox = document.getElementById("wa-subview-inbox");
 const waPanelGateway = document.getElementById("wa-subview-gateway");
+const waPanelKnowledge = document.getElementById("wa-subview-knowledge");
 
 const waConvCountLabel = document.getElementById("wa-conv-count-label");
 const waConvFilterSelect = document.getElementById("wa-conv-filter-select");
@@ -283,11 +285,34 @@ const waSettingProvider = document.getElementById("wa-setting-provider");
 const waSettingSender = document.getElementById("wa-setting-number");
 const waSettingToken = document.getElementById("wa-setting-secret");
 const waSettingAutoReply = document.getElementById("wa-setting-bot-active");
+const waSettingBotActiveTitle = document.getElementById("wa-setting-bot-active-title");
 const waSettingAutoRedirect = document.getElementById("wa-setting-auto-notify");
 const waSettingTemplateApproved = document.getElementById("wa-setting-approve-tpl");
 const waSettingTemplateRejected = document.getElementById("wa-setting-reject-tpl");
 const waGatewaySaveBtn = document.getElementById("wa-gateway-save-btn");
 const waGatewaySaveFeedback = document.getElementById("wa-gateway-status");
+
+/* Phase 3: Knowledge Base Editor & AI Health Monitor DOM */
+const waKnowledgeSectionsList = document.getElementById("wa-knowledge-sections-list");
+const waKnowledgeSaveBtn = document.getElementById("wa-knowledge-save-btn");
+const waKnowledgeResetAllBtn = document.getElementById("wa-knowledge-reset-all-btn");
+const waKnowledgeStatus = document.getElementById("wa-knowledge-status");
+
+const waHealthStatusBadge = document.getElementById("wa-health-status-badge");
+const waHealthRefreshBtn = document.getElementById("wa-health-refresh-btn");
+const waHealthActiveModel = document.getElementById("wa-health-active-model");
+const waHealthModelsPair = document.getElementById("wa-health-models-pair");
+const waHealthThinkingTimeout = document.getElementById("wa-health-thinking-timeout");
+const waHealthApikeyStatus = document.getElementById("wa-health-apikey-status");
+const waHealthStatTotal = document.getElementById("wa-health-stat-total");
+const waHealthStatSuccess = document.getElementById("wa-health-stat-success");
+const waHealthStatFallback = document.getElementById("wa-health-stat-fallback");
+const waHealthStatLatency = document.getElementById("wa-health-stat-latency");
+const waHealthLastErrorBox = document.getElementById("wa-health-last-error-box");
+const waHealthLastErrorTime = document.getElementById("wa-health-last-error-time");
+const waHealthLastErrorMsg = document.getElementById("wa-health-last-error-msg");
+const waHealthLogsCount = document.getElementById("wa-health-logs-count");
+const waAiLogsTbody = document.getElementById("wa-ai-logs-tbody");
 
 const waOpenTestModalBtn = document.getElementById("wa-open-test-modal-btn");
 const waRefreshBtn = document.getElementById("wa-refresh-btn");
@@ -1103,6 +1128,7 @@ function renderInlineOrderDetail(order) {
                         ? `✓ Customer klaim sudah bayar (${formatDate(order.customerConfirmedAt)}). Cocokkan penerimaan sebelum konfirmasi.`
                         : "Pastikan pembayaran telah diterima sebelum menandai pesanan sukses."}
                 </p>
+                ${buildAdminReceiptAnalysisBoxHtml(order, true)}
                 <div class="inline-actions-stack">
                     ${statusVal !== "success"
                         ? `<button type="button" class="btn-primary inline-action-btn" data-action="success" data-order-id="${escapeHtml(order.orderId)}">✓ Tandai Sukses</button>`
@@ -1244,6 +1270,8 @@ function openOrderModal(order) {
             <span>Total</span>
             <strong>${formatRupiah(order.total || 0)}</strong>
         </div>
+
+        ${buildAdminReceiptAnalysisBoxHtml(order, true)}
 
         <div class="modal-actions">
             <p class="mini-label" style="margin-bottom:4px;">Ubah Status</p>
@@ -3302,12 +3330,26 @@ if (waWebhookUrlDisplay) {
     waWebhookUrlDisplay.innerText = `${API_BASE}/api/wa/webhook`;
 }
 
+let waKnowledgeSectionsCache = [];
+let waKnowledgeLoadedOnce = false;
+let waBotHealthCache = null;
+
 function switchWaSubtab(subtab) {
-    const isInbox = subtab !== "gateway";
-    if (waSubtabInboxBtn) waSubtabInboxBtn.classList.toggle("active", isInbox);
-    if (waSubtabGatewayBtn) waSubtabGatewayBtn.classList.toggle("active", !isInbox);
-    if (waPanelInbox) waPanelInbox.hidden = !isInbox;
-    if (waPanelGateway) waPanelGateway.hidden = isInbox;
+    const activeTab = subtab === "gateway" || subtab === "knowledge" ? subtab : "inbox";
+    if (waSubtabInboxBtn) waSubtabInboxBtn.classList.toggle("active", activeTab === "inbox");
+    if (waSubtabGatewayBtn) waSubtabGatewayBtn.classList.toggle("active", activeTab === "gateway");
+    if (waSubtabKnowledgeBtn) waSubtabKnowledgeBtn.classList.toggle("active", activeTab === "knowledge");
+
+    if (waPanelInbox) waPanelInbox.hidden = activeTab !== "inbox";
+    if (waPanelGateway) waPanelGateway.hidden = activeTab !== "gateway";
+    if (waPanelKnowledge) waPanelKnowledge.hidden = activeTab !== "knowledge";
+
+    if (activeTab === "knowledge") {
+        if (!waKnowledgeLoadedOnce) {
+            loadBotKnowledge();
+        }
+        loadBotHealth();
+    }
 }
 
 if (waSubtabInboxBtn) {
@@ -3315,6 +3357,343 @@ if (waSubtabInboxBtn) {
 }
 if (waSubtabGatewayBtn) {
     waSubtabGatewayBtn.addEventListener("click", () => switchWaSubtab("gateway"));
+}
+if (waSubtabKnowledgeBtn) {
+    waSubtabKnowledgeBtn.addEventListener("click", () => switchWaSubtab("knowledge"));
+}
+
+function renderBotHealthBanner(botHealth, isBotOn = true) {
+    if (botHealth) {
+        waBotHealthCache = botHealth;
+    }
+    const bh = botHealth || waBotHealthCache || {};
+    const activeModel = bh.activeModel || bh.primaryModel || "gemini-3.8-flash";
+    const primaryModel = bh.primaryModel || "gemini-3.8-flash";
+    const fallbackModel = bh.fallbackModel || "gemini-3-flash-preview";
+    const healthStatus = bh.status || "healthy";
+
+    if (waSettingBotActiveTitle) {
+        waSettingBotActiveTitle.innerText = `Aktifkan Balasan Otomatis AI (${activeModel})`;
+    }
+
+    if (waBotStatusPill) {
+        if (!isBotOn) {
+            waBotStatusPill.innerText = "Bot AI Nonaktif (Manual)";
+            waBotStatusPill.className = "badge-pill badge-gold";
+        } else if (healthStatus === "error") {
+            waBotStatusPill.innerText = `⚠️ ${bh.statusLabel || "API Key / SDK Belum Aktif"}`;
+            waBotStatusPill.className = "badge-pill badge-danger";
+        } else if (healthStatus === "degraded") {
+            waBotStatusPill.innerText = `⚠️ ${bh.statusLabel || `Terdegradasi (Fallback · ${activeModel})`}`;
+            waBotStatusPill.className = "badge-pill badge-gold";
+        } else if (healthStatus === "failover") {
+            waBotStatusPill.innerText = `AI Aktif · Failover (${activeModel})`;
+            waBotStatusPill.className = "badge-pill badge-green";
+        } else {
+            waBotStatusPill.innerText = `AI Aktif · ${activeModel}`;
+            waBotStatusPill.className = "badge-pill badge-green";
+        }
+    }
+
+    if (waHealthStatusBadge) {
+        if (healthStatus === "error") {
+            waHealthStatusBadge.innerText = bh.statusLabel || "Error Konfigurasi";
+            waHealthStatusBadge.className = "badge-pill badge-danger";
+        } else if (healthStatus === "degraded") {
+            waHealthStatusBadge.innerText = bh.statusLabel || "Terdegradasi (Fallback)";
+            waHealthStatusBadge.className = "badge-pill badge-gold";
+        } else if (healthStatus === "failover") {
+            waHealthStatusBadge.innerText = bh.statusLabel || `Failover Aktif · ${activeModel}`;
+            waHealthStatusBadge.className = "badge-pill badge-green";
+        } else {
+            waHealthStatusBadge.innerText = bh.statusLabel || `AI Sehat · ${activeModel}`;
+            waHealthStatusBadge.className = "badge-pill badge-green";
+        }
+    }
+
+    if (waHealthActiveModel) {
+        const cooldownSec = Number(bh.primaryCooldownRemainingSec || 0);
+        waHealthActiveModel.innerText = cooldownSec > 0
+            ? `${activeModel} (Cooldown utama ${cooldownSec} dtk)`
+            : activeModel;
+    }
+    if (waHealthModelsPair) {
+        waHealthModelsPair.innerText = `${primaryModel} → ${fallbackModel}`;
+    }
+    if (waHealthThinkingTimeout) {
+        waHealthThinkingTimeout.innerText = `thinking: ${bh.thinkingLevel || "low"} · batas ${bh.timeoutSeconds || 15} dtk`;
+    }
+    if (waHealthApikeyStatus) {
+        const ok = bh.apiKeyConfigured !== false && bh.sdkInstalled !== false;
+        waHealthApikeyStatus.innerText = ok ? "✓ API Key & SDK google-genai Aktif" : "❌ API Key / SDK Belum Siap";
+        waHealthApikeyStatus.className = ok ? "text-green" : "";
+    }
+
+    const s24 = bh.stats24h || {};
+    if (waHealthStatTotal) waHealthStatTotal.innerText = String(s24.totalCalls || 0);
+    if (waHealthStatSuccess) waHealthStatSuccess.innerText = String(s24.successCalls || 0);
+    if (waHealthStatFallback) waHealthStatFallback.innerText = String(s24.fallbackCalls || 0);
+    if (waHealthStatLatency) waHealthStatLatency.innerText = `${s24.avgLatencyMs || 0} ms`;
+
+    if (waHealthLastErrorBox) {
+        const lastErr = bh.lastError;
+        if (lastErr && lastErr.errorMessage) {
+            waHealthLastErrorBox.hidden = false;
+            if (waHealthLastErrorTime) {
+                waHealthLastErrorTime.innerText = `${formatDate(lastErr.createdAt)} · ${lastErr.model || "-"}`;
+            }
+            if (waHealthLastErrorMsg) {
+                waHealthLastErrorMsg.innerText = lastErr.errorMessage;
+            }
+        } else {
+            waHealthLastErrorBox.hidden = true;
+        }
+    }
+
+    const logs = Array.isArray(bh.recentLogs) ? bh.recentLogs : [];
+    if (waHealthLogsCount) {
+        waHealthLogsCount.innerText = `${logs.length} catatan terbaru`;
+    }
+    if (waAiLogsTbody) {
+        if (logs.length === 0) {
+            waAiLogsTbody.innerHTML = `<tr><td colspan="6" class="empty-state-sm">Belum ada riwayat pemanggilan AI yang tercatat.</td></tr>`;
+        } else {
+            waAiLogsTbody.innerHTML = logs.map((lg) => {
+                const isVision = lg.logType === "vision";
+                const typeBadge = isVision
+                    ? `<span class="badge-pill badge-gold">👁 Vision Struk</span>`
+                    : `<span class="badge-pill badge-green">💬 Chat WA</span>`;
+                const targetParts = [];
+                if (lg.orderId) targetParts.push(`<strong>#${escapeHtml(lg.orderId)}</strong>`);
+                if (lg.phone) targetParts.push(`<span>${escapeHtml(lg.phone)}</span>`);
+                const targetHtml = targetParts.length > 0 ? targetParts.join("<br>") : "—";
+
+                const statusBadge = lg.usedFallback
+                    ? `<span class="badge-pill badge-gold" title="${escapeHtml(lg.errorMessage || "Fallback digunakan")}">⚠️ Fallback</span>`
+                    : `<span class="badge-pill badge-green">✓ AI Murni</span>`;
+
+                const errHint = lg.errorMessage
+                    ? `<div style="font-size:11px;color:var(--danger);margin-top:3px;">${escapeHtml(String(lg.errorMessage).slice(0, 90))}</div>`
+                    : "";
+
+                return `
+                    <tr>
+                        <td>${formatDate(lg.createdAt)}</td>
+                        <td>${typeBadge}</td>
+                        <td>${targetHtml}</td>
+                        <td>
+                            <strong>${escapeHtml(lg.model || "-")}</strong>
+                            <div class="text-muted-sm">${escapeHtml(lg.intent || "-")}${lg.needsHuman ? " · 👤 Handover" : ""}${lg.inScope === false ? " · 🚫 Out-of-Scope" : ""}</div>
+                            ${errHint}
+                        </td>
+                        <td class="align-right"><strong>${lg.latencyMs || 0} ms</strong></td>
+                        <td>${statusBadge}</td>
+                    </tr>
+                `;
+            }).join("");
+        }
+    }
+}
+
+async function loadBotHealth() {
+    const token = getToken();
+    if (!token) return;
+    try {
+        const res = await fetch(`${API_BASE}/api/admin/bot/health`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.success && data.botHealth) {
+            renderBotHealthBanner(data.botHealth, data.botHealth.botActive !== false);
+        }
+    } catch (err) {
+        console.error("Load bot health error:", err);
+    }
+}
+
+function showBotKnowledgeStatus(msg, type = "success") {
+    if (!waKnowledgeStatus) return;
+    waKnowledgeStatus.innerText = msg;
+    waKnowledgeStatus.className = `settings-status ${type}`;
+    if (type === "success") {
+        setTimeout(() => {
+            if (waKnowledgeStatus) {
+                waKnowledgeStatus.innerText = "";
+                waKnowledgeStatus.className = "settings-status";
+            }
+        }, 4000);
+    }
+}
+
+async function loadBotKnowledge() {
+    const token = getToken();
+    if (!token || !waKnowledgeSectionsList) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/api/admin/bot/knowledge`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.success) return;
+
+        waKnowledgeSectionsCache = Array.isArray(data.sections) ? data.sections : [];
+        waKnowledgeLoadedOnce = true;
+        renderBotKnowledgeSections(waKnowledgeSectionsCache);
+    } catch (err) {
+        console.error("Load bot knowledge error:", err);
+        if (waKnowledgeSectionsList) {
+            waKnowledgeSectionsList.innerHTML = `<p class="empty-state-sm">Gagal memuat Knowledge Base AI Bot.</p>`;
+        }
+    }
+}
+
+function renderBotKnowledgeSections(sections) {
+    if (!waKnowledgeSectionsList) return;
+    if (!sections || sections.length === 0) {
+        waKnowledgeSectionsList.innerHTML = `<p class="empty-state-sm">Tidak ada bagian knowledge base ditemukan.</p>`;
+        return;
+    }
+
+    waKnowledgeSectionsList.innerHTML = sections.map((sec) => {
+        const modBadge = sec.isModified
+            ? `<span class="badge-pill badge-gold">Diedit Admin</span>`
+            : `<span class="badge-pill badge-green">Default Resmi</span>`;
+        const updatedText = sec.updatedAt
+            ? `Terakhir diperbarui: ${formatDate(sec.updatedAt)}`
+            : "Menggunakan teks bawaan Velacookies";
+
+        return `
+            <div class="wa-knowledge-section-item" data-section-key="${escapeHtml(sec.key)}">
+                <div class="wa-knowledge-section-top">
+                    <div class="wa-knowledge-section-title-group">
+                        <strong>${escapeHtml(sec.title)}</strong>
+                        <span>${escapeHtml(sec.description || "")}</span>
+                    </div>
+                    <div class="wa-knowledge-section-meta">
+                        ${modBadge}
+                        <button type="button" class="btn-outline-sm btn-reset-knowledge-sec" data-section-key="${escapeHtml(sec.key)}" title="Kembalikan bagian ini ke teks bawaan">
+                            ↺ Reset Bagian
+                        </button>
+                    </div>
+                </div>
+                <textarea class="wa-knowledge-textarea" data-knowledge-input="${escapeHtml(sec.key)}" rows="5">${escapeHtml(sec.content || "")}</textarea>
+                <span class="wa-knowledge-updated-hint">${escapeHtml(updatedText)}</span>
+            </div>
+        `;
+    }).join("");
+
+    waKnowledgeSectionsList.querySelectorAll(".btn-reset-knowledge-sec").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const key = btn.getAttribute("data-section-key");
+            if (key) resetBotKnowledgeSection(key);
+        });
+    });
+}
+
+async function saveBotKnowledge() {
+    if (!waKnowledgeSectionsList) return;
+    const inputs = waKnowledgeSectionsList.querySelectorAll("[data-knowledge-input]");
+    const sectionsPayload = {};
+    inputs.forEach((el) => {
+        const k = el.getAttribute("data-knowledge-input");
+        if (k) {
+            sectionsPayload[k] = el.value.trim();
+        }
+    });
+
+    if (waKnowledgeSaveBtn) {
+        waKnowledgeSaveBtn.disabled = true;
+        waKnowledgeSaveBtn.innerText = "Menyimpan...";
+    }
+
+    try {
+        const res = await fetch(`${API_BASE}/api/admin/bot/knowledge`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${getToken()}`
+            },
+            body: JSON.stringify({ sections: sectionsPayload })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            showBotKnowledgeStatus(data.message || "Gagal menyimpan Knowledge Base.", "error");
+            return;
+        }
+        waKnowledgeSectionsCache = Array.isArray(data.sections) ? data.sections : [];
+        renderBotKnowledgeSections(waKnowledgeSectionsCache);
+        showBotKnowledgeStatus("✓ Knowledge Base AI Bot berhasil disimpan & langsung aktif!", "success");
+    } catch (err) {
+        console.error("Save bot knowledge error:", err);
+        showBotKnowledgeStatus("Gagal terhubung ke server.", "error");
+    } finally {
+        if (waKnowledgeSaveBtn) {
+            waKnowledgeSaveBtn.disabled = false;
+            waKnowledgeSaveBtn.innerText = "💾 Simpan Semua Knowledge";
+        }
+    }
+}
+
+async function resetBotKnowledgeSection(sectionKey) {
+    if (!sectionKey) return;
+    if (!confirm("Kembalikan bagian ini ke teks bawaan resmi Velacookies?")) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/api/admin/bot/knowledge`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${getToken()}`
+            },
+            body: JSON.stringify({ resetSectionKey: sectionKey })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            waKnowledgeSectionsCache = Array.isArray(data.sections) ? data.sections : [];
+            renderBotKnowledgeSections(waKnowledgeSectionsCache);
+            showBotKnowledgeStatus("✓ Bagian berhasil dikembalikan ke default!", "success");
+        }
+    } catch (err) {
+        console.error("Reset knowledge section error:", err);
+    }
+}
+
+async function resetAllBotKnowledge() {
+    if (!confirm("Kembalikan SELURUH 7 bagian Knowledge Base AI Bot ke teks bawaan resmi Velacookies?")) return;
+
+    if (waKnowledgeResetAllBtn) waKnowledgeResetAllBtn.disabled = true;
+    try {
+        const res = await fetch(`${API_BASE}/api/admin/bot/knowledge`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${getToken()}`
+            },
+            body: JSON.stringify({ resetToDefault: true })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            waKnowledgeSectionsCache = Array.isArray(data.sections) ? data.sections : [];
+            renderBotKnowledgeSections(waKnowledgeSectionsCache);
+            showBotKnowledgeStatus("✓ Seluruh Knowledge Base berhasil di-reset ke default!", "success");
+        }
+    } catch (err) {
+        console.error("Reset all bot knowledge error:", err);
+    } finally {
+        if (waKnowledgeResetAllBtn) waKnowledgeResetAllBtn.disabled = false;
+    }
+}
+
+if (waKnowledgeSaveBtn) {
+    waKnowledgeSaveBtn.addEventListener("click", saveBotKnowledge);
+}
+if (waKnowledgeResetAllBtn) {
+    waKnowledgeResetAllBtn.addEventListener("click", resetAllBotKnowledge);
+}
+if (waHealthRefreshBtn) {
+    waHealthRefreshBtn.addEventListener("click", loadBotHealth);
 }
 
 async function loadWaWorkspace(options = {}) {
@@ -3338,11 +3717,8 @@ async function loadWaWorkspace(options = {}) {
         if (waMetricDp) waMetricDp.innerText = String(metrics.dpAwaitingCount || 0);
         if (waMetricHuman) waMetricHuman.innerText = String(metrics.needsHumanCount || 0);
 
-        if (waBotStatusPill) {
-            const isBotOn = metrics.botActive !== false;
-            waBotStatusPill.innerText = isBotOn ? "AI Aktif · Gemini 2.5 Flash" : "Bot AI Nonaktif (Manual)";
-            waBotStatusPill.className = isBotOn ? "badge-pill badge-green" : "badge-pill badge-gold";
-        }
+        const isBotOn = metrics.botActive !== false;
+        renderBotHealthBanner(data.botHealth, isBotOn);
 
         const actionNeededCount =
             Number(metrics.awaitingVerificationCount || 0) + Number(metrics.needsHumanCount || 0);
@@ -3532,19 +3908,85 @@ function renderWaMessages(messages) {
             ? `<img src="${escapeHtml(m.mediaUrl)}" alt="Bukti Transfer" class="wa-bubble-media">`
             : "";
 
+        let aiMetaChipHtml = "";
+        if (senderRole === "bot" && m.aiAnalysis && typeof m.aiAnalysis === "object") {
+            const meta = m.aiAnalysis;
+            const chips = [];
+            if (meta.intent) chips.push(escapeHtml(meta.intent));
+            if (meta.model) chips.push(escapeHtml(meta.model));
+            if (meta.latencyMs !== undefined && meta.latencyMs !== null) chips.push(`${meta.latencyMs}ms`);
+            if (meta.usedFallback) chips.push("⚠️ Fallback");
+            if (meta.needsHuman) chips.push("👤 Needs Human");
+            if (meta.inScope === false) chips.push("🚫 Out of Scope");
+            if (chips.length > 0) {
+                aiMetaChipHtml = `<div style="margin-top:6px;padding-top:4px;border-top:1px dashed rgba(0,0,0,0.08);font-size:10.5px;color:var(--text-muted);">${chips.join(" · ")}</div>`;
+            }
+        }
+
         return `
             <div class="wa-bubble wa-bubble-${senderRole}">
                 <div class="wa-bubble-meta">
                     <strong>${senderLabel}</strong>
                     <span>${formatDate(m.createdAt)}</span>
                 </div>
-                <div>${escapeHtml(m.text)}</div>
+                <div style="white-space:pre-wrap;">${escapeHtml(m.text)}</div>
                 ${mediaHtml}
+                ${aiMetaChipHtml}
             </div>
         `;
     }).join("");
 
     waMessagesViewport.scrollTop = waMessagesViewport.scrollHeight;
+}
+
+function buildAdminReceiptAnalysisBoxHtml(order, compact = false) {
+    const ai = order && order.aiReceiptAnalysis;
+    const proofUrl = order && order.paymentProofUrl;
+    if (!ai && !proofUrl) {
+        if (compact) return "";
+        return `
+            <div class="wa-ai-analysis-box">
+                <span class="text-muted-sm">Belum ada foto struk pembayaran yang diunggah pelanggan di chat/website.</span>
+            </div>
+        `;
+    }
+
+    const isReceipt = ai ? ai.isReceipt !== false : true;
+    const concerns = (ai && Array.isArray(ai.concerns)) ? ai.concerns : [];
+    const senderBank = ai
+        ? [ai.senderName && ai.senderName !== "-" ? ai.senderName : "", ai.bankOrWallet || ""].filter(Boolean).join(" · ") || "-"
+        : "-";
+
+    const concernsHtml = concerns.length > 0 ? `
+        <div style="margin-top:8px;padding:8px 10px;border-radius:8px;background:rgba(192,57,43,0.08);border:1px solid rgba(192,57,43,0.3);font-size:11.5px;color:#a93226;line-height:1.45;">
+            <strong style="display:block;margin-bottom:3px;">⚠️ Catatan Pemeriksaan AI:</strong>
+            <ul style="margin:0;padding-left:16px;">
+                ${concerns.map((c) => `<li>${escapeHtml(c)}</li>`).join("")}
+            </ul>
+        </div>
+    ` : "";
+
+    return `
+        <div class="wa-ai-analysis-box" style="${compact ? "margin-top:10px;margin-bottom:12px;" : ""}">
+            <div class="page-title-row" style="justify-content:space-between;margin-bottom:6px;gap:6px;">
+                <strong style="font-size:12.5px;">🤖 Hasil Pemeriksaan Struk AI</strong>
+                ${ai ? `<span class="badge-pill ${ai.isSufficient ? "badge-green" : "badge-gold"}">${escapeHtml(ai.matchLabel || "Dicek AI")}</span>` : `<span class="badge-pill badge-gold">Bukti Terunggah</span>`}
+            </div>
+            ${ai ? `
+                <div class="meta-kv-row"><span>Terdeteksi Struk</span><strong>${isReceipt ? "✓ Ya (Struk Pembayaran)" : "❌ Bukan Struk"}</strong></div>
+                <div class="meta-kv-row"><span>Nominal Terbaca</span><strong>${formatRupiah(ai.detectedAmount || 0)}</strong></div>
+                <div class="meta-kv-row"><span>Tagihan / Syarat</span><strong>${formatRupiah(ai.expectedAmount || 0)}</strong></div>
+                <div class="meta-kv-row"><span>Penerima / Merchant</span><strong>${escapeHtml(ai.recipientName || "-")}</strong></div>
+                <div class="meta-kv-row"><span>Pengirim / Bank</span><strong>${escapeHtml(senderBank)}</strong></div>
+                <div class="meta-kv-row"><span>No. Referensi</span><strong>${escapeHtml(ai.referenceId || "-")}${ai.duplicateOrderId ? ` (⚠️ Duplikat #${escapeHtml(ai.duplicateOrderId)})` : ""}</strong></div>
+                ${ai.receiptDateText && ai.receiptDateText !== "-" ? `<div class="meta-kv-row"><span>Waktu di Struk</span><strong>${escapeHtml(ai.receiptDateText)}</strong></div>` : ""}
+                <div class="meta-kv-row"><span>Skor Keyakinan</span><strong>${ai.confidenceScore !== undefined && ai.confidenceScore !== null ? ai.confidenceScore : 95}%</strong></div>
+                ${concernsHtml}
+                ${ai.summaryNote ? `<p class="text-muted-sm" style="margin-top:6px;font-size:11.5px;line-height:1.45;">${escapeHtml(ai.summaryNote)}</p>` : ""}
+            ` : ""}
+            ${proofUrl ? `<a href="${escapeHtml(proofUrl)}" target="_blank" rel="noopener" title="Klik untuk lihat ukuran penuh"><img src="${escapeHtml(proofUrl)}" alt="Struk Pembayaran" class="wa-proof-preview-img" style="margin-top:8px;max-height:${compact ? "180px" : "260px"};width:auto;max-width:100%;border-radius:8px;display:block;"></a>` : ""}
+        </div>
+    `;
 }
 
 function renderWaOrderContext(conv, order) {
@@ -3596,23 +4038,7 @@ function renderWaOrderContext(conv, order) {
         </div>
     `).join("");
 
-    const aiBoxHtml = ai ? `
-        <div class="wa-ai-analysis-box">
-            <div class="page-title-row" style="justify-content:space-between;margin-bottom:6px;">
-                <strong style="font-size:12.5px;">🤖 Hasil Pemeriksaan Struk AI</strong>
-                <span class="badge-pill ${ai.isSufficient ? "badge-green" : "badge-gold"}">${escapeHtml(ai.matchLabel || "Dicek AI")}</span>
-            </div>
-            <div class="meta-kv-row"><span>Nominal Terbaca</span><strong>${formatRupiah(ai.detectedAmount)}</strong></div>
-            <div class="meta-kv-row"><span>Tagihan / Syarat</span><strong>${formatRupiah(ai.expectedAmount)}</strong></div>
-            <div class="meta-kv-row"><span>Pengirim / Bank</span><strong>${escapeHtml(ai.bankOrWallet || "-")}</strong></div>
-            <div class="meta-kv-row"><span>Skor Keyakinan</span><strong>${ai.confidenceScore || 95}%</strong></div>
-            ${order.paymentProofUrl ? `<img src="${escapeHtml(order.paymentProofUrl)}" alt="Struk Pembayaran" class="wa-proof-preview-img">` : ""}
-        </div>
-    ` : `
-        <div class="wa-ai-analysis-box">
-            <span class="text-muted-sm">Belum ada foto struk pembayaran yang diunggah pelanggan di chat ini.</span>
-        </div>
-    `;
+    const aiBoxHtml = buildAdminReceiptAnalysisBoxHtml(order, false);
 
     waOrderContextBody.innerHTML = `
         <div class="wa-context-card">

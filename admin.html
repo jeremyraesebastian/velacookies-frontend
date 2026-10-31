@@ -946,7 +946,7 @@
                         <div>
                             <div class="page-title-row">
                                 <h1 class="page-title">Chatbot WhatsApp &amp; Verifikasi AI</h1>
-                                <span class="badge-pill badge-green" id="wa-bot-status-pill">AI Aktif · Gemini 2.5 Flash</span>
+                                <span class="badge-pill badge-green" id="wa-bot-status-pill">AI Aktif · gemini-3.8-flash</span>
                             </div>
                             <p class="page-subtitle">Pantau percakapan pelanggan dari website, cek bukti transfer QRIS &amp; DP COD otomatis, dan setujui pesanan dalam satu klik.</p>
                         </div>
@@ -988,6 +988,9 @@
                             </button>
                             <button type="button" class="wa-subtab" data-wa-subtab="gateway" id="wa-subtab-gateway-btn">
                                 ⚙ Koneksi WA Gateway &amp; Template Notifikasi
+                            </button>
+                            <button type="button" class="wa-subtab" data-wa-subtab="knowledge" id="wa-subtab-knowledge-btn">
+                                🧠 Knowledge Bot &amp; Monitor AI
                             </button>
                         </div>
                         <div class="wa-filter-pills">
@@ -1099,7 +1102,7 @@
                                     <label class="wa-checkbox-row" for="wa-setting-bot-active">
                                         <input type="checkbox" id="wa-setting-bot-active" checked>
                                         <div>
-                                            <strong>Aktifkan Balasan Otomatis AI (Gemini 2.5 Flash)</strong>
+                                            <strong id="wa-setting-bot-active-title">Aktifkan Balasan Otomatis AI (gemini-3.8-flash)</strong>
                                             <span>Bot otomatis mengenali format Order ID VC-XXXX dari website, mengecek foto bukti bayar, dan menjawab info stok/PO.</span>
                                         </div>
                                     </label>
@@ -1141,6 +1144,127 @@
                                     <li><strong>Deteksi Format QRIS &amp; Struk AI:</strong> Mengekstrak nominal transfer dari foto bukti bayar dan mencocokkannya dengan tagihan order.</li>
                                     <li><strong>Aturan COD &amp; DP 50%:</strong> Order COD &lt; 3 pcs tanpa DP; Order COD ≥ 3 pcs otomatis diminta bukti transfer DP 50%.</li>
                                 </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SUB-VIEW 3: KNOWLEDGE BASE EDITOR & AI HEALTH MONITOR (PHASE 3) -->
+                    <div id="wa-subview-knowledge" class="wa-knowledge-split-grid" hidden>
+                        <!-- LEFT CARD: KNOWLEDGE BASE EDITOR -->
+                        <div class="surface-card wa-knowledge-card">
+                            <div class="wa-knowledge-card-header">
+                                <div>
+                                    <h2 class="card-title">🧠 Knowledge Base AI Bot Velacookies</h2>
+                                    <p class="card-subtitle">Edit informasi produk, alergen, daya tahan, aturan order/COD, refund, dan kontak resmi tanpa menyentuh kode. Perubahan langsung dipakai AI pada pesan berikutnya.</p>
+                                </div>
+                                <div class="wa-knowledge-header-actions">
+                                    <button type="button" class="btn-outline-sm" id="wa-knowledge-reset-all-btn" title="Kembalikan seluruh bagian ke teks bawaan">
+                                        ↺ Reset Semua Default
+                                    </button>
+                                    <button type="button" class="btn-primary" id="wa-knowledge-save-btn">
+                                        💾 Simpan Semua Knowledge
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="wa-knowledge-status-bar">
+                                <span class="settings-status" id="wa-knowledge-status"></span>
+                            </div>
+
+                            <div id="wa-knowledge-sections-list" class="wa-knowledge-sections-list">
+                                <p class="empty-state-sm">Memuat bagian Knowledge Base AI Bot...</p>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT CARD: AI HEALTH & DIAGNOSTICS + RECENT AI LOGS -->
+                        <div class="surface-card wa-health-card">
+                            <div class="wa-knowledge-card-header">
+                                <div>
+                                    <div class="page-title-row" style="gap:8px;">
+                                        <h2 class="card-title">🩺 Monitor Kesehatan AI &amp; Log Panggilan</h2>
+                                        <span class="badge-pill badge-green" id="wa-health-status-badge">Memeriksa...</span>
+                                    </div>
+                                    <p class="card-subtitle">Pantau model Gemini yang aktif, waktu respons rata-rata, status failover kuota, dan 25 riwayat pemanggilan AI terbaru.</p>
+                                </div>
+                                <button type="button" class="btn-outline-sm" id="wa-health-refresh-btn">
+                                    ↻ Segarkan Monitor
+                                </button>
+                            </div>
+
+                            <!-- MODEL & CONFIG GRID -->
+                            <div class="wa-health-config-grid mt-14" id="wa-health-config-grid">
+                                <div class="wa-health-kv-box">
+                                    <span class="mini-label">MODEL AKTIF SAAT INI</span>
+                                    <strong id="wa-health-active-model">gemini-3.8-flash</strong>
+                                </div>
+                                <div class="wa-health-kv-box">
+                                    <span class="mini-label">MODEL UTAMA → CADANGAN</span>
+                                    <strong id="wa-health-models-pair">gemini-3.8-flash → gemini-3-flash-preview</strong>
+                                </div>
+                                <div class="wa-health-kv-box">
+                                    <span class="mini-label">THINKING &amp; HARD TIMEOUT</span>
+                                    <strong id="wa-health-thinking-timeout">low · batas 15 dtk</strong>
+                                </div>
+                                <div class="wa-health-kv-box">
+                                    <span class="mini-label">STATUS API KEY &amp; SDK</span>
+                                    <strong id="wa-health-apikey-status">✓ Aktif &amp; Siap</strong>
+                                </div>
+                            </div>
+
+                            <!-- 24-HOUR TELEMETRY STATS -->
+                            <div class="wa-health-stats-grid mt-14">
+                                <div class="wa-health-stat-box">
+                                    <span class="mini-label">PANGGILAN (24 JAM)</span>
+                                    <strong id="wa-health-stat-total">0</strong>
+                                </div>
+                                <div class="wa-health-stat-box">
+                                    <span class="mini-label">SUKSES AI MURNI</span>
+                                    <strong class="text-green" id="wa-health-stat-success">0</strong>
+                                </div>
+                                <div class="wa-health-stat-box">
+                                    <span class="mini-label">PAKAI FALLBACK</span>
+                                    <strong id="wa-health-stat-fallback">0</strong>
+                                </div>
+                                <div class="wa-health-stat-box">
+                                    <span class="mini-label">RATA-RATA LATENSI</span>
+                                    <strong id="wa-health-stat-latency">0 ms</strong>
+                                </div>
+                            </div>
+
+                            <!-- LAST ERROR BOX (HIDDEN IF NO ERROR) -->
+                            <div class="wa-health-error-alert mt-14" id="wa-health-last-error-box" hidden>
+                                <div class="wa-health-error-title">
+                                    <strong>⚠️ Catatan Error / Fallback Terakhir</strong>
+                                    <span id="wa-health-last-error-time">—</span>
+                                </div>
+                                <p id="wa-health-last-error-msg">—</p>
+                            </div>
+
+                            <!-- RECENT 25 LOGS TABLE -->
+                            <div class="wa-health-logs-section mt-16">
+                                <div class="wa-health-logs-header">
+                                    <h3 class="card-title" style="font-size:14px;">Riwayat 25 Pemanggilan AI Terbaru</h3>
+                                    <span class="text-muted-sm" id="wa-health-logs-count">0 catatan</span>
+                                </div>
+                                <div class="table-responsive wa-ai-logs-table-wrap mt-8">
+                                    <table class="admin-table wa-ai-logs-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Waktu</th>
+                                                <th>Tipe</th>
+                                                <th>Target / Order</th>
+                                                <th>Model &amp; Intent</th>
+                                                <th class="align-right">Latensi</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="wa-ai-logs-tbody">
+                                            <tr>
+                                                <td colspan="6" class="empty-state-sm">Belum ada riwayat pemanggilan AI.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>

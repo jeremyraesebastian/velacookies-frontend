@@ -2052,6 +2052,203 @@
 }
 
 /* =========================================================
+   PHASE 3: KNOWLEDGE BASE EDITOR & AI HEALTH MONITOR
+   ========================================================= */
+
+.wa-knowledge-split-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 18px;
+    align-items: start;
+}
+
+.wa-knowledge-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.wa-knowledge-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.wa-knowledge-status-bar {
+    min-height: 22px;
+    margin-top: 8px;
+}
+
+.wa-knowledge-sections-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 8px;
+    max-height: 760px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.wa-knowledge-section-item {
+    padding: 14px;
+    border-radius: 12px;
+    background: var(--bg-main);
+    border: 1px solid var(--surface-border);
+    transition: border-color 0.2s ease;
+}
+
+.wa-knowledge-section-item:focus-within {
+    border-color: var(--green-primary);
+}
+
+.wa-knowledge-section-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.wa-knowledge-section-title-group strong {
+    display: block;
+    font-size: 13.5px;
+    color: var(--text-main);
+}
+
+.wa-knowledge-section-title-group span {
+    display: block;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    line-height: 1.4;
+}
+
+.wa-knowledge-section-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.wa-knowledge-textarea {
+    width: 100%;
+    min-height: 120px;
+    resize: vertical;
+    font-family: inherit;
+    font-size: 12.5px;
+    line-height: 1.55;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--surface-border);
+    background: var(--surface);
+    color: var(--text-main);
+    margin-top: 6px;
+}
+
+.wa-knowledge-updated-hint {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 5px;
+}
+
+.wa-health-config-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.wa-health-kv-box {
+    padding: 11px 13px;
+    border-radius: 10px;
+    background: var(--bg-main);
+    border: 1px solid var(--surface-border);
+}
+
+.wa-health-kv-box strong {
+    display: block;
+    font-size: 13px;
+    color: var(--text-main);
+    margin-top: 3px;
+    word-break: break-word;
+}
+
+.wa-health-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.wa-health-stat-box {
+    padding: 12px 10px;
+    border-radius: 10px;
+    background: var(--bg-main);
+    border: 1px solid var(--surface-border);
+    text-align: center;
+}
+
+.wa-health-stat-box strong {
+    display: block;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-top: 4px;
+}
+
+.wa-health-error-alert {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: var(--danger-bg);
+    border: 1px solid var(--danger-border);
+    color: var(--danger);
+}
+
+.wa-health-error-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.wa-health-error-alert p {
+    font-size: 12px;
+    line-height: 1.45;
+    margin: 0;
+    word-break: break-word;
+}
+
+.wa-health-logs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.wa-ai-logs-table-wrap {
+    max-height: 460px;
+    overflow-y: auto;
+    border-radius: 10px;
+    border: 1px solid var(--surface-border);
+}
+
+.wa-ai-logs-table th,
+.wa-ai-logs-table td {
+    padding: 9px 10px;
+    font-size: 12px;
+    vertical-align: top;
+}
+
+.badge-danger {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+/* =========================================================
    SETTINGS TAB
    ========================================================= */
 
@@ -2411,11 +2608,13 @@
     .finance-split-grid,
     .stocks-split-grid,
     .settings-split-grid,
+    .wa-knowledge-split-grid,
     .inline-detail-grid {
         grid-template-columns: 1fr;
     }
 
-    .metrics-grid-4 {
+    .metrics-grid-4,
+    .wa-health-stats-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 
@@ -2461,6 +2660,8 @@
 
     .metrics-grid-3,
     .metrics-grid-4,
+    .wa-health-config-grid,
+    .wa-health-stats-grid,
     .daily-mini-box,
     .location-strip-grid,
     .form-row-2 {

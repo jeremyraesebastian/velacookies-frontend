@@ -894,3 +894,250 @@ RESPONSIVE
         font-size: 18px;
     }
 }
+
+
+/* =========================
+UPLOAD BUKTI PEMBAYARAN (PHASE 2)
+========================= */
+
+.payment-total-subnote {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: rgba(250, 246, 239, 0.85);
+    line-height: 1.4;
+}
+
+.payment-upload-box {
+    margin-bottom: 18px;
+    padding: 16px;
+    border-radius: 16px;
+    border: 1.5px solid var(--border-strong);
+    background: var(--bg);
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.payment-upload-box.is-uploaded {
+    border-color: rgba(36, 107, 73, 0.45);
+    background: rgba(36, 107, 73, 0.03);
+}
+
+.payment-upload-box.is-warning {
+    border-color: rgba(192, 57, 43, 0.45);
+    background: rgba(192, 57, 43, 0.03);
+}
+
+.payment-upload-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.payment-upload-title-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.payment-upload-icon {
+    font-size: 20px;
+    line-height: 1.2;
+    flex-shrink: 0;
+}
+
+.payment-upload-title {
+    display: block;
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.3;
+}
+
+.payment-upload-subtitle {
+    display: block;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.payment-upload-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+    background: rgba(168, 118, 28, 0.14);
+    color: var(--gold);
+    border: 1px solid rgba(168, 118, 28, 0.3);
+}
+
+.payment-upload-badge.success {
+    background: rgba(36, 107, 73, 0.14);
+    color: var(--success);
+    border-color: rgba(36, 107, 73, 0.35);
+}
+
+.payment-upload-badge.warning {
+    background: rgba(192, 57, 43, 0.12);
+    color: var(--error);
+    border-color: rgba(192, 57, 43, 0.35);
+}
+
+.payment-upload-dropzone {
+    border: 2px dashed rgba(168, 118, 28, 0.45);
+    border-radius: 14px;
+    background: var(--surface);
+    padding: 20px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+.payment-upload-dropzone:hover,
+.payment-upload-dropzone.is-dragover {
+    border-color: var(--green-mid);
+    background: rgba(36, 107, 73, 0.04);
+}
+
+.payment-upload-dropzone.is-disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.payment-upload-empty[hidden],
+.payment-upload-preview-wrap[hidden],
+.payment-proof-preview-img[hidden],
+.payment-upload-saved-banner[hidden],
+.payment-upload-status[hidden],
+.payment-gate-hint[hidden],
+.payment-total-subnote[hidden] {
+    display: none !important;
+}
+
+.payment-upload-cloud {
+    font-size: 28px;
+    margin-bottom: 6px;
+}
+
+.payment-upload-cta {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--green-mid);
+    margin-bottom: 2px;
+}
+
+.payment-upload-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.payment-upload-preview-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.payment-proof-preview-img {
+    max-height: 240px;
+    width: auto;
+    max-width: 100%;
+    border-radius: 10px;
+    border: 1px solid var(--border-strong);
+    box-shadow: var(--shadow-sm);
+    object-fit: contain;
+    background: #FFFFFF;
+}
+
+.payment-upload-saved-banner {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: rgba(36, 107, 73, 0.08);
+    border: 1px solid rgba(36, 107, 73, 0.25);
+    font-size: 12.5px;
+    color: var(--green);
+    font-weight: 600;
+}
+
+.payment-upload-filebar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+}
+
+.payment-upload-filename {
+    font-size: 12px;
+    color: var(--text-soft);
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.payment-upload-change-btn {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.payment-upload-change-btn:hover {
+    background: var(--bg-alt);
+    border-color: var(--gold);
+}
+
+.payment-upload-status {
+    margin-top: 12px;
+    padding: 11px 13px;
+    border-radius: 10px;
+    font-size: 12.5px;
+    line-height: 1.5;
+}
+
+.payment-upload-status.is-loading {
+    background: rgba(168, 118, 28, 0.1);
+    border: 1px solid rgba(168, 118, 28, 0.3);
+    color: var(--text);
+}
+
+.payment-upload-status.is-success {
+    background: rgba(36, 107, 73, 0.1);
+    border: 1px solid rgba(36, 107, 73, 0.32);
+    color: var(--green);
+}
+
+.payment-upload-status.is-warning {
+    background: rgba(200, 130, 30, 0.12);
+    border: 1px solid rgba(200, 130, 30, 0.4);
+    color: var(--text);
+}
+
+.payment-upload-status.is-error {
+    background: rgba(192, 57, 43, 0.1);
+    border: 1px solid rgba(192, 57, 43, 0.35);
+    color: var(--error);
+}
+
+.payment-gate-hint {
+    font-size: 12px;
+    color: var(--gold);
+    margin: -6px 0 14px;
+    line-height: 1.45;
+    font-weight: 600;
+}
+
+.payment-gate-hint.is-ready {
+    color: var(--success);
+}

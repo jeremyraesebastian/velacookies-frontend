@@ -17,11 +17,14 @@ const mainEl = document.getElementById("payment-main");
 
 const statusDot = document.getElementById("payment-status-dot");
 const statusLabel = document.getElementById("payment-status-label");
+const titleEl = document.getElementById("payment-title");
 
 const orderIdEl = document.getElementById("payment-order-id");
 const customerNameEl = document.getElementById("payment-customer-name");
 const locationEl = document.getElementById("payment-location");
+const totalLabelEl = document.getElementById("payment-total-label");
 const totalEl = document.getElementById("payment-total");
+const totalSubnoteEl = document.getElementById("payment-total-subnote");
 
 const qrImageEl = document.getElementById("payment-qr-image");
 const qrisOwnerEl = document.getElementById("payment-qris-owner");
@@ -31,6 +34,20 @@ const itemsTotalEl = document.getElementById("payment-items-total");
 
 const expiryInfoEl = document.getElementById("payment-expiry-info");
 const expiryCountdownEl = document.getElementById("payment-expiry-countdown");
+
+/* Upload Bukti Bayar (Phase 2) */
+const uploadBoxEl = document.getElementById("payment-upload-box");
+const uploadBadgeEl = document.getElementById("payment-upload-badge");
+const proofInputEl = document.getElementById("payment-proof-input");
+const uploadDropzoneEl = document.getElementById("payment-upload-dropzone");
+const uploadEmptyEl = document.getElementById("payment-upload-empty");
+const uploadPreviewWrapEl = document.getElementById("payment-upload-preview-wrap");
+const proofPreviewImgEl = document.getElementById("payment-proof-preview-img");
+const uploadSavedBannerEl = document.getElementById("payment-upload-saved-banner");
+const proofFileInfoEl = document.getElementById("payment-proof-file-info");
+const proofChangeBtnEl = document.getElementById("payment-proof-change-btn");
+const uploadStatusEl = document.getElementById("payment-upload-status");
+const gateHintEl = document.getElementById("payment-gate-hint");
 
 const confirmBtn = document.getElementById("payment-confirm-btn");
 const waBtn = document.getElementById("payment-wa-btn");
@@ -53,6 +70,11 @@ let paymentSettings = {
 };
 
 let countdownInterval = null;
+let isUploadingProof = false;
+let localPreviewUploadedInSession = false;
+
+const ALLOWED_PROOF_MIMES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+const MAX_PROOF_BYTES = 2.5 * 1024 * 1024;
 
 
 /* =========================
@@ -60,7 +82,15 @@ let countdownInterval = null;
    ========================= */
 
 function formatRupiah(number) {
-    return "Rp" + Number(number).toLocaleString("id-ID");
+    return "Rp" + Number(number || 0).toLocaleString("id-ID");
+}
+
+function formatFileSize(bytes) {
+    if (!bytes || bytes <= 0) return "";
+    if (bytes < 1024 * 1024) {
+        return (bytes / 1024).toFixed(0) + " KB";
+    }
+    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
 }
 
 function getOrderIdFromURL() {
@@ -103,6 +133,83 @@ function openWhatsApp(phone, message) {
 
 
 /* =========================
+   IMAGE COMPRESSION (≤ 2.5 MB)
+   ========================= */
+
+function readFileAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(new Error("Gagal membaca file gambar."));
+        reader.readAsDataURL(file);
+    });
+}
+
+function estimateBase64Bytes(dataUrl) {
+    const commaIdx = dataUrl.indexOf(",");
+    if (commaIdx === -1) return dataUrl.length;
+    const b64 = dataUrl.slice(commaIdx + 1);
+    return Math.ceil((b64.length * 3) / 4);
+}
+
+async function compressImageToDataUrl(file) {
+    const rawDataUrl = await readFileAsDataURL(file);
+
+    /* Jika sudah kecil (≤ 900 KB) dan tipe didukung, langsung pakai */
+    if (file.size <= 900 * 1024 && ["image/jpeg", "image/png", "image/webp"].includes(file.type.toLowerCase())) {
+        return {
+            dataUrl: rawDataUrl,
+            byteLength: file.size
+        };
+    }
+
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            try {
+                const maxDim = 1600;
+                let width = img.naturalWidth || img.width;
+                let height = img.naturalHeight || img.height;
+
+                if (width > maxDim || height > maxDim) {
+                    const ratio = Math.min(maxDim / width, maxDim / height);
+                    width = Math.max(1, Math.round(width * ratio));
+                    height = Math.max(1, Math.round(height * ratio));
+                }
+
+                const canvas = document.createElement("canvas");
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                ctx.fillStyle = "#FFFFFF";
+                ctx.fillRect(0, 0, width, height);
+                ctx.drawImage(img, 0, 0, width, height);
+
+                let quality = 0.84;
+                let compressedUrl = canvas.toDataURL("image/jpeg", quality);
+                let byteLen = estimateBase64Bytes(compressedUrl);
+
+                while (byteLen > MAX_PROOF_BYTES && quality > 0.45) {
+                    quality -= 0.12;
+                    compressedUrl = canvas.toDataURL("image/jpeg", quality);
+                    byteLen = estimateBase64Bytes(compressedUrl);
+                }
+
+                resolve({
+                    dataUrl: compressedUrl,
+                    byteLength: byteLen
+                });
+            } catch (err) {
+                reject(err);
+            }
+        };
+        img.onerror = () => reject(new Error("File bukan gambar yang valid."));
+        img.src = rawDataUrl;
+    });
+}
+
+
+/* =========================
    LOAD FUNCTIONS
    ========================= */
 
@@ -137,10 +244,15 @@ async function loadOrder(orderId) {
 
 function renderOrder(order) {
     currentOrder = order;
+    const rules = order.paymentRules || {};
+    const requiresDp50 = Boolean(rules.requiresDp50);
 
     /* Status badge */
     const statusMap = {
-        "pending": { label: "Menunggu Pembayaran", className: "" },
+        "pending": {
+            label: order.hasPaymentProof ? "Menunggu Verifikasi Admin" : "Menunggu Pembayaran",
+            className: ""
+        },
         "success": { label: "Pembayaran Sukses", className: "success" },
         "expired": { label: "Pesanan Expired", className: "expired" },
         "failed": { label: "Pembayaran Gagal", className: "expired" }
@@ -157,11 +269,32 @@ function renderOrder(order) {
         statusLabel.innerText = statusInfo.label;
     }
 
+    if (titleEl) {
+        titleEl.innerText = requiresDp50 ? "Pembayaran DP 50% COD (QRIS)" : "Pembayaran QRIS";
+    }
+
     /* Meta */
     if (orderIdEl) orderIdEl.innerText = order.orderId || "—";
     if (customerNameEl) customerNameEl.innerText = order.customerNameMasked || "—";
     if (locationEl) locationEl.innerText = getLocationLabel(order.location);
-    if (totalEl) totalEl.innerText = formatRupiah(order.total || 0);
+
+    if (requiresDp50) {
+        const dpAmt = Number(rules.dpRequiredAmount || Math.ceil((order.total || 0) / 2));
+        const sisaAmt = Math.max(0, Number(order.total || 0) - dpAmt);
+        if (totalLabelEl) totalLabelEl.innerText = "Nominal Wajib Transfer (DP 50%)";
+        if (totalEl) totalEl.innerText = formatRupiah(dpAmt);
+        if (totalSubnoteEl) {
+            totalSubnoteEl.hidden = false;
+            totalSubnoteEl.innerText = `Dari Total Pesanan ${formatRupiah(order.total || 0)} · Sisa ${formatRupiah(sisaAmt)} dibayar tunai saat COD`;
+        }
+    } else {
+        if (totalLabelEl) totalLabelEl.innerText = "Total Pembayaran";
+        if (totalEl) totalEl.innerText = formatRupiah(order.total || 0);
+        if (totalSubnoteEl) {
+            totalSubnoteEl.hidden = true;
+            totalSubnoteEl.innerText = "";
+        }
+    }
 
     /* QR */
     if (qrImageEl) {
@@ -176,6 +309,9 @@ function renderOrder(order) {
 
     /* Expiry countdown */
     renderExpiry(order);
+
+    /* Render Upload Box State */
+    renderUploadBoxState(order);
 
     /* Sesuaikan tombol dengan status */
     updateActionsForStatus(order);
@@ -262,6 +398,10 @@ function renderExpiry(order) {
                 confirmCheckbox.disabled = true;
             }
 
+            if (uploadDropzoneEl) {
+                uploadDropzoneEl.classList.add("is-disabled");
+            }
+
             return;
         }
 
@@ -277,31 +417,255 @@ function renderExpiry(order) {
     countdownInterval = setInterval(update, 1000);
 }
 
+
+/* =========================
+   UPLOAD BUKTI PEMBAYARAN UI & LOGIC
+   ========================= */
+
+function setUploadStatusBanner(type, htmlContent) {
+    if (!uploadStatusEl) return;
+    if (!htmlContent) {
+        uploadStatusEl.hidden = true;
+        uploadStatusEl.className = "payment-upload-status";
+        uploadStatusEl.innerHTML = "";
+        return;
+    }
+    uploadStatusEl.hidden = false;
+    uploadStatusEl.className = `payment-upload-status is-${type}`;
+    uploadStatusEl.innerHTML = htmlContent;
+}
+
+function renderUploadBoxState(order) {
+    if (!uploadBoxEl || !order) return;
+
+    const isPending = order.status === "pending";
+    if (uploadDropzoneEl) {
+        uploadDropzoneEl.classList.toggle("is-disabled", !isPending || isUploadingProof);
+    }
+    if (proofChangeBtnEl) {
+        proofChangeBtnEl.disabled = !isPending || isUploadingProof;
+    }
+
+    if (order.hasPaymentProof) {
+        if (uploadEmptyEl) uploadEmptyEl.hidden = true;
+        if (uploadPreviewWrapEl) uploadPreviewWrapEl.hidden = false;
+
+        if (!localPreviewUploadedInSession) {
+            if (proofPreviewImgEl) proofPreviewImgEl.hidden = true;
+            if (uploadSavedBannerEl) uploadSavedBannerEl.hidden = false;
+            if (proofFileInfoEl) proofFileInfoEl.innerText = "Bukti pembayaran sudah terunggah";
+        }
+
+        const summary = order.receiptSummary || null;
+        if (summary && summary.isReceipt === false) {
+            uploadBoxEl.className = "payment-upload-box is-warning";
+            if (uploadBadgeEl) {
+                uploadBadgeEl.className = "payment-upload-badge warning";
+                uploadBadgeEl.innerText = "⚠️ Bukan Struk";
+            }
+            setUploadStatusBanner(
+                "error",
+                `⚠️ <strong>Gambar yang diunggah terdeteksi bukan struk pembayaran.</strong><br>Silakan klik tombol <strong>"🔄 Ganti Foto"</strong> di atas untuk mengunggah screenshot bukti transfer QRIS yang benar.`
+            );
+        } else if (summary && Array.isArray(summary.concerns) && summary.concerns.length > 0) {
+            uploadBoxEl.className = "payment-upload-box is-uploaded";
+            if (uploadBadgeEl) {
+                uploadBadgeEl.className = "payment-upload-badge success";
+                uploadBadgeEl.innerText = "✓ Bukti Terunggah";
+            }
+            setUploadStatusBanner(
+                "warning",
+                `✅ <strong>Bukti pembayaran sudah diterima sistem &amp; sedang menunggu verifikasi Admin.</strong><br>Catatan pemeriksaan: ${escapeHtml(summary.concerns.join(" · "))}`
+            );
+        } else {
+            uploadBoxEl.className = "payment-upload-box is-uploaded";
+            if (uploadBadgeEl) {
+                uploadBadgeEl.className = "payment-upload-badge success";
+                uploadBadgeEl.innerText = "✓ Bukti Terunggah";
+            }
+            const detailText = summary && summary.detectedAmount
+                ? `(${formatRupiah(summary.detectedAmount)} · ${escapeHtml(summary.matchLabel || "Menunggu Verifikasi Admin")}) `
+                : "";
+            setUploadStatusBanner(
+                "success",
+                `✅ <strong>Bukti pembayaran berhasil diterima!</strong> ${detailText}Sedang menunggu verifikasi Admin Velacookies.`
+            );
+        }
+    } else {
+        uploadBoxEl.className = "payment-upload-box";
+        if (uploadEmptyEl) uploadEmptyEl.hidden = false;
+        if (uploadPreviewWrapEl) uploadPreviewWrapEl.hidden = true;
+        if (uploadBadgeEl) {
+            uploadBadgeEl.className = "payment-upload-badge";
+            uploadBadgeEl.innerText = "Wajib Diunggah";
+        }
+
+        if (order.verificationStatus === "rejected") {
+            uploadBoxEl.className = "payment-upload-box is-warning";
+            if (uploadBadgeEl) {
+                uploadBadgeEl.className = "payment-upload-badge warning";
+                uploadBadgeEl.innerText = "Wajib Unggah Ulang";
+            }
+            setUploadStatusBanner(
+                "error",
+                `⚠️ <strong>Bukti pembayaran sebelumnya belum dapat diverifikasi oleh Admin.</strong><br>Silakan unggah ulang foto screenshot bukti transfer QRIS yang jelas pada kotak di atas.`
+            );
+        } else {
+            setUploadStatusBanner("", "");
+        }
+    }
+}
+
+async function handleProofFileSelected(file) {
+    if (!file || !currentOrder) return;
+
+    if (currentOrder.status !== "pending") {
+        alert("Pesanan ini sudah tidak dalam status menunggu pembayaran.");
+        return;
+    }
+
+    const mime = (file.type || "").toLowerCase();
+    if (!ALLOWED_PROOF_MIMES.includes(mime)) {
+        setUploadStatusBanner("error", "❌ Format file tidak didukung. Pilih gambar berformat <strong>JPG, PNG, atau WEBP</strong> ya.");
+        return;
+    }
+
+    isUploadingProof = true;
+    updateActionsForStatus(currentOrder);
+
+    try {
+        setUploadStatusBanner("loading", "⏳ Mengoptimalkan ukuran gambar...");
+        const compressed = await compressImageToDataUrl(file);
+
+        if (compressed.byteLength > MAX_PROOF_BYTES) {
+            isUploadingProof = false;
+            setUploadStatusBanner("error", "❌ Ukuran gambar terlalu besar (lebih dari 2.5 MB). Silakan pilih screenshot dengan ukuran lebih kecil.");
+            updateActionsForStatus(currentOrder);
+            return;
+        }
+
+        /* Tampilkan preview lokal */
+        localPreviewUploadedInSession = true;
+        if (uploadEmptyEl) uploadEmptyEl.hidden = true;
+        if (uploadPreviewWrapEl) uploadPreviewWrapEl.hidden = false;
+        if (uploadSavedBannerEl) uploadSavedBannerEl.hidden = true;
+        if (proofPreviewImgEl) {
+            proofPreviewImgEl.src = compressed.dataUrl;
+            proofPreviewImgEl.hidden = false;
+        }
+        if (proofFileInfoEl) {
+            proofFileInfoEl.innerText = `${file.name} (${formatFileSize(compressed.byteLength)})`;
+        }
+        if (uploadBadgeEl) {
+            uploadBadgeEl.className = "payment-upload-badge";
+            uploadBadgeEl.innerText = "⏳ Memeriksa...";
+        }
+
+        setUploadStatusBanner(
+            "loading",
+            "⏳ <strong>Sedang mengunggah &amp; memeriksa bukti pembayaran...</strong> Mohon tunggu sebentar ya."
+        );
+
+        const response = await fetch(`${API_BASE}/api/orders/${currentOrder.orderId}/upload-proof`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                imageBase64: compressed.dataUrl
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            throw new Error(result.message || "Gagal mengunggah bukti pembayaran.");
+        }
+
+        currentOrder.hasPaymentProof = true;
+        currentOrder.customerConfirmed = true;
+        currentOrder.customerConfirmedAt = result.confirmedAt || new Date().toISOString();
+        currentOrder.verificationStatus = result.verificationStatus || "awaiting_verification";
+        currentOrder.receiptSummary = result.receiptAnalysis || null;
+
+        if (statusLabel && currentOrder.status === "pending") {
+            statusLabel.innerText = "Menunggu Verifikasi Admin";
+        }
+
+        renderUploadBoxState(currentOrder);
+
+    } catch (error) {
+        console.error("Upload proof error:", error);
+        setUploadStatusBanner(
+            "error",
+            `❌ <strong>Gagal mengunggah bukti pembayaran:</strong> ${escapeHtml(error.message || "Terjadi gangguan jaringan. Silakan coba lagi.")}`
+        );
+        if (uploadBadgeEl && !currentOrder.hasPaymentProof) {
+            uploadBadgeEl.className = "payment-upload-badge warning";
+            uploadBadgeEl.innerText = "Gagal Unggah";
+        }
+    } finally {
+        isUploadingProof = false;
+        updateActionsForStatus(currentOrder);
+    }
+}
+
 function updateActionsForStatus(order) {
-    if (!confirmBtn) return;
+    if (!confirmBtn || !order) return;
 
     if (order.status === "pending") {
-        if (order.customerConfirmed === true) {
-            /* Udah confirmed → tombol aktif, checkbox tidak wajib lagi */
-            confirmBtn.disabled = false;
-            confirmBtn.innerText = "✓ Buka WhatsApp Admin Lagi";
+        const hasProof = Boolean(order.hasPaymentProof);
+        const isChecked = Boolean(confirmCheckbox && confirmCheckbox.checked);
 
-            if (confirmCheckbox) {
-                confirmCheckbox.checked = true;
-                confirmCheckbox.disabled = true;
+        if (confirmCheckbox) {
+            confirmCheckbox.disabled = isUploadingProof;
+        }
+
+        if (isUploadingProof) {
+            confirmBtn.disabled = true;
+            confirmBtn.innerText = "⏳ Mengunggah Bukti Bayar...";
+            if (gateHintEl) {
+                gateHintEl.hidden = false;
+                gateHintEl.className = "payment-gate-hint";
+                gateHintEl.innerText = "⏳ Tunggu sebentar, bukti pembayaran sedang diunggah dan diperiksa...";
             }
-        } else {
-            /* Belum confirmed → tombol disabled sampai checkbox dicentang */
-            confirmBtn.disabled = confirmCheckbox ? !confirmCheckbox.checked : true;
+            return;
+        }
+
+        if (!hasProof) {
+            /* WAJIB upload bukti bayar terlebih dahulu sebelum tombol aktif */
+            confirmBtn.disabled = true;
             confirmBtn.innerText = "✓ Saya Sudah Bayar & Chat Admin";
-
-            if (confirmCheckbox) {
-                confirmCheckbox.disabled = false;
+            if (gateHintEl) {
+                gateHintEl.hidden = false;
+                gateHintEl.className = "payment-gate-hint";
+                gateHintEl.innerText = isChecked
+                    ? "⚠️ Kamu sudah mencentang kotak, tapi wajib mengunggah foto bukti pembayaran pada kotak di atas terlebih dahulu ya."
+                    : "📌 Unggah foto bukti pembayaran di atas & centang kotak persetujuan untuk mengaktifkan tombol konfirmasi.";
             }
+            return;
+        }
+
+        if (!isChecked) {
+            confirmBtn.disabled = true;
+            confirmBtn.innerText = "✓ Saya Sudah Bayar & Chat Admin";
+            if (gateHintEl) {
+                gateHintEl.hidden = false;
+                gateHintEl.className = "payment-gate-hint";
+                gateHintEl.innerText = "☝️ Bukti bayar sudah terunggah! Sekarang centang kotak persetujuan di atas untuk mengaktifkan tombol konfirmasi.";
+            }
+            return;
+        }
+
+        confirmBtn.disabled = false;
+        confirmBtn.innerText = "✓ Saya Sudah Bayar & Chat Admin";
+        if (gateHintEl) {
+            gateHintEl.hidden = false;
+            gateHintEl.className = "payment-gate-hint is-ready";
+            gateHintEl.innerText = "✅ Bukti pembayaran sudah tersimpan! Klik tombol di bawah untuk mengirim chat konfirmasi ke WhatsApp Admin.";
         }
     } else if (order.status === "success") {
         confirmBtn.disabled = true;
         confirmBtn.innerText = "✓ Pembayaran Berhasil";
+        if (gateHintEl) gateHintEl.hidden = true;
 
         if (confirmCheckbox) {
             confirmCheckbox.disabled = true;
@@ -309,6 +673,7 @@ function updateActionsForStatus(order) {
     } else if (order.status === "expired") {
         confirmBtn.disabled = true;
         confirmBtn.innerText = "× Pesanan Expired";
+        if (gateHintEl) gateHintEl.hidden = true;
 
         if (confirmCheckbox) {
             confirmCheckbox.disabled = true;
@@ -316,6 +681,7 @@ function updateActionsForStatus(order) {
     } else {
         confirmBtn.disabled = true;
         confirmBtn.innerText = "× Pesanan Tidak Aktif";
+        if (gateHintEl) gateHintEl.hidden = true;
 
         if (confirmCheckbox) {
             confirmCheckbox.disabled = true;
@@ -356,19 +722,27 @@ function showMain() {
 
 function buildConfirmWaMessage(order) {
     const lines = [];
+    const rules = (order && order.paymentRules) || {};
 
     lines.push("Halo Velacookies! \uD83C\uDF6A");
     lines.push("");
-    lines.push("Saya sudah transfer via QRIS:");
+    if (rules.requiresDp50) {
+        lines.push("Saya sudah transfer DP 50% COD via QRIS dan mengunggah bukti pembayarannya di website:");
+    } else {
+        lines.push("Saya sudah transfer via QRIS dan mengunggah bukti pembayarannya di website:");
+    }
     lines.push("");
     lines.push(`Order ID: ${order.orderId}`);
     lines.push(`Nama: ${order.customerNameMasked}`);
-    lines.push(`Total: ${formatRupiah(order.total)}`);
+    if (rules.requiresDp50) {
+        lines.push(`Total Pesanan: ${formatRupiah(order.total)}`);
+        lines.push(`Nominal DP 50%: ${formatRupiah(rules.dpRequiredAmount)}`);
+    } else {
+        lines.push(`Total: ${formatRupiah(order.total)}`);
+    }
     lines.push(`Lokasi: ${getLocationLabel(order.location)}`);
     lines.push("");
-    lines.push("Saya kirim bukti transfernya di chat ini ya.");
-    lines.push("");
-    lines.push("Mohon dicek, terima kasih!");
+    lines.push("Mohon dicek dan diverifikasi ya Kak, terima kasih!");
 
     return lines.join("\n");
 }
@@ -402,16 +776,32 @@ async function handleConfirmPayment() {
         return;
     }
 
+    if (isUploadingProof) {
+        alert("Tunggu sebentar ya, foto bukti pembayaran sedang diunggah.");
+        return;
+    }
+
+    /* Wajib unggah bukti bayar terlebih dahulu */
+    if (!currentOrder.hasPaymentProof) {
+        alert("Silakan unggah foto bukti pembayaran pada kotak di atas terlebih dahulu ya.");
+        if (uploadBoxEl) {
+            uploadBoxEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        return;
+    }
+
     /* Wajib centang dulu */
     if (!confirmCheckbox || !confirmCheckbox.checked) {
         alert("Centang dulu kotak persetujuan di atas ya, biar pesanan bisa diproses.");
         return;
     }
 
-    /* Kalau udah pernah konfirmasi → langsung WA tanpa API call lagi */
+    /* Karena upload bukti bayar di website sudah menandai customerConfirmed = true di backend,
+       kita bisa langsung mengarahkan ke WhatsApp dan menampilkan modal sukses */
     if (currentOrder.customerConfirmed === true) {
         const message = buildConfirmWaMessage(currentOrder);
         openWhatsApp(paymentSettings.adminWaNumber, message);
+        openSuccessModal();
         return;
     }
 
@@ -440,7 +830,8 @@ async function handleConfirmPayment() {
         currentOrder.customerConfirmed = true;
         currentOrder.customerConfirmedAt = result.confirmedAt;
 
-        confirmBtn.innerText = "✓ Konfirmasi Terkirim";
+        confirmBtn.innerText = "✓ Buka WhatsApp Admin Lagi";
+        confirmBtn.disabled = false;
 
         /* LANGSUNG buka WA (auto redirect) */
         const waMessage = buildConfirmWaMessage(currentOrder);
@@ -512,16 +903,76 @@ async function init() {
    EVENT LISTENERS
    ========================= */
 
+function triggerProofFileDialog() {
+    if (!currentOrder || currentOrder.status !== "pending" || isUploadingProof) return;
+    if (proofInputEl) {
+        proofInputEl.value = "";
+        proofInputEl.click();
+    }
+}
+
+if (uploadDropzoneEl) {
+    uploadDropzoneEl.addEventListener("click", (e) => {
+        if (e.target.closest("#payment-proof-change-btn")) return;
+        if (!currentOrder || currentOrder.status !== "pending" || isUploadingProof) return;
+        /* Jika belum ada bukti, klik area dropzone langsung buka file picker */
+        if (!currentOrder.hasPaymentProof) {
+            triggerProofFileDialog();
+        }
+    });
+
+    uploadDropzoneEl.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            triggerProofFileDialog();
+        }
+    });
+
+    uploadDropzoneEl.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        if (!currentOrder || currentOrder.status !== "pending" || isUploadingProof) return;
+        uploadDropzoneEl.classList.add("is-dragover");
+    });
+
+    uploadDropzoneEl.addEventListener("dragleave", () => {
+        uploadDropzoneEl.classList.remove("is-dragover");
+    });
+
+    uploadDropzoneEl.addEventListener("drop", (e) => {
+        e.preventDefault();
+        uploadDropzoneEl.classList.remove("is-dragover");
+        if (!currentOrder || currentOrder.status !== "pending" || isUploadingProof) return;
+        const droppedFile = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (droppedFile) {
+            handleProofFileSelected(droppedFile);
+        }
+    });
+}
+
+if (proofChangeBtnEl) {
+    proofChangeBtnEl.addEventListener("click", (e) => {
+        e.stopPropagation();
+        triggerProofFileDialog();
+    });
+}
+
+if (proofInputEl) {
+    proofInputEl.addEventListener("change", () => {
+        const selectedFile = proofInputEl.files && proofInputEl.files[0];
+        if (selectedFile) {
+            handleProofFileSelected(selectedFile);
+        }
+    });
+}
+
 if (confirmBtn) {
     confirmBtn.addEventListener("click", handleConfirmPayment);
 }
 
 if (confirmCheckbox) {
     confirmCheckbox.addEventListener("change", () => {
-        if (!confirmBtn) return;
-
-        if (currentOrder && currentOrder.status === "pending" && currentOrder.customerConfirmed !== true) {
-            confirmBtn.disabled = !confirmCheckbox.checked;
+        if (currentOrder) {
+            updateActionsForStatus(currentOrder);
         }
     });
 }
@@ -529,7 +980,7 @@ if (confirmCheckbox) {
 if (waBtn) {
     waBtn.addEventListener("click", () => {
         const message = currentOrder
-            ? buildConfirmWaMessage(currentOrder)
+            ? buildGeneralWaMessage(currentOrder)
             : buildGeneralWaMessage(null);
 
         openWhatsApp(paymentSettings.adminWaNumber, message);
