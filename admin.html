@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ruang Kerja Admin — Velacookies</title>
+    <title>Admin Panel — Velacookies</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="admin.css">
 </head>
-
 <body class="admin-body">
 
     <!-- =====================================================
@@ -15,14 +17,14 @@
     <div class="login-view" id="login-view">
         <div class="login-card">
             <div class="login-brand">
-                <div class="brand-monogram">V.</div>
+                <div class="brand-monogram">V</div>
                 <div>
-                    <strong>VELACOOKIES</strong>
-                    <span>BAKED WITH LOVE</span>
+                    <strong>Velacookies</strong>
+                    <span>Ruang Kerja Admin</span>
                 </div>
             </div>
-            <h1>Ruang Kerja Admin</h1>
-            <p class="login-sub">Masuk untuk mengelola pesanan, stok, keuangan, chatbot WA, dan jadwal Pre-Order.</p>
+            <h1>Masuk ke Admin Panel</h1>
+            <p class="login-sub">Kelola pesanan, inventaris, batch pre-order, laporan harian, keuangan, dan verifikasi WhatsApp dalam satu sistem.</p>
 
             <form id="login-form">
                 <div class="form-group">
@@ -31,7 +33,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="login-password">Password</label>
-                    <input type="password" id="login-password" class="form-input" autocomplete="current-password" placeholder="••••••••" required>
+                    <input type="password" id="login-password" class="form-input" autocomplete="current-password" placeholder="Masukkan password" required>
                 </div>
                 <p class="login-error" id="login-error"></p>
                 <button type="submit" class="btn-primary btn-full" id="login-submit">Masuk ke Ruang Kerja</button>
@@ -40,77 +42,85 @@
     </div>
 
     <!-- =====================================================
-         DASHBOARD VIEW (SIDEBAR + MAIN WORKSPACE)
+         DASHBOARD VIEW (FIGMA SIDEBAR + MAIN WORKSPACE)
          ===================================================== -->
     <div class="dashboard-view" id="dashboard-view" hidden>
 
-        <!-- SIDEBAR OVERLAY (MOBILE) -->
         <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
         <!-- LEFT SIDEBAR -->
         <aside class="admin-sidebar" id="admin-sidebar">
             <div class="sidebar-top">
                 <div class="sidebar-brand">
-                    <span class="brand-monogram">V.</span>
+                    <span class="brand-monogram">V</span>
                     <div class="brand-titles">
-                        <strong>VELACOOKIES</strong>
-                        <small>BAKED WITH LOVE</small>
+                        <strong>Velacookies</strong>
+                        <small>Ruang Kerja Admin</small>
                     </div>
                 </div>
 
-                <div class="sidebar-section-label">RUANG KERJA</div>
-
+                <div class="sidebar-section-label">OPERASIONAL</div>
                 <nav class="sidebar-nav">
-                    <button type="button" class="admin-tab active" data-tab="overview">
-                        <span class="nav-icon">⊞</span>
-                        <span class="nav-text">Ringkasan</span>
-                        <span class="nav-dot"></span>
+                    <button type="button" class="admin-tab active" data-tab="dashboard">
+                        <svg class="nav-svg" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="6" height="6" rx="1.2"/><rect x="11" y="3" width="6" height="6" rx="1.2"/><rect x="3" y="11" width="6" height="6" rx="1.2"/><rect x="11" y="11" width="6" height="6" rx="1.2"/></svg>
+                        <span class="nav-text">Dashboard</span>
                     </button>
                     <button type="button" class="admin-tab" data-tab="orders">
-                        <span class="nav-icon">☑</span>
+                        <svg class="nav-svg" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="3" width="12" height="14" rx="1.5"/><path d="M7 7h6M7 10.5h6M7 14h4"/></svg>
                         <span class="nav-text">Pesanan</span>
                         <span class="nav-badge" id="sidebar-orders-badge">0</span>
                     </button>
-                    <button type="button" class="admin-tab" data-tab="finance">
-                        <span class="nav-icon">◫</span>
-                        <span class="nav-text">Keuangan</span>
-                        <span class="nav-dot"></span>
-                    </button>
                     <button type="button" class="admin-tab" data-tab="stocks">
-                        <span class="nav-icon">⬡</span>
-                        <span class="nav-text">Stok</span>
-                        <span class="nav-dot"></span>
+                        <svg class="nav-svg" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 2.5L16.5 6.2V13.8L10 17.5L3.5 13.8V6.2L10 2.5Z"/><path d="M3.5 6.2L10 10L16.5 6.2M10 10V17.5"/></svg>
+                        <span class="nav-text">Stok produk</span>
                     </button>
-                    <button type="button" class="admin-tab" data-tab="whatsapp" id="sidebar-tab-whatsapp">
-                        <span class="nav-icon">💬</span>
-                        <span class="nav-text">Chatbot WA</span>
-                        <span class="nav-badge" id="sidebar-wa-badge" hidden>0</span>
-                    </button>
-                    <button type="button" class="admin-tab" data-tab="settings">
-                        <span class="nav-icon">⚙</span>
-                        <span class="nav-text">Pengaturan</span>
-                        <span class="nav-dot"></span>
+                    <button type="button" class="admin-tab" data-tab="preorder">
+                        <svg class="nav-svg" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4.5" width="14" height="12.5" rx="1.5"/><path d="M6.5 2.5v3M13.5 2.5v3M3 8.5h14"/></svg>
+                        <span class="nav-text">Pre-order</span>
+                        <span class="nav-badge nav-badge-subtle" id="sidebar-po-badge">Tutup</span>
                     </button>
                 </nav>
 
-                <!-- SIDEBAR PO CARD -->
-                <div class="sidebar-po-box" id="header-po-badge" title="Klik untuk kelola Pre-Order (PO)">
-                    <div class="sidebar-po-header">
-                        <span class="po-indicator-dot"></span>
-                        <strong id="header-po-text">Memuat PO...</strong>
-                    </div>
-                    <p class="sidebar-po-dates" id="sidebar-po-dates">Jadwal belum diatur</p>
-                    <p class="sidebar-po-sub" id="sidebar-po-sub">Siap untuk pesanan manis.</p>
-                    <a href="index.html" target="_blank" rel="noopener" class="sidebar-store-link" onclick="event.stopPropagation();">
-                        <span>Lihat toko</span>
-                        <span>↗</span>
-                    </a>
-                </div>
+                <div class="sidebar-section-label mt-16">PENGELOLAAN</div>
+                <nav class="sidebar-nav">
+                    <button type="button" class="admin-tab" data-tab="finance">
+                        <svg class="nav-svg" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="4.5" width="15" height="11" rx="1.5"/><path d="M2.5 8.5h15"/><circle cx="13.5" cy="12" r="1"/></svg>
+                        <span class="nav-text">Keuangan</span>
+                    </button>
+                    <button type="button" class="admin-tab" data-tab="reports">
+                        <svg class="nav-svg" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16V10M8 16V6M12 16V11M16 16V4"/></svg>
+                        <span class="nav-text">Laporan harian</span>
+                    </button>
+                    <button type="button" class="admin-tab" data-tab="whatsapp" id="sidebar-tab-whatsapp">
+                        <svg class="nav-svg" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4.5h12a1.5 1.5 0 0 1 1.5 1.5v7a1.5 1.5 0 0 1-1.5 1.5H7.5L4 17V6A1.5 1.5 0 0 1 5.5 4.5Z"/></svg>
+                        <span class="nav-text">WhatsApp</span>
+                        <span class="nav-badge" id="sidebar-wa-badge" hidden>0</span>
+                    </button>
+                </nav>
             </div>
 
             <div class="sidebar-footer">
-                <p class="sidebar-tagline">A little joy, every day.</p>
-                <small>© 2026 VelaCookies</small>
+                <div class="sidebar-wa-conn" id="sidebar-wa-conn-pill">
+                    <span class="status-dot dot-online" id="sidebar-wa-dot"></span>
+                    <div class="sidebar-wa-conn-info">
+                        <strong id="sidebar-wa-conn-title">WhatsApp terhubung</strong>
+                        <small id="sidebar-wa-conn-sub">+62 851-1712-2454 · Aktif</small>
+                    </div>
+                </div>
+
+                <button type="button" class="admin-tab sidebar-settings-tab" data-tab="settings">
+                    <svg class="nav-svg" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="2.6"/><path d="M10 3v1.8M10 15.2V17M3 10h1.8M15.2 10H17M5.1 5.1l1.3 1.3M13.6 13.6l1.3 1.3M14.9 5.1l-1.3 1.3M6.4 13.6l-1.3 1.3"/></svg>
+                    <span class="nav-text">Pengaturan</span>
+                </button>
+
+                <div class="sidebar-user-box">
+                    <div class="sidebar-user-avatar" id="sidebar-user-avatar">AD</div>
+                    <div class="sidebar-user-meta">
+                        <strong id="sidebar-user-name">Admin</strong>
+                        <small>Administrator</small>
+                    </div>
+                    <button type="button" class="btn-sidebar-logout" id="logout-btn" title="Keluar dari sesi Admin">Keluar</button>
+                </div>
             </div>
         </aside>
 
@@ -120,525 +130,1099 @@
             <!-- TOPBAR -->
             <header class="admin-topbar">
                 <div class="topbar-left">
-                    <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu">☰</button>
-                    <div class="breadcrumb">
-                        <span>Ruang kerja</span>
+                    <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Buka navigasi">Menu</button>
+                    <div class="breadcrumb" id="topbar-breadcrumb">
+                        <span>Admin</span>
                         <span class="breadcrumb-sep">/</span>
-                        <strong id="topbar-current-page">Ringkasan</strong>
+                        <strong id="topbar-current-page">Dashboard</strong>
                     </div>
                 </div>
 
                 <div class="topbar-right">
-                    <a href="index.html" target="_blank" rel="noopener" class="btn-outline-sm">
-                        <span>↗</span> Lihat toko
-                    </a>
-                    <div class="admin-profile-pill">
-                        <span class="profile-avatar" id="topbar-avatar">AD</span>
-                        <div class="profile-meta">
-                            <strong id="topbar-admin-name">Admin</strong>
-                            <small>Administrator</small>
-                        </div>
+                    <div class="topbar-search-wrap">
+                        <svg class="search-svg" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="9" r="5.5"/><path d="M13.2 13.2L17 17"/></svg>
+                        <input type="search" id="global-search-input" class="topbar-search-input" placeholder="Cari pesanan, pelanggan, produk...">
                     </div>
-                    <button type="button" class="btn-outline-sm btn-logout-top" id="logout-btn">Logout</button>
+
+                    <div class="topbar-po-pill" id="header-po-badge" title="Klik untuk kelola Pre-Order">
+                        <span class="status-dot" id="header-po-dot"></span>
+                        <span id="header-po-text">Memuat PO...</span>
+                    </div>
+
+                    <a href="index.html" target="_blank" rel="noopener" class="btn-outline-sm">Lihat Toko</a>
                 </div>
             </header>
 
             <main class="admin-main">
 
                 <!-- ============================================
-                     TAB 1: RINGKASAN USAHA (OVERVIEW)
+                     VIEW 1: DASHBOARD (OPERASIONAL HARI INI)
                      ============================================ -->
-                <section class="tab-content active" data-tab-content="overview">
+                <section class="tab-content active" data-tab-content="dashboard">
 
                     <div class="page-header">
                         <div>
-                            <div class="page-title-row">
-                                <h1 class="page-title">Ringkasan usaha</h1>
-                                <span class="badge-pill badge-Live">Live Data</span>
-                            </div>
-                            <p class="page-subtitle">Selamat bertugas! Berikut cerita manis usahamu dan performa penjualan terkini.</p>
+                            <h1 class="page-title">Ringkasan operasional</h1>
+                            <p class="page-subtitle" id="dashboard-date-subtitle">Memuat ringkasan aktivitas hari ini...</p>
                         </div>
                         <div class="page-header-actions">
-                            <button type="button" class="btn-outline" id="overview-refresh-btn">↻ Segarkan Data</button>
+                            <button type="button" class="btn-outline" id="overview-refresh-btn">Muat ulang</button>
+                            <button type="button" class="btn-outline" id="dash-export-btn">Ekspor hari ini</button>
                         </div>
                     </div>
 
-                    <!-- 3 HERO METRIC CARDS -->
-                    <div class="metrics-grid-3">
-                        <div class="metric-card metric-card-primary">
-                            <div class="metric-card-top">
-                                <span class="metric-label">Total penjualan (Lunas)</span>
-                                <span class="metric-icon">◫</span>
+                    <!-- 4 TOP METRIC CARDS -->
+                    <div class="metrics-grid-4">
+                        <div class="metric-card">
+                            <span class="metric-label">PENJUALAN HARI INI</span>
+                            <div class="metric-main-row">
+                                <strong class="metric-value" id="dash-today-revenue">Rp 0</strong>
+                                <span class="metric-delta" id="dash-today-rev-delta"></span>
                             </div>
-                            <strong class="metric-value" id="summary-total-revenue">Rp0</strong>
-                            <span class="metric-sub" id="summary-revenue-sub">Dari seluruh pesanan berstatus sukses</span>
+                            <span class="metric-sub" id="dash-today-rev-sub">Dari 0 pesanan terbayar · total semua waktu Rp 0</span>
                         </div>
 
                         <div class="metric-card">
-                            <div class="metric-card-top">
-                                <span class="metric-label">Total pesanan sukses</span>
-                                <span class="metric-icon">☑</span>
+                            <span class="metric-label">PESANAN AKTIF</span>
+                            <div class="metric-main-row">
+                                <strong class="metric-value" id="dash-active-orders">0</strong>
+                                <span class="badge-pill badge-gold" id="dash-pending-pill">0 menunggu</span>
                             </div>
-                            <strong class="metric-value" id="summary-total-orders">0</strong>
-                            <span class="metric-sub"><strong id="summary-today-orders">0</strong> pesanan sukses hari ini</span>
+                            <span class="metric-sub" id="dash-active-orders-sub">0 terbayar · 0 menunggu verifikasi</span>
                         </div>
 
                         <div class="metric-card">
-                            <div class="metric-card-top">
-                                <span class="metric-label">Cookies terjual</span>
-                                <span class="metric-icon">🍪</span>
+                            <span class="metric-label">PCS TERJUAL HARI INI</span>
+                            <div class="metric-main-row">
+                                <strong class="metric-value" id="dash-today-pcs">0 pcs</strong>
                             </div>
-                            <strong class="metric-value" id="summary-total-pcs">0 pcs</strong>
-                            <span class="metric-sub" id="summary-avg-pcs">Rata-rata 0 cookies per pesanan</span>
+                            <span class="metric-sub" id="dash-avg-pcs">Rata-rata 0 pcs per pesanan</span>
+                        </div>
+
+                        <div class="metric-card">
+                            <span class="metric-label">PERLU TINDAKAN</span>
+                            <div class="metric-main-row">
+                                <strong class="metric-value text-warning" id="dash-action-count">0</strong>
+                                <span class="badge-pill badge-danger" id="dash-action-badge">Prioritas</span>
+                            </div>
+                            <span class="metric-sub" id="dash-action-sub">0 bukti bayar · 0 stok rendah</span>
                         </div>
                     </div>
 
-                    <!-- LAPORAN HARIAN + WAWASAN PELANGGAN GRID -->
-                    <div class="overview-split-grid">
+                    <!-- ANTREAN TINDAKAN CEPAT (3 ACTION CARDS) -->
+                    <div class="section-heading-row mt-20">
+                        <h2 class="section-label-caps">ANTREAN TINDAKAN CEPAT</h2>
+                        <span class="text-muted-sm">Diurutkan berdasarkan urgensi</span>
+                    </div>
 
-                        <!-- LEFT: LAPORAN HARIAN -->
+                    <div class="metrics-grid-3 mt-8">
+                        <div class="action-queue-card" id="dash-queue-verify">
+                            <div class="action-queue-top">
+                                <span class="badge-pill badge-gold" id="dash-q-verify-badge">0 menunggu</span>
+                                <span class="action-queue-link">Verifikasi &rarr;</span>
+                            </div>
+                            <strong class="action-queue-title">Verifikasi bukti pembayaran</strong>
+                            <p class="action-queue-desc" id="dash-q-verify-desc">Belum ada kiriman struk baru yang menunggu verifikasi.</p>
+                        </div>
+
+                        <div class="action-queue-card" id="dash-queue-wa">
+                            <div class="action-queue-top">
+                                <span class="badge-pill badge-danger" id="dash-q-wa-badge">0 chat</span>
+                                <span class="action-queue-link">Buka inbox &rarr;</span>
+                            </div>
+                            <strong class="action-queue-title">Chat WhatsApp perlu admin</strong>
+                            <p class="action-queue-desc" id="dash-q-wa-desc">Semua percakapan pelanggan ditangani oleh AI Bot.</p>
+                        </div>
+
+                        <div class="action-queue-card" id="dash-queue-stock">
+                            <div class="action-queue-top">
+                                <span class="badge-pill badge-neutral" id="dash-q-stock-badge">Aman</span>
+                                <span class="action-queue-link">Sesuaikan &rarr;</span>
+                            </div>
+                            <strong class="action-queue-title">Stok di bawah batas minimum</strong>
+                            <p class="action-queue-desc" id="dash-q-stock-desc">Seluruh SKU memiliki stok cukup untuk dipesan.</p>
+                        </div>
+                    </div>
+
+                    <!-- SPLIT: PENJUALAN 7 HARI TERAKHIR (LEFT) + BATCH PRE-ORDER AKTIF (RIGHT) -->
+                    <div class="dashboard-mid-grid mt-20">
+
+                        <!-- LEFT: 7-DAY REVENUE & PCS CHART -->
                         <div class="surface-card">
                             <div class="card-header-row">
                                 <div>
-                                    <h2 class="card-title">Laporan harian</h2>
-                                    <p class="card-subtitle">Pantau penjualan, satu hari pada satu waktu.</p>
+                                    <h2 class="card-title">Penjualan 7 hari terakhir</h2>
+                                    <p class="card-subtitle">Omzet harian dan jumlah pesanan terbayar (klik batang untuk rincian laporan)</p>
                                 </div>
-                                <div class="report-controls">
-                                    <input type="date" id="report-date" class="input-pill">
-                                    <button type="button" class="btn-outline-sm" id="report-today">Hari Ini</button>
-                                    <button type="button" class="btn-outline-sm" id="report-export">⬇ Ekspor CSV</button>
-                                </div>
-                            </div>
-
-                            <!-- 3 MINI METRICS -->
-                            <div class="daily-mini-box">
-                                <div class="daily-mini-item">
-                                    <span class="mini-label">Penjualan hari ini</span>
-                                    <strong class="mini-value" id="report-total-revenue">Rp0</strong>
-                                    <span class="report-delta" id="report-delta-revenue"></span>
-                                </div>
-                                <div class="daily-mini-item">
-                                    <span class="mini-label">Pesanan sukses</span>
-                                    <strong class="mini-value" id="report-total-orders">0</strong>
-                                    <span class="report-delta" id="report-delta-orders"></span>
-                                </div>
-                                <div class="daily-mini-item">
-                                    <span class="mini-label">Cookies terjual</span>
-                                    <strong class="mini-value" id="report-total-items">0 pcs</strong>
-                                    <span class="report-delta" id="report-delta-items"></span>
+                                <div class="chart-legend-inline">
+                                    <span><i class="legend-sq sq-green"></i> Omzet</span>
+                                    <span><i class="legend-sq sq-tan"></i> Pcs terjual</span>
                                 </div>
                             </div>
 
-                            <!-- 7 DAY CHART -->
-                            <div class="chart-section">
-                                <div class="chart-header-row">
-                                    <h3 class="section-Label-sm">Penjualan 7 hari terakhir</h3>
-                                    <span class="chart-unit-hint">Klik batang untuk pilih tanggal</span>
-                                </div>
-                                <div class="chart-7day" id="chart-7day"></div>
-                            </div>
+                            <div class="chart-7day-figma" id="dash-chart-7day"></div>
 
-                            <!-- PER LOKASI SUMMARY STRIP + TABLE TERBUKA -->
-                            <div class="location-summary-section">
-                                <div class="location-strip-grid" id="overview-location-strip">
-                                    <div class="loc-strip-head">
-                                        <strong>Per lokasi</strong>
-                                        <span id="overview-location-date-label">Hari terpilih</span>
-                                    </div>
-                                    <div class="loc-strip-item">
-                                        <span class="loc-strip-title">SMAN 1 <small id="strip-sman1-count">0 pesanan</small></span>
-                                        <strong id="strip-sman1-rev">Rp0</strong>
-                                    </div>
-                                    <div class="loc-strip-item">
-                                        <span class="loc-strip-title">SMAN 5 <small id="strip-sman5-count">0 pesanan</small></span>
-                                        <strong id="strip-sman5-rev">Rp0</strong>
-                                    </div>
-                                    <div class="loc-strip-item">
-                                        <span class="loc-strip-title">Lainnya <small id="strip-others-count">0 pesanan</small></span>
-                                        <strong id="strip-others-rev">Rp0</strong>
-                                    </div>
+                            <div class="dash-chart-footer">
+                                <div>
+                                    <span class="mini-label">TOTAL 7 HARI</span>
+                                    <strong id="dash-7d-total-rev">Rp 0</strong>
                                 </div>
-
-                                <div class="mt-14">
-                                    <h3 class="section-Label-sm" style="margin-bottom: 8px;">Breakdown per Lokasi &amp; Varian</h3>
-                                    <table class="clean-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Lokasi</th>
-                                                <th class="align-right">Jumlah Order / Item</th>
-                                                <th class="align-right">Subtotal</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="report-location-tbody"></tbody>
-                                    </table>
-                                    <p class="empty-state-sm" id="report-location-empty" hidden>Belum ada order di tanggal ini.</p>
+                                <div>
+                                    <span class="mini-label">RATA-RATA HARIAN</span>
+                                    <strong id="dash-7d-avg-rev">Rp 0</strong>
+                                </div>
+                                <div>
+                                    <span class="mini-label">TOTAL PESANAN</span>
+                                    <strong id="dash-7d-total-orders">0 pesanan</strong>
+                                </div>
+                                <div>
+                                    <span class="mini-label">TOTAL PCS</span>
+                                    <strong id="dash-7d-total-pcs">0 pcs</strong>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- RIGHT: WAWASAN PELANGGAN & PRODUK TERJUAL -->
-                        <div class="overview-side-stack">
-
-                            <!-- WAWASAN PELANGGAN -->
-                            <div class="surface-card">
-                                <div class="card-header-row">
-                                    <div>
-                                        <h2 class="card-title">Wawasan pelanggan</h2>
-                                        <p class="card-subtitle">Nomor WA unik dari pesanan sukses</p>
+                        <!-- RIGHT: BATCH PRE-ORDER AKTIF -->
+                        <div class="surface-card">
+                            <div class="card-header-row">
+                                <div>
+                                    <div class="page-title-row">
+                                        <span class="badge-pill badge-green" id="dash-po-status-pill">Memuat</span>
+                                        <span class="text-muted-sm" id="dash-po-batch-code">Batch PO</span>
                                     </div>
-                                    <span class="metric-icon">👥</span>
+                                    <h2 class="card-title mt-4" id="dash-po-title">Pre-Order Velacookies</h2>
                                 </div>
+                                <button type="button" class="btn-link-sm" id="dash-go-po-btn">Kelola &rarr;</button>
+                            </div>
 
-                                <div class="customer-big-stat">
-                                    <strong id="insight-total-customers">0</strong>
-                                    <span>pelanggan unik</span>
+                            <div class="po-quota-box mt-12">
+                                <div class="po-quota-labels">
+                                    <span>Kuota terpakai</span>
+                                    <strong id="dash-po-quota-text">0 / 100 pcs (0%)</strong>
                                 </div>
-
-                                <div class="split-progress-bar">
-                                    <div class="split-bar-new" id="insight-bar-new" style="width: 50%;"></div>
-                                    <div class="split-bar-old" id="insight-bar-old" style="width: 50%;"></div>
-                                </div>
-
-                                <div class="customer-legend-list">
-                                    <div class="legend-row">
-                                        <span class="legend-dot dot-gold"></span>
-                                        <span class="legend-name">Order Baru vs Lama</span>
-                                        <strong id="insight-new-old-ratio">0% / 0%</strong>
-                                    </div>
-                                    <div class="legend-sub" id="insight-new-old-detail">Belum ada data</div>
-
-                                    <div class="legend-row mt-8">
-                                        <span class="legend-dot dot-green"></span>
-                                        <span class="legend-name">Repeat Rate (Beli &gt;1x)</span>
-                                        <strong id="insight-repeat-rate">0%</strong>
-                                    </div>
-                                    <div class="legend-sub" id="insight-repeat-detail">Belum ada data</div>
+                                <div class="progress-track">
+                                    <div class="progress-fill" id="dash-po-quota-bar" style="width: 0%;"></div>
                                 </div>
                             </div>
 
-                            <!-- PRODUK TERJUAL (BREAKDOWN PER VARIAN) -->
-                            <div class="surface-card">
-                                <div class="card-header-row">
-                                    <h2 class="card-title">Produk terjual (Breakdown per Varian)</h2>
-                                    <span class="text-muted-sm" id="overview-variant-total-pcs">0 pcs</span>
+                            <div class="po-mini-dates-grid mt-14">
+                                <div class="po-mini-date-box">
+                                    <span class="mini-label">TUTUP PO</span>
+                                    <strong id="dash-po-close-date">—</strong>
+                                    <small id="dash-po-close-time">WIB</small>
                                 </div>
-
-                                <div id="overview-variant-bars" class="variant-bars-list" style="margin-bottom: 14px;"></div>
-
-                                <table class="clean-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Varian</th>
-                                            <th class="align-right">Jumlah</th>
-                                            <th class="align-right">Subtotal</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="report-tbody"></tbody>
-                                </table>
-                                <p class="empty-state-sm" id="report-empty" hidden>Belum ada order di tanggal ini.</p>
+                                <div class="po-mini-date-box">
+                                    <span class="mini-label">PRODUKSI &amp; KIRIM</span>
+                                    <strong id="dash-po-prod-date">—</strong>
+                                    <small id="dash-po-prod-sub">Jadwal pengiriman</small>
+                                </div>
                             </div>
 
+                            <div class="mt-14">
+                                <span class="mini-label">DISTRIBUSI LOKASI PENGAMBILAN</span>
+                                <div class="dash-po-loc-list mt-8" id="dash-po-loc-list"></div>
+                            </div>
                         </div>
 
                     </div>
 
-                    <!-- PESANAN TERBARU (RINGKASAN) -->
-                    <div class="surface-card mt-20">
-                        <div class="card-header-row">
-                            <div>
-                                <div class="page-title-row">
+                    <!-- SPLIT: PESANAN TERBARU (LEFT) + STOK PRODUK RINGKAS (RIGHT) -->
+                    <div class="dashboard-bottom-grid mt-20">
+
+                        <!-- LEFT: PESANAN TERBARU -->
+                        <div class="surface-card">
+                            <div class="card-header-row">
+                                <div>
                                     <h2 class="card-title">Pesanan terbaru</h2>
-                                    <span class="badge-pill badge-green" id="overview-orders-count-badge">0 pesanan</span>
+                                    <p class="card-subtitle">Menampilkan 6 pesanan terakhir yang masuk ke sistem</p>
                                 </div>
-                                <p class="card-subtitle" id="overview-pending-subtitle">Kelola pesanan yang baru masuk hari ini.</p>
+                                <button type="button" class="btn-link-sm" id="go-to-orders-btn">Lihat semua pesanan &rarr;</button>
                             </div>
-                            <button type="button" class="btn-primary-sm" id="go-to-orders-btn">Kelola Semua Pesanan →</button>
+
+                            <div class="table-responsive">
+                                <table class="clean-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>PELANGGAN</th>
+                                            <th>ITEM</th>
+                                            <th>LOKASI</th>
+                                            <th>METODE</th>
+                                            <th class="align-right">TOTAL</th>
+                                            <th>STATUS</th>
+                                            <th class="align-right"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="overview-recent-tbody"></tbody>
+                                </table>
+                            </div>
                         </div>
 
-                        <div class="table-responsive">
-                            <table class="clean-table">
-                                <thead>
-                                    <tr>
-                                        <th>ID pesanan</th>
-                                        <th>Pelanggan</th>
-                                        <th>WhatsApp</th>
-                                        <th>Lokasi</th>
-                                        <th>Pembayaran</th>
-                                        <th>Status pesanan</th>
-                                        <th class="align-right">Total</th>
-                                        <th class="align-right">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="overview-recent-tbody"></tbody>
-                            </table>
+                        <!-- RIGHT: STOK PRODUK -->
+                        <div class="surface-card">
+                            <div class="card-header-row">
+                                <div>
+                                    <h2 class="card-title">Stok produk</h2>
+                                    <p class="card-subtitle">Status ketersediaan 6 SKU aktif</p>
+                                </div>
+                                <button type="button" class="btn-link-sm" id="dash-go-stocks-btn">Kelola stok &rarr;</button>
+                            </div>
+
+                            <div class="dash-stock-list" id="dash-stock-list">
+                                <p class="empty-state-sm">Memuat status stok...</p>
+                            </div>
                         </div>
+
+                    </div>
+
+                    <!-- LEGACY HIDDEN SUMMARY IDs FOR BACKWARD COMPATIBILITY -->
+                    <div hidden>
+                        <span id="summary-total-revenue"></span>
+                        <span id="summary-total-orders"></span>
+                        <span id="summary-today-orders"></span>
+                        <span id="summary-total-pcs"></span>
+                        <span id="summary-avg-pcs"></span>
+                        <span id="summary-revenue-sub"></span>
+                        <span id="overview-orders-count-badge"></span>
+                        <span id="overview-pending-subtitle"></span>
                     </div>
 
                 </section>
 
 
                 <!-- ============================================
-                     TAB 2: KELOLA PESANAN (ORDERS)
+                     VIEW 2: PESANAN (ORDERS LIST)
                      ============================================ -->
                 <section class="tab-content" data-tab-content="orders" hidden>
 
                     <div class="page-header">
                         <div>
-                            <div class="page-title-row">
-                                <h1 class="page-title">Kelola pesanan</h1>
-                            </div>
-                            <p class="page-subtitle">Semua pesanan, dari konfirmasi pembayaran hingga siap dinikmati.</p>
+                            <h1 class="page-title">Pesanan</h1>
+                            <p class="page-subtitle">Kelola seluruh pesanan pelanggan, verifikasi pembayaran, dan pantau pengiriman per lokasi.</p>
                         </div>
                         <div class="page-header-actions">
-                            <button type="button" class="btn-outline btn-danger-outline" id="bulk-delete-open-btn">🗑️ Hapus Massal</button>
-                            <button type="button" class="btn-primary" id="refresh-btn">↻ Segarkan Pesanan</button>
+                            <button type="button" class="btn-outline btn-danger-outline" id="bulk-delete-open-btn">Hapus massal</button>
+                            <button type="button" class="btn-outline" id="orders-export-csv-btn">Ekspor CSV</button>
+                            <button type="button" class="btn-primary" id="refresh-btn">Muat ulang</button>
                         </div>
                     </div>
 
-                    <!-- 4 STATUS CARDS (CLICKABLE QUICK FILTERS) -->
-                    <div class="metrics-grid-4">
-                        <div class="metric-card metric-card-primary clickable-card" data-quick-status="all">
-                            <span class="metric-label">Semua Pesanan</span>
-                            <strong class="metric-value" id="orders-card-total">0</strong>
-                            <span class="metric-sub" id="orders-card-total-sub">0 cookies · Nilai Rp0</span>
-                        </div>
-
-                        <div class="metric-card clickable-card" data-quick-status="pending">
-                            <span class="metric-label">Menunggu pembayaran</span>
-                            <strong class="metric-value" id="orders-card-pending">0</strong>
-                            <span class="metric-sub" id="orders-card-pending-sub">Periksa konfirmasi pelanggan</span>
-                        </div>
-
-                        <div class="metric-card clickable-card" data-quick-status="success">
-                            <span class="metric-label">Pembayaran berhasil</span>
-                            <strong class="metric-value" id="orders-card-success">0</strong>
-                            <span class="metric-sub">Sudah dikonfirmasi dan tercatat</span>
-                        </div>
-
-                        <div class="metric-card clickable-card" data-quick-status="review">
-                            <span class="metric-label">Perlu ditinjau</span>
-                            <strong class="metric-value" id="orders-card-review">0</strong>
-                            <span class="metric-sub" id="orders-card-review-sub">0 kedaluwarsa · 0 gagal</span>
-                        </div>
+                    <!-- STATUS FILTER TABS BAR (FIGMA STYLE) -->
+                    <div class="status-tabs-bar" id="orders-status-tabs">
+                        <button type="button" class="status-tab-pill active" data-quick-status="all">
+                            <span>Semua pesanan</span>
+                            <strong class="tab-count" id="orders-card-total">0</strong>
+                        </button>
+                        <button type="button" class="status-tab-pill" data-quick-status="awaiting_verification">
+                            <span>Perlu verifikasi</span>
+                            <strong class="tab-count count-warning" id="orders-card-verify">0</strong>
+                        </button>
+                        <button type="button" class="status-tab-pill" data-quick-status="pending">
+                            <span>Menunggu bayar</span>
+                            <strong class="tab-count" id="orders-card-pending">0</strong>
+                        </button>
+                        <button type="button" class="status-tab-pill" data-quick-status="success">
+                            <span>Terbayar / Lunas</span>
+                            <strong class="tab-count count-success" id="orders-card-success">0</strong>
+                        </button>
+                        <button type="button" class="status-tab-pill" data-quick-status="review">
+                            <span>Kedaluwarsa / Batal</span>
+                            <strong class="tab-count" id="orders-card-review">0</strong>
+                        </button>
+                    </div>
+                    <div hidden>
+                        <span id="orders-card-total-sub"></span>
+                        <span id="orders-card-pending-sub"></span>
+                        <span id="orders-card-review-sub"></span>
+                        <span id="orders-list-subtitle"></span>
                     </div>
 
-                    <!-- DAFTAR PESANAN CARD -->
-                    <div class="surface-card">
-                        <div class="card-header-row">
-                            <div>
-                                <h2 class="card-title">Daftar pesanan</h2>
-                                <p class="card-subtitle" id="orders-list-subtitle">Memuat daftar pesanan...</p>
-                            </div>
-                            <button type="button" class="btn-outline-sm" id="orders-export-csv-btn">⬇ Ekspor pesanan (CSV)</button>
-                        </div>
-
-                        <!-- FILTER TOOLBAR -->
+                    <!-- ORDERS FILTER & TABLE CARD -->
+                    <div class="surface-card mt-14">
                         <div class="admin-toolbar">
                             <div class="search-wrap">
-                                <span class="search-icon">🔍</span>
-                                <input type="search" id="search-input" class="search-input" placeholder="Cari ID pesanan, nama, atau WhatsApp...">
+                                <svg class="search-svg" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="9" r="5.5"/><path d="M13.2 13.2L17 17"/></svg>
+                                <input type="search" id="search-input" class="search-input" placeholder="Cari ID pesanan (VC-xxxx), nama, atau nomor WA...">
                             </div>
 
                             <select id="location-filter" class="filter-select">
-                                <option value="all">📍 Semua lokasi</option>
+                                <option value="all">Lokasi: Semua</option>
                                 <option value="sman1">SMAN 1 Karawang</option>
                                 <option value="sman5">SMAN 5 Karawang</option>
-                                <option value="others">Lainnya</option>
+                                <option value="others">Pengiriman Luar / Lainnya</option>
+                            </select>
+
+                            <select id="payment-filter" class="filter-select">
+                                <option value="all">Metode: Semua</option>
+                                <option value="qris">QRIS</option>
+                                <option value="cash">COD / Tunai</option>
                             </select>
 
                             <div class="date-filter-wrap">
                                 <input type="date" id="date-filter" class="filter-select date-filter" title="Filter Tanggal">
-                                <button type="button" class="btn-clear-date" id="clear-date-btn" title="Hapus filter tanggal" hidden>&times;</button>
+                                <button type="button" class="btn-clear-date" id="clear-date-btn" title="Reset tanggal" hidden>&times;</button>
                             </div>
 
-                            <select id="status-filter" class="filter-select">
-                                <option value="all">☷ Semua status</option>
+                            <select id="status-filter" class="filter-select" hidden>
+                                <option value="all">Semua status</option>
                                 <option value="pending">Pending</option>
+                                <option value="awaiting_verification">Perlu Verifikasi</option>
                                 <option value="success">Success</option>
                                 <option value="expired">Expired</option>
                                 <option value="failed">Failed</option>
+                                <option value="review">Kedaluwarsa / Batal</option>
                             </select>
+
+                            <button type="button" class="btn-link-sm" id="orders-reset-filter-btn">Reset filter</button>
                         </div>
 
-                        <!-- TABLE -->
                         <div class="table-responsive">
                             <table class="clean-table" id="orders-table">
                                 <thead>
                                     <tr>
-                                        <th>ID pesanan</th>
-                                        <th>Pelanggan</th>
-                                        <th>WhatsApp</th>
-                                        <th>Lokasi</th>
-                                        <th>Pembayaran</th>
-                                        <th>Status bayar</th>
-                                        <th class="align-right">Total</th>
-                                        <th class="align-right">Aksi</th>
+                                        <th>ID PESANAN</th>
+                                        <th>WAKTU</th>
+                                        <th>PELANGGAN</th>
+                                        <th>ITEM PESANAN</th>
+                                        <th>LOKASI PENGAMBILAN</th>
+                                        <th>PEMBAYARAN</th>
+                                        <th class="align-right">TOTAL</th>
+                                        <th>STATUS</th>
+                                        <th class="align-right">AKSI</th>
                                     </tr>
                                 </thead>
                                 <tbody id="orders-tbody"></tbody>
                             </table>
-                            <p class="table-empty" id="table-empty" hidden>Belum ada pesanan yang cocok.</p>
-                            <p class="table-loading" id="table-loading">Memuat pesanan...</p>
+                            <p class="table-empty" id="table-empty" hidden>Tidak ada pesanan yang cocok dengan filter.</p>
+                            <p class="table-loading" id="table-loading">Memuat daftar pesanan...</p>
                         </div>
 
-                        <!-- PAGINATION -->
                         <div class="table-pagination" id="orders-pagination">
                             <span class="pagination-info" id="orders-pagination-info">Menampilkan 0 pesanan</span>
                             <div class="pagination-buttons" id="orders-pagination-btns"></div>
                         </div>
                     </div>
 
-                    <!-- INLINE ORDER DETAIL PANEL -->
-                    <div class="surface-card mt-20" id="inline-order-detail-card" hidden>
-                        <div id="inline-order-detail-body"></div>
+                </section>
+
+
+                <!-- ============================================
+                     VIEW 2B: DETAIL PESANAN (FULL SUB-VIEW)
+                     ============================================ -->
+                <section class="tab-content" data-tab-content="order-detail" hidden>
+
+                    <div class="detail-topbar-nav">
+                        <button type="button" class="btn-back-link" id="detail-back-to-orders-btn">
+                            &larr; Kembali ke daftar pesanan
+                        </button>
+                        <div class="detail-prev-next">
+                            <button type="button" class="btn-outline-sm" id="detail-prev-order-btn">&larr; Sebelumnya</button>
+                            <button type="button" class="btn-outline-sm" id="detail-next-order-btn">Berikutnya &rarr;</button>
+                        </div>
+                    </div>
+
+                    <div id="order-detail-full-container"></div>
+
+                </section>
+
+
+                <!-- ============================================
+                     VIEW 3: STOK PRODUK (INVENTORY & LOGS)
+                     ============================================ -->
+                <section class="tab-content" data-tab-content="stocks" hidden>
+
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Stok produk</h1>
+                            <p class="page-subtitle">Kelola ketersediaan 6 SKU aktif, pantau stok direservasi pesanan pending, dan catat riwayat keluar-masuk.</p>
+                        </div>
+                        <div class="page-header-actions">
+                            <button type="button" class="btn-outline" id="stocks-refresh">Muat ulang</button>
+                        </div>
+                    </div>
+
+                    <!-- 4 SUMMARY CARDS (FIGMA STYLE) -->
+                    <div class="metrics-grid-4">
+                        <div class="metric-card">
+                            <span class="metric-label">TOTAL SKU AKTIF</span>
+                            <div class="metric-main-row">
+                                <strong class="metric-value" id="stocks-summary-sku-count">6</strong>
+                                <span class="text-muted-sm">varian</span>
+                            </div>
+                            <span class="metric-sub">4 produk utama · 2 varian add-on</span>
+                        </div>
+
+                        <div class="metric-card">
+                            <span class="metric-label">TOTAL STOK FISIK</span>
+                            <div class="metric-main-row">
+                                <strong class="metric-value" id="stocks-summary-physical-pcs">0 pcs</strong>
+                            </div>
+                            <span class="metric-sub">Tersedia dijual + direservasi pending</span>
+                        </div>
+
+                        <div class="metric-card">
+                            <span class="metric-label">TERSEDIA DIJUAL</span>
+                            <div class="metric-main-row">
+                                <strong class="metric-value text-green" id="stocks-summary-total-pcs">0 pcs</strong>
+                            </div>
+                            <span class="metric-sub" id="stocks-summary-reserved-sub">0 pcs sedang direservasi pesanan pending</span>
+                        </div>
+
+                        <div class="metric-card">
+                            <span class="metric-label">DI BAWAH MINIMUM</span>
+                            <div class="metric-main-row">
+                                <strong class="metric-value text-warning" id="stocks-summary-low-count">0 SKU</strong>
+                            </div>
+                            <span class="metric-sub" id="stocks-summary-out-count">0 habis · batas minimum 5 pcs</span>
+                        </div>
+                    </div>
+
+                    <!-- LOW STOCK ALERT BANNER -->
+                    <div class="stock-alert-banner mt-14" id="stock-alert-banner" hidden>
+                        <strong id="stock-alert-text">Beberapa varian memiliki stok menipis atau habis.</strong>
+                    </div>
+
+                    <!-- SPLIT: TABEL INVENTARIS + RIWAYAT (LEFT) & SESUAIKAN STOK (RIGHT) -->
+                    <div class="stocks-split-grid mt-16">
+
+                        <!-- LEFT COLUMN -->
+                        <div class="stocks-left-col">
+                            <div class="surface-card">
+                                <div class="card-header-row">
+                                    <div>
+                                        <h2 class="card-title">Daftar inventaris per SKU</h2>
+                                        <p class="card-subtitle">Klik Sesuaikan pada baris produk untuk memilih SKU di formulir sebelah kanan.</p>
+                                    </div>
+                                    <div class="filter-pills-inline" id="stocks-filter-pills">
+                                        <button type="button" class="pill-filter active" data-stock-filter="all">Semua (6)</button>
+                                        <button type="button" class="pill-filter" data-stock-filter="low">Stok rendah</button>
+                                        <button type="button" class="pill-filter" data-stock-filter="out">Habis</button>
+                                    </div>
+                                </div>
+
+                                <div class="table-responsive">
+                                    <table class="clean-table" id="stocks-table">
+                                        <thead>
+                                            <tr>
+                                                <th>SKU / PRODUK</th>
+                                                <th class="align-right">HARGA JUAL</th>
+                                                <th class="align-right">STOK FISIK</th>
+                                                <th class="align-right">DIRESERVASI</th>
+                                                <th class="align-right">TERSEDIA DIJUAL</th>
+                                                <th>STATUS</th>
+                                                <th class="align-right">AKSI</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="stocks-tbody"></tbody>
+                                    </table>
+                                    <p class="table-loading" id="stocks-loading">Memuat data stok...</p>
+                                    <p class="table-empty" id="stocks-empty" hidden>Tidak ada SKU yang cocok dengan filter.</p>
+                                </div>
+                            </div>
+
+                            <!-- RIWAYAT PERUBAHAN STOK -->
+                            <div class="surface-card mt-20">
+                                <div class="card-header-row">
+                                    <div>
+                                        <h2 class="card-title">Riwayat perubahan stok</h2>
+                                        <p class="card-subtitle">Catatan keluar-masuk otomatis dari pesanan dan penyesuaian manual admin</p>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="clean-table">
+                                        <thead>
+                                            <tr>
+                                                <th>WAKTU</th>
+                                                <th>PRODUK</th>
+                                                <th>JENIS</th>
+                                                <th class="align-right">PERUBAHAN</th>
+                                                <th class="align-right">SALDO AKHIR</th>
+                                                <th>CATATAN / REFERENSI</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="stock-history-tbody">
+                                            <tr><td colspan="6" class="empty-state-sm">Memuat riwayat perubahan stok...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT COLUMN: SESUAIKAN STOK -->
+                        <div class="surface-card stocks-side-form-card">
+                            <span class="mini-label">FORMULIR CEPAT</span>
+                            <h2 class="card-title mt-4">Sesuaikan stok</h2>
+                            <p class="card-subtitle">Perubahan stok langsung tercatat di buku log dan memperbarui kuota di halaman depan toko.</p>
+
+                            <form id="inline-stock-form" class="mt-14">
+                                <div class="form-group">
+                                    <label class="form-label" for="inline-stock-select">Produk / SKU</label>
+                                    <select id="inline-stock-select" class="form-input" required>
+                                        <option value="">Pilih produk</option>
+                                    </select>
+                                </div>
+
+                                <div class="stock-summary-triplet">
+                                    <div>
+                                        <span>Stok fisik</span>
+                                        <strong id="inline-stock-physical">0 pcs</strong>
+                                    </div>
+                                    <div>
+                                        <span>Direservasi</span>
+                                        <strong id="inline-stock-reserved">0 pcs</strong>
+                                    </div>
+                                    <div>
+                                        <span>Tersedia</span>
+                                        <strong class="text-green" id="inline-stock-current">0 pcs</strong>
+                                    </div>
+                                </div>
+
+                                <div class="form-group mt-14">
+                                    <label class="form-label">Jenis penyesuaian</label>
+                                    <div class="segmented-3" id="inline-stock-mode-tabs">
+                                        <button type="button" class="seg-btn active" data-adjust-mode="add">+ Tambah</button>
+                                        <button type="button" class="seg-btn" data-adjust-mode="sub">&minus; Kurangi</button>
+                                        <button type="button" class="seg-btn" data-adjust-mode="set">= Atur nilai</button>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="inline-stock-input" id="inline-stock-input-label">Jumlah perubahan (pcs)</label>
+                                    <div class="stock-stepper-wrap">
+                                        <button type="button" class="btn-stepper" id="inline-step-minus">&minus;</button>
+                                        <input type="number" id="inline-stock-input" class="form-input stock-stepper-input" min="0" step="1" value="10" required>
+                                        <button type="button" class="btn-stepper" id="inline-step-plus">+</button>
+                                    </div>
+                                </div>
+
+                                <div class="stock-after-preview">
+                                    <span>Setelah disimpan (Tersedia dijual)</span>
+                                    <strong id="inline-stock-after-preview">0 pcs &rarr; 0 pcs</strong>
+                                </div>
+
+                                <div class="form-group mt-14">
+                                    <label class="form-label" for="inline-stock-reason">Alasan perubahan</label>
+                                    <select id="inline-stock-reason" class="form-input">
+                                        <option value="restock">Produksi batch baru (Restock)</option>
+                                        <option value="admin_adjust">Koreksi stok fisik / Rusak</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="inline-stock-note">Catatan</label>
+                                    <textarea id="inline-stock-note" class="form-input" rows="2" placeholder="Contoh: Produksi pagi batch baru..."></textarea>
+                                </div>
+
+                                <div class="form-actions-row">
+                                    <button type="submit" class="btn-primary btn-full" id="inline-stock-submit">Simpan penyesuaian</button>
+                                    <button type="button" class="btn-outline" id="inline-stock-reset-btn">Batal</button>
+                                </div>
+                                <p id="inline-stock-msg" class="settings-status mt-8"></p>
+                            </form>
+                        </div>
+
                     </div>
 
                 </section>
 
 
                 <!-- ============================================
-                     TAB 3: KEUANGAN USAHA (FINANCE)
+                     VIEW 4: PRE-ORDER (DEDICATED BATCH PAGE)
+                     ============================================ -->
+                <section class="tab-content" data-tab-content="preorder" hidden>
+
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Pre-order</h1>
+                            <p class="page-subtitle">Atur periode buka-tutup pre-order, kuota produksi per batch, jadwal pengiriman, dan daftar peserta batch.</p>
+                        </div>
+                        <div class="page-header-actions">
+                            <button type="button" class="btn-outline btn-danger-outline" id="btn-close-po" style="display: none;">Tutup batch sekarang</button>
+                            <button type="button" class="btn-primary" id="po-header-open-btn">Buka / Perbarui Batch PO</button>
+                        </div>
+                    </div>
+
+                    <!-- ACTIVE BATCH HERO BANNER -->
+                    <div class="po-hero-banner" id="po-hero-banner">
+                        <div class="po-hero-top">
+                            <div>
+                                <div class="page-title-row">
+                                    <span class="badge-pill badge-green" id="po-current-badge">MEMUAT STATUS</span>
+                                    <span class="po-hero-code" id="po-hero-id-label">Periode PO</span>
+                                </div>
+                                <h2 class="po-hero-title mt-4" id="po-info-status">Memuat Batch Pre-Order...</h2>
+                                <p class="po-hero-sub" id="po-hero-subtitle">Pengaturan jadwal pemesanan dan pengiriman untuk pelanggan website.</p>
+                            </div>
+
+                            <div class="po-hero-quota-right">
+                                <span class="mini-label-light">KUOTA BATCH TERALOKASI</span>
+                                <div class="po-hero-quota-nums">
+                                    <strong id="po-hero-allocated-pcs">0</strong>
+                                    <span id="po-hero-max-quota">/ 100 pcs</span>
+                                </div>
+                                <div class="po-hero-progress">
+                                    <div class="po-hero-progress-fill" id="po-hero-progress-bar" style="width: 0%;"></div>
+                                </div>
+                                <div class="po-hero-quota-foot">
+                                    <span id="po-hero-orders-count">0 pesanan masuk</span>
+                                    <span id="po-hero-remaining-pcs">Tersisa 100 pcs</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="po-hero-stats-grid">
+                            <div class="po-hero-stat-item">
+                                <span class="mini-label-light">DIBUKA</span>
+                                <strong id="po-info-open">—</strong>
+                                <small>Waktu mulai</small>
+                            </div>
+                            <div class="po-hero-stat-item">
+                                <span class="mini-label-light">TUTUP PO (CUTOFF)</span>
+                                <strong id="po-info-close">—</strong>
+                                <small>Batas akhir pesanan</small>
+                            </div>
+                            <div class="po-hero-stat-item">
+                                <span class="mini-label-light">TANGGAL PRODUKSI / KIRIM</span>
+                                <strong id="po-info-production">—</strong>
+                                <small>Jadwal pengantaran</small>
+                            </div>
+                            <div class="po-hero-stat-item">
+                                <span class="mini-label-light">ESTIMASI OMZET BATCH</span>
+                                <strong id="po-hero-est-revenue">Rp 0</strong>
+                                <small id="po-hero-paid-revenue">Rp 0 sudah lunas</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SPLIT: ALOKASI VARIAN & DISTRIBUSI LOKASI (LEFT) + FORM JADWAL & KUOTA (RIGHT) -->
+                    <div class="po-main-grid mt-20">
+
+                        <!-- LEFT COLUMN: ALOKASI PER VARIAN & LOKASI -->
+                        <div class="po-left-col">
+                            <div class="surface-card">
+                                <div class="card-header-row">
+                                    <div>
+                                        <h2 class="card-title">Alokasi per varian — Batch aktif</h2>
+                                        <p class="card-subtitle">Rekap jumlah pcs yang dipesan di periode PO ini untuk panduan produksi dapur</p>
+                                    </div>
+                                    <span class="badge-pill badge-neutral" id="po-variant-total-badge">Total 0 pcs</span>
+                                </div>
+
+                                <div class="table-responsive">
+                                    <table class="clean-table">
+                                        <thead>
+                                            <tr>
+                                                <th>VARIAN PRODUK</th>
+                                                <th class="align-right">JUMLAH PESANAN</th>
+                                                <th class="align-right">TERALOKASI (PCS)</th>
+                                                <th>PORSI BATCH</th>
+                                                <th class="align-right">NILAI OMZET</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="po-variant-allocation-tbody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- DISTRIBUSI PENGANTARAN PER LOKASI -->
+                            <div class="metrics-grid-3 po-loc-cards-grid mt-16">
+                                <div class="surface-card po-loc-card">
+                                    <div class="po-loc-card-header">
+                                        <div class="po-loc-title-group">
+                                            <span class="po-loc-kicker">TITIK PENGANTARAN</span>
+                                            <strong class="po-loc-name">SMAN 1 Karawang</strong>
+                                        </div>
+                                        <span class="badge-pill badge-neutral po-loc-badge" id="po-loc-sman1-orders">0 pesanan</span>
+                                    </div>
+                                    <div class="po-loc-card-body">
+                                        <div class="po-loc-metric-row">
+                                            <span class="po-loc-metric-label">Volume &amp; Omzet</span>
+                                            <strong class="po-loc-metric-val" id="po-loc-sman1-pcs">0 pcs · Rp 0</strong>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="surface-card po-loc-card">
+                                    <div class="po-loc-card-header">
+                                        <div class="po-loc-title-group">
+                                            <span class="po-loc-kicker">TITIK PENGANTARAN</span>
+                                            <strong class="po-loc-name">SMAN 5 Karawang</strong>
+                                        </div>
+                                        <span class="badge-pill badge-neutral po-loc-badge" id="po-loc-sman5-orders">0 pesanan</span>
+                                    </div>
+                                    <div class="po-loc-card-body">
+                                        <div class="po-loc-metric-row">
+                                            <span class="po-loc-metric-label">Volume &amp; Omzet</span>
+                                            <strong class="po-loc-metric-val" id="po-loc-sman5-pcs">0 pcs · Rp 0</strong>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="surface-card po-loc-card">
+                                    <div class="po-loc-card-header">
+                                        <div class="po-loc-title-group">
+                                            <span class="po-loc-kicker">TITIK PENGANTARAN</span>
+                                            <strong class="po-loc-name">Pengiriman Luar / Lainnya</strong>
+                                        </div>
+                                        <span class="badge-pill badge-neutral po-loc-badge" id="po-loc-others-orders">0 pesanan</span>
+                                    </div>
+                                    <div class="po-loc-card-body">
+                                        <div class="po-loc-metric-row">
+                                            <span class="po-loc-metric-label">Volume &amp; Omzet</span>
+                                            <strong class="po-loc-metric-val" id="po-loc-others-pcs">0 pcs · Rp 0</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT COLUMN: PENGATURAN BATCH (JADWAL & KUOTA) -->
+                        <div class="surface-card" id="po-settings-card">
+                            <span class="mini-label">PENGATURAN BATCH</span>
+                            <h2 class="card-title mt-4" id="po-form-title">Jadwal dan kuota</h2>
+                            <p class="card-subtitle">Perubahan jadwal langsung tampil di banner toko depan dan digunakan oleh AI Bot WhatsApp.</p>
+
+                            <form id="po-form" class="mt-14">
+                                <div class="form-group">
+                                    <label class="form-label" for="po-batch-name">Nama batch</label>
+                                    <input type="text" id="po-batch-name" class="form-input" placeholder="Contoh: Batch PO #04 — Akhir Pekan">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="po-open-date">Waktu buka PO</label>
+                                    <input type="datetime-local" id="po-open-date" class="form-input">
+                                    <span class="form-help">Kosongkan untuk mulai saat ini juga (WIB).</span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="po-close-date">Waktu tutup PO (Cutoff) *</label>
+                                    <input type="datetime-local" id="po-close-date" class="form-input" required>
+                                    <span class="form-help">Pesanan otomatis ditutup saat melewati waktu ini.</span>
+                                </div>
+
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label class="form-label" for="po-production-date">Tanggal produksi / kirim *</label>
+                                        <input type="date" id="po-production-date" class="form-input" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="po-max-quota">Kuota maksimum (pcs)</label>
+                                        <input type="number" id="po-max-quota" class="form-input" min="1" value="100" required>
+                                    </div>
+                                </div>
+
+                                <div class="settings-actions mt-12">
+                                    <button type="submit" class="btn-primary btn-full" id="po-submit-btn">Simpan perubahan jadwal</button>
+                                </div>
+                                <p class="settings-status mt-8" id="po-status-msg"></p>
+                            </form>
+                        </div>
+
+                    </div>
+
+                    <!-- PESERTA BATCH AKTIF -->
+                    <div class="surface-card mt-20">
+                        <div class="card-header-row">
+                            <div>
+                                <div class="page-title-row">
+                                    <h2 class="card-title">Peserta Batch Aktif</h2>
+                                    <span class="badge-pill badge-green" id="po-participants-count-badge">0 pesanan</span>
+                                </div>
+                                <p class="card-subtitle">Daftar pesanan yang terhubung ke periode pre-order ini</p>
+                            </div>
+                            <div class="toolbar-inline">
+                                <input type="search" id="po-participant-search" class="form-input input-sm" placeholder="Cari nama atau VC-xxxx...">
+                                <select id="po-participant-filter" class="filter-select">
+                                    <option value="all">Semua pembayaran</option>
+                                    <option value="success">Sudah lunas</option>
+                                    <option value="pending">Menunggu verifikasi / bayar</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="clean-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>PELANGGAN</th>
+                                        <th>ITEM</th>
+                                        <th class="align-right">PCS</th>
+                                        <th>LOKASI</th>
+                                        <th>METODE</th>
+                                        <th class="align-right">TOTAL</th>
+                                        <th>STATUS</th>
+                                        <th class="align-right"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="po-participants-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- BATCH LAINNYA (HISTORY) -->
+                    <div class="surface-card mt-20">
+                        <div class="card-header-row">
+                            <div>
+                                <h2 class="card-title">Riwayat batch pre-order</h2>
+                                <p class="card-subtitle">Arsip periode pre-order yang pernah dibuka di sistem</p>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="clean-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID PERIODE</th>
+                                        <th>NAMA BATCH</th>
+                                        <th>PERIODE BUKA &ndash; TUTUP</th>
+                                        <th>TANGGAL PRODUKSI</th>
+                                        <th class="align-right">PESANAN</th>
+                                        <th class="align-right">TERALOKASI</th>
+                                        <th>STATUS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="po-history-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </section>
+
+
+                <!-- ============================================
+                     VIEW 5: KEUANGAN (FINANCE & REKONSILIASI)
                      ============================================ -->
                 <section class="tab-content" data-tab-content="finance" hidden>
 
                     <div class="page-header">
                         <div>
-                            <div class="page-title-row">
-                                <h1 class="page-title">Keuangan usaha</h1>
-                            </div>
-                            <p class="page-subtitle">Lihat omzet, atur alokasi, dan catat setiap pengeluaran dengan rapi.</p>
+                            <h1 class="page-title">Keuangan</h1>
+                            <p class="page-subtitle">Ringkasan arus kas masuk-keluar, alokasi anggaran omzet, serta rekonsiliasi saldo QRIS dan COD.</p>
                         </div>
                         <div class="page-header-actions">
-                            <input type="month" id="finance-month" class="input-pill">
-                            <button type="button" class="btn-outline" id="finance-refresh">↻ Refresh</button>
-                            <button type="button" class="btn-primary" id="finance-export">⬇ Ekspor Excel</button>
+                            <input type="month" id="finance-month" class="filter-select">
+                            <button type="button" class="btn-outline" id="finance-refresh">Muat ulang</button>
+                            <button type="button" class="btn-outline" id="finance-export">Ekspor laporan (.xlsx)</button>
+                            <button type="button" class="btn-primary" id="finance-scroll-form-btn">+ Catat pengeluaran</button>
                         </div>
                     </div>
 
-                    <!-- GREEN HERO BANNER (3 STATS) -->
-                    <div class="finance-hero-banner">
-                        <div class="fin-banner-main">
-                            <span class="fin-banner-label">Total omzet bulan ini</span>
-                            <strong class="fin-banner-value" id="fin-revenue">Rp0</strong>
-                            <span class="fin-banner-sub" id="fin-period-status">Periode berjalan</span>
+                    <!-- 4 TOP FINANCE METRIC CARDS -->
+                    <div class="metrics-grid-4">
+                        <div class="metric-card">
+                            <span class="metric-label">TOTAL PEMASUKAN (OMZET)</span>
+                            <div class="metric-main-row">
+                                <strong class="metric-value" id="fin-revenue">Rp 0</strong>
+                            </div>
+                            <span class="metric-sub" id="fin-period-status">Periode berjalan</span>
                         </div>
-                        <div class="fin-banner-stat">
-                            <span class="fin-banner-label">Pengeluaran tercatat</span>
-                            <strong class="fin-banner-stat-val" id="fin-total-spent">Rp0</strong>
-                            <span class="fin-banner-sub" id="fin-total-spent-sub">HPP + operasional</span>
+
+                        <div class="metric-card">
+                            <span class="metric-label">TOTAL PENGELUARAN</span>
+                            <div class="metric-main-row">
+                                <strong class="metric-value text-danger" id="fin-total-spent">Rp 0</strong>
+                            </div>
+                            <span class="metric-sub" id="fin-total-spent-sub">Bahan baku (HPP) + operasional</span>
                         </div>
-                        <div class="fin-banner-stat">
-                            <span class="fin-banner-label">Sisa dana periode ini</span>
-                            <strong class="fin-banner-stat-val" id="fin-net-remaining">Rp0</strong>
-                            <span class="fin-banner-sub">Omzet dikurangi pengeluaran</span>
+
+                        <div class="metric-card">
+                            <span class="metric-label">LABA BERSIH PERIODE INI</span>
+                            <div class="metric-main-row">
+                                <strong class="metric-value text-green" id="fin-net-remaining">Rp 0</strong>
+                            </div>
+                            <span class="metric-sub" id="fin-margin-sub">Margin bersih 0% dari omzet</span>
+                        </div>
+
+                        <div class="metric-card">
+                            <span class="metric-label">MENUNGGU VERIFIKASI</span>
+                            <div class="metric-main-row">
+                                <strong class="metric-value text-warning" id="fin-pending-funds">Rp 0</strong>
+                            </div>
+                            <span class="metric-sub" id="fin-pending-funds-sub">Dari 0 pesanan belum disetujui</span>
                         </div>
                     </div>
 
-                    <!-- ALOKASI DANA (3 BUCKETS) -->
-                    <div class="section-heading-bar">
-                        <h2 class="section-title-md">Alokasi dana</h2>
-                        <span class="text-muted-sm">Dihitung dari omzet · Total alokasi 100%</span>
-                    </div>
+                    <!-- SPLIT: ALOKASI ANGGARAN (LEFT) + REKONSILIASI KAS (RIGHT) -->
+                    <div class="finance-top-split mt-20">
 
-                    <div class="metrics-grid-3">
-
-                        <!-- HPP BUCKET -->
-                        <div class="surface-card finance-bucket">
-                            <div class="finance-bucket-header">
+                        <!-- LEFT: 3 BUCKETS ALOKASI DANA -->
+                        <div class="surface-card">
+                            <div class="card-header-row">
                                 <div>
-                                    <h3 class="finance-bucket-title"><span class="accent-bar bar-green"></span>HPP</h3>
-                                    <p class="bucket-desc">Bahan baku &amp; biaya produksi</p>
+                                    <h2 class="card-title">Alokasi dana dari omzet</h2>
+                                    <p class="card-subtitle">Pembagian otomatis berdasarkan persentase anggaran toko</p>
                                 </div>
-                                <span class="badge-pill badge-green" id="fin-hpp-pct">40%</span>
+                                <button type="button" class="btn-link-sm" id="fin-edit-allocation-link">Ubah rasio % &rarr;</button>
                             </div>
 
-                            <strong class="bucket-big-val" id="fin-hpp-allocated">Rp0</strong>
+                            <div class="metrics-grid-3 mt-12">
+                                <!-- HPP BUCKET -->
+                                <div class="finance-bucket-box">
+                                    <div class="finance-bucket-header">
+                                        <strong>HPP (Bahan baku)</strong>
+                                        <span class="badge-pill badge-green" id="fin-hpp-pct">40%</span>
+                                    </div>
+                                    <strong class="bucket-big-val" id="fin-hpp-allocated">Rp 0</strong>
+                                    <div class="finance-row mt-8">
+                                        <span>Terpakai</span>
+                                        <strong id="fin-hpp-spent">Rp 0</strong>
+                                    </div>
+                                    <div class="finance-row">
+                                        <span>Sisa alokasi</span>
+                                        <strong class="text-green" id="fin-hpp-remaining">Rp 0</strong>
+                                    </div>
+                                    <div class="finance-progress mt-8">
+                                        <div class="finance-progress-bar" id="fin-hpp-bar"></div>
+                                    </div>
+                                    <span class="progress-caption" id="fin-hpp-usage-label">0% terpakai</span>
+                                </div>
 
-                            <div class="finance-bucket-rows">
-                                <div class="finance-row">
-                                    <span class="label">Aktual digunakan</span>
-                                    <strong id="fin-hpp-spent">Rp0</strong>
+                                <!-- CASHFLOW BUCKET -->
+                                <div class="finance-bucket-box">
+                                    <div class="finance-bucket-header">
+                                        <strong>Operasional (Cashflow)</strong>
+                                        <span class="badge-pill badge-green" id="fin-cashflow-pct">40%</span>
+                                    </div>
+                                    <strong class="bucket-big-val" id="fin-cashflow-allocated">Rp 0</strong>
+                                    <div class="finance-row mt-8">
+                                        <span>Terpakai</span>
+                                        <strong id="fin-cashflow-spent">Rp 0</strong>
+                                    </div>
+                                    <div class="finance-row">
+                                        <span>Sisa alokasi</span>
+                                        <strong class="text-green" id="fin-cashflow-remaining">Rp 0</strong>
+                                    </div>
+                                    <div class="finance-progress mt-8">
+                                        <div class="finance-progress-bar" id="fin-cashflow-bar"></div>
+                                    </div>
+                                    <span class="progress-caption" id="fin-cashflow-usage-label">0% terpakai</span>
                                 </div>
-                                <div class="finance-row">
-                                    <span class="label">Sisa alokasi</span>
-                                    <strong class="text-green" id="fin-hpp-remaining">Rp0</strong>
+
+                                <!-- PROFIT BUCKET -->
+                                <div class="finance-bucket-box">
+                                    <div class="finance-bucket-header">
+                                        <strong>Target Profit</strong>
+                                        <span class="badge-pill badge-gold" id="fin-profit-pct">20%</span>
+                                    </div>
+                                    <strong class="bucket-big-val" id="fin-profit-allocated">Rp 0</strong>
+                                    <div class="finance-row mt-8">
+                                        <span>Total keluar</span>
+                                        <strong id="fin-profit-detail">Rp 0</strong>
+                                    </div>
+                                    <div class="finance-row">
+                                        <span>Laba aktual</span>
+                                        <strong class="text-green" id="fin-profit-final">Rp 0</strong>
+                                    </div>
+                                    <div class="finance-progress mt-8">
+                                        <div class="finance-progress-bar" style="width: 100%; opacity: 0.3;"></div>
+                                    </div>
+                                    <span class="progress-caption">Akumulasi laba bersih</span>
                                 </div>
-                                <div class="finance-progress">
-                                    <div class="finance-progress-bar" id="fin-hpp-bar"></div>
-                                </div>
-                                <span class="progress-caption" id="fin-hpp-usage-label">0% terpakai</span>
                             </div>
                         </div>
 
-                        <!-- CASHFLOW BUCKET -->
-                        <div class="surface-card finance-bucket">
-                            <div class="finance-bucket-header">
+                        <!-- RIGHT: REKONSILIASI KAS -->
+                        <div class="surface-card">
+                            <div class="card-header-row">
                                 <div>
-                                    <h3 class="finance-bucket-title"><span class="accent-bar bar-teal"></span>Cashflow</h3>
-                                    <p class="bucket-desc">Dana operasional usaha</p>
+                                    <h2 class="card-title">Rekonsiliasi kas</h2>
+                                    <p class="card-subtitle">Posisi dana masuk berdasarkan metode pembayaran bulan ini</p>
                                 </div>
-                                <span class="badge-pill badge-green" id="fin-cashflow-pct">40%</span>
+                                <span class="badge-pill badge-green">Tersinkron</span>
                             </div>
 
-                            <strong class="bucket-big-val" id="fin-cashflow-allocated">Rp0</strong>
-
-                            <div class="finance-bucket-rows">
-                                <div class="finance-row">
-                                    <span class="label">Aktual digunakan</span>
-                                    <strong id="fin-cashflow-spent">Rp0</strong>
+                            <div class="recon-list mt-12">
+                                <div class="recon-item">
+                                    <div>
+                                        <strong>Rekening QRIS (Terverifikasi)</strong>
+                                        <span>Pesanan QRIS berstatus lunas</span>
+                                    </div>
+                                    <strong class="recon-val" id="fin-recon-qris">Rp 0</strong>
                                 </div>
-                                <div class="finance-row">
-                                    <span class="label">Sisa alokasi</span>
-                                    <strong class="text-green" id="fin-cashflow-remaining">Rp0</strong>
+                                <div class="recon-item">
+                                    <div>
+                                        <strong>Kas Tunai / COD (Terverifikasi)</strong>
+                                        <span>Pesanan COD berstatus lunas</span>
+                                    </div>
+                                    <strong class="recon-val" id="fin-recon-cod">Rp 0</strong>
                                 </div>
-                                <div class="finance-progress">
-                                    <div class="finance-progress-bar" id="fin-cashflow-bar"></div>
+                                <div class="recon-item">
+                                    <div>
+                                        <strong>Pengeluaran Tercatat (HPP + Operasional)</strong>
+                                        <span>Mengurangi saldo kas periode ini</span>
+                                    </div>
+                                    <strong class="recon-val text-danger" id="fin-recon-out">&minus; Rp 0</strong>
                                 </div>
-                                <span class="progress-caption" id="fin-cashflow-usage-label">0% terpakai</span>
-                            </div>
-                        </div>
-
-                        <!-- PROFIT BUCKET -->
-                        <div class="surface-card finance-bucket">
-                            <div class="finance-bucket-header">
-                                <div>
-                                    <h3 class="finance-bucket-title"><span class="accent-bar bar-gold"></span>Profit</h3>
-                                    <p class="bucket-desc">Laba bersih yang disisihkan</p>
+                                <div class="recon-item recon-total">
+                                    <div>
+                                        <strong>Saldo Bersih Periode Ini</strong>
+                                        <span>Total kas masuk dikurangi pengeluaran</span>
+                                    </div>
+                                    <strong class="recon-val text-green" id="fin-recon-net">Rp 0</strong>
                                 </div>
-                                <span class="badge-pill badge-gold" id="fin-profit-pct">20%</span>
-                            </div>
-
-                            <strong class="bucket-big-val" id="fin-profit-allocated">Rp0</strong>
-
-                            <div class="finance-bucket-rows">
-                                <div class="finance-row">
-                                    <span class="label">Omzet - Pengeluaran</span>
-                                    <strong id="fin-profit-detail">Rp0</strong>
-                                </div>
-                                <div class="finance-row">
-                                    <span class="label">Laba Final</span>
-                                    <strong class="text-green" id="fin-profit-final">Rp0</strong>
-                                </div>
-                                <div class="finance-progress">
-                                    <div class="finance-progress-bar" style="width: 100%; opacity: 0.25;"></div>
-                                </div>
-                                <span class="progress-caption">Akumulasi laba aktual</span>
                             </div>
                         </div>
 
                     </div>
 
-                    <!-- SPLIT: CATAT TRANSAKSI (LEFT) & RIWAYAT PENGELUARAN (RIGHT) -->
+                    <!-- SPLIT: TABEL TRANSAKSI GABUNGAN (LEFT) + FORM CATAT PENGELUARAN (RIGHT) -->
                     <div class="finance-split-grid mt-20">
 
-                        <!-- LEFT: CATAT TRANSAKSI -->
+                        <!-- LEFT: UNIFIED TRANSACTIONS TABLE -->
                         <div class="surface-card">
-                            <h2 class="card-title">Catat transaksi</h2>
-                            <p class="card-subtitle">Pengeluaran akan mengurangi sisa pos alokasi.</p>
+                            <div class="card-header-row">
+                                <div>
+                                    <h2 class="card-title">Buku kas &amp; riwayat transaksi</h2>
+                                    <p class="card-subtitle">Periode <span id="hpp-history-month">—</span> <span id="cf-history-month" hidden></span></p>
+                                </div>
+                                <div class="filter-pills-inline">
+                                    <select id="finance-history-filter" class="filter-select">
+                                        <option value="all">Semua transaksi (Masuk &amp; Keluar)</option>
+                                        <option value="in">Pemasukan (Penjualan Lunas)</option>
+                                        <option value="hpp">Pengeluaran HPP (Bahan Baku)</option>
+                                        <option value="cashflow">Pengeluaran Operasional</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="clean-table">
+                                    <thead>
+                                        <tr>
+                                            <th>TANGGAL</th>
+                                            <th>DESKRIPSI</th>
+                                            <th>KATEGORI / POS</th>
+                                            <th>JENIS</th>
+                                            <th class="align-right">NOMINAL</th>
+                                            <th class="align-right">AKSI</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="finance-unified-tbody"></tbody>
+                                </table>
+                            </div>
+
+                            <!-- LEGACY TBODIES HIDDEN IF NEEDED -->
+                            <div hidden>
+                                <div id="finance-history-hpp-section"><tbody id="hpp-history-tbody"></tbody><p id="hpp-history-empty"></p></div>
+                                <div id="finance-history-cf-section"><tbody id="cf-history-tbody"></tbody><p id="cf-history-empty"></p></div>
+                            </div>
+
+                            <div class="finance-history-footer">
+                                <span>Total pengeluaran tercatat bulan ini</span>
+                                <strong id="finance-history-total-footer">Rp 0</strong>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT: CATAT PENGELUARAN FORM -->
+                        <div class="surface-card" id="finance-form-card">
+                            <span class="mini-label">INPUT KAS KELUAR</span>
+                            <h2 class="card-title mt-4">Catat pengeluaran</h2>
+                            <p class="card-subtitle">Pilih pos pengeluaran HPP (bahan baku) atau Operasional (cashflow).</p>
 
                             <div class="segmented-tabs mt-14">
-                                <button type="button" class="finance-tab active" data-finance-tab="hpp">+ Input HPP</button>
-                                <button type="button" class="finance-tab" data-finance-tab="cashflow">+ Input Cashflow</button>
+                                <button type="button" class="finance-tab active" data-finance-tab="hpp">+ Pembelian HPP</button>
+                                <button type="button" class="finance-tab" data-finance-tab="cashflow">+ Biaya Operasional</button>
                             </div>
 
                             <!-- FORM HPP -->
@@ -646,11 +1230,11 @@
                                 <form id="hpp-form">
                                     <div class="form-row-2">
                                         <div class="form-group">
-                                            <label class="form-label" for="hpp-item">Nama Bahan / Item</label>
-                                            <input type="text" id="hpp-item" class="form-input" placeholder="Tepung, telur, butter..." required>
+                                            <label class="form-label" for="hpp-item">Nama bahan / item *</label>
+                                            <input type="text" id="hpp-item" class="form-input" placeholder="Anchor butter, Nutella, tepung..." required>
                                         </div>
                                         <div class="form-group">
-                                            <label class="form-label" for="hpp-date">Tanggal</label>
+                                            <label class="form-label" for="hpp-date">Tanggal *</label>
                                             <input type="date" id="hpp-date" class="form-input" required>
                                         </div>
                                     </div>
@@ -662,21 +1246,21 @@
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label" for="hpp-unit">Satuan (opsional)</label>
-                                            <input type="text" id="hpp-unit" class="form-input" placeholder="kg, gram, pcs">
+                                            <input type="text" id="hpp-unit" class="form-input" placeholder="kg, jar, pack">
                                         </div>
                                     </div>
 
                                     <div class="form-group">
-                                        <label class="form-label" for="hpp-amount">Total Harga (Rp)</label>
-                                        <input type="number" id="hpp-amount" class="form-input" min="1" placeholder="30000" required>
+                                        <label class="form-label" for="hpp-amount">Total harga (Rp) *</label>
+                                        <input type="number" id="hpp-amount" class="form-input" min="1" placeholder="45000" required>
                                     </div>
 
                                     <div class="form-group">
-                                        <label class="form-label" for="hpp-note">Catatan (opsional)</label>
-                                        <input type="text" id="hpp-note" class="form-input" placeholder="Beli di toko X">
+                                        <label class="form-label" for="hpp-note">Catatan toko / supplier</label>
+                                        <input type="text" id="hpp-note" class="form-input" placeholder="Toko Bahan Kue Karawang">
                                     </div>
 
-                                    <button type="submit" class="btn-primary btn-full" id="hpp-submit">Simpan Pembelian</button>
+                                    <button type="submit" class="btn-primary btn-full" id="hpp-submit">Simpan pengeluaran HPP</button>
                                 </form>
                             </div>
 
@@ -685,251 +1269,214 @@
                                 <form id="cashflow-form">
                                     <div class="form-row-2">
                                         <div class="form-group">
-                                            <label class="form-label" for="cf-category">Kategori</label>
+                                            <label class="form-label" for="cf-category">Kategori biaya</label>
                                             <select id="cf-category" class="form-input">
-                                                <option value="">— Pilih kategori —</option>
+                                                <option value="">Pilih kategori</option>
                                             </select>
                                         </div>
                                         <div class="form-group">
-                                            <label class="form-label" for="cf-date">Tanggal</label>
+                                            <label class="form-label" for="cf-date">Tanggal *</label>
                                             <input type="date" id="cf-date" class="form-input" required>
                                         </div>
                                     </div>
 
                                     <div class="form-group">
-                                        <label class="form-label" for="cf-desc">Deskripsi</label>
-                                        <input type="text" id="cf-desc" class="form-input" placeholder="Gas dapur, listrik, transport..." required>
+                                        <label class="form-label" for="cf-desc">Deskripsi pengeluaran *</label>
+                                        <input type="text" id="cf-desc" class="form-input" placeholder="Kemasan box, stiker, gas, bensin kurir..." required>
                                     </div>
 
                                     <div class="form-group">
-                                        <label class="form-label" for="cf-amount">Jumlah (Rp)</label>
-                                        <input type="number" id="cf-amount" class="form-input" min="1" placeholder="20000" required>
+                                        <label class="form-label" for="cf-amount">Nominal (Rp) *</label>
+                                        <input type="number" id="cf-amount" class="form-input" min="1" placeholder="25000" required>
                                     </div>
 
                                     <div class="form-group">
-                                        <label class="form-label" for="cf-note">Catatan (opsional)</label>
-                                        <input type="text" id="cf-note" class="form-input">
+                                        <label class="form-label" for="cf-note">Catatan tambahan</label>
+                                        <input type="text" id="cf-note" class="form-input" placeholder="Opsional">
                                     </div>
 
-                                    <button type="submit" class="btn-primary btn-full" id="cf-submit">Simpan Transaksi</button>
+                                    <button type="submit" class="btn-primary btn-full" id="cf-submit">Simpan biaya operasional</button>
                                 </form>
                             </div>
                         </div>
 
-                        <!-- RIGHT: RIWAYAT PENGELUARAN -->
-                        <div class="surface-card">
-                            <div class="card-header-row">
-                                <div>
-                                    <h2 class="card-title">Riwayat pengeluaran</h2>
-                                    <p class="card-subtitle">Periode <span id="hpp-history-month">—</span> · <span id="cf-history-month">—</span></p>
-                                </div>
-                                <select id="finance-history-filter" class="filter-select">
-                                    <option value="all">✓ Semua pos</option>
-                                    <option value="hpp">Hanya HPP</option>
-                                    <option value="cashflow">Hanya Cashflow</option>
-                                </select>
-                            </div>
-
-                            <!-- HPP TABLE -->
-                            <div id="finance-history-hpp-section">
-                                <h4 class="subtable-heading">Riwayat HPP</h4>
-                                <div class="table-responsive">
-                                    <table class="clean-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Tanggal</th>
-                                                <th>Item</th>
-                                                <th>Qty</th>
-                                                <th>Pos</th>
-                                                <th class="align-right">Harga</th>
-                                                <th></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="hpp-history-tbody"></tbody>
-                                    </table>
-                                    <p class="empty-state-sm" id="hpp-history-empty" hidden>Belum ada pembelian HPP di bulan ini.</p>
-                                </div>
-                            </div>
-
-                            <!-- CASHFLOW TABLE -->
-                            <div id="finance-history-cf-section" class="mt-16">
-                                <h4 class="subtable-heading">Riwayat Cashflow</h4>
-                                <div class="table-responsive">
-                                    <table class="clean-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Tanggal</th>
-                                                <th>Kategori</th>
-                                                <th>Deskripsi</th>
-                                                <th>Pos</th>
-                                                <th class="align-right">Jumlah</th>
-                                                <th></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="cf-history-tbody"></tbody>
-                                    </table>
-                                    <p class="empty-state-sm" id="cf-history-empty" hidden>Belum ada transaksi cashflow di bulan ini.</p>
-                                </div>
-                            </div>
-
-                            <div class="finance-history-footer">
-                                <span>Total pengeluaran tercatat</span>
-                                <strong id="finance-history-total-footer">Rp0</strong>
-                            </div>
-                        </div>
-
                     </div>
 
                 </section>
 
 
                 <!-- ============================================
-                     TAB 4: STOK & KETERSEDIAAN (STOCKS)
+                     VIEW 6: LAPORAN HARIAN (DEDICATED ANALYTICS)
                      ============================================ -->
-                <section class="tab-content" data-tab-content="stocks" hidden>
+                <section class="tab-content" data-tab-content="reports" hidden>
 
                     <div class="page-header">
                         <div>
-                            <div class="page-title-row">
-                                <h1 class="page-title">Stok &amp; ketersediaan</h1>
-                            </div>
-                            <p class="page-subtitle">Daftar stok cookies yang tersedia saat ini.</p>
+                            <h1 class="page-title">Laporan harian</h1>
+                            <p class="page-subtitle">Analisis penjualan harian, rincian per varian produk, distribusi titik pengantaran, dan retensi pelanggan.</p>
                         </div>
                         <div class="page-header-actions">
-                            <button type="button" class="btn-primary" id="stocks-refresh">↻ Refresh</button>
+                            <input type="date" id="report-date" class="filter-select">
+                            <button type="button" class="btn-outline" id="report-today">Hari ini</button>
+                            <button type="button" class="btn-primary" id="report-export">Ekspor CSV</button>
                         </div>
                     </div>
 
-                    <!-- 4 STOCK SUMMARY CARDS -->
+                    <!-- 4 DAILY REPORT SUMMARY CARDS -->
                     <div class="metrics-grid-4">
-                        <div class="metric-card metric-card-primary">
-                            <span class="metric-label">Total stok tersedia</span>
-                            <strong class="metric-value" id="stocks-summary-total-pcs">0 pcs</strong>
-                            <span class="metric-sub">Siap dipesan pelanggan</span>
-                        </div>
                         <div class="metric-card">
-                            <span class="metric-label">Total varian / SKU</span>
-                            <strong class="metric-value" id="stocks-summary-sku-count">0</strong>
-                            <span class="metric-sub">Termasuk varian add-on</span>
+                            <span class="metric-label">OMZET TANGGAL TERPILIH</span>
+                            <div class="metric-main-row">
+                                <strong class="metric-value" id="report-total-revenue">Rp 0</strong>
+                            </div>
+                            <span class="report-delta" id="report-delta-revenue"></span>
                         </div>
+
                         <div class="metric-card">
-                            <span class="metric-label">Stok menipis (≤5)</span>
-                            <strong class="metric-value" id="stocks-summary-low-count">0 item</strong>
-                            <span class="metric-sub">Perlu segera restock</span>
+                            <span class="metric-label">PESANAN TERBAYAR</span>
+                            <div class="metric-main-row">
+                                <strong class="metric-value" id="report-total-orders">0</strong>
+                            </div>
+                            <span class="report-delta" id="report-delta-orders"></span>
                         </div>
+
                         <div class="metric-card">
-                            <span class="metric-label">Stok habis (0)</span>
-                            <strong class="metric-value" id="stocks-summary-out-count">0 item</strong>
-                            <span class="metric-sub">Otomatis tertutup di web</span>
+                            <span class="metric-label">COOKIES TERJUAL</span>
+                            <div class="metric-main-row">
+                                <strong class="metric-value" id="report-total-items">0 pcs</strong>
+                            </div>
+                            <span class="report-delta" id="report-delta-items"></span>
+                        </div>
+
+                        <div class="metric-card">
+                            <span class="metric-label">RATA-RATA NILAI ORDER (AOV)</span>
+                            <div class="metric-main-row">
+                                <strong class="metric-value" id="report-aov-value">Rp 0</strong>
+                            </div>
+                            <span class="metric-sub" id="report-aov-sub">0 pcs / pesanan</span>
                         </div>
                     </div>
 
-                    <!-- LOW STOCK ALERT BANNER -->
-                    <div class="stock-alert-banner" id="stock-alert-banner" hidden>
-                        <span>⚠️</span>
-                        <p id="stock-alert-text">Beberapa varian memiliki stok menipis atau habis.</p>
-                    </div>
+                    <!-- SPLIT: TREN 7 HARI (LEFT) + WAWASAN PELANGGAN (RIGHT) -->
+                    <div class="reports-top-grid mt-20">
 
-                    <!-- SPLIT: DAFTAR STOK (LEFT) + FORM PENYESUAIAN STOK (RIGHT) -->
-                    <div class="stocks-split-grid">
-
-                        <!-- LEFT COLUMN: TABLE + HISTORY -->
-                        <div class="stocks-left-col">
-                            <div class="surface-card">
-                                <div class="card-header-row">
-                                    <div>
-                                        <h2 class="card-title">Sisa Stok Produk</h2>
-                                        <p class="card-subtitle">Klik tombol Ubah Stok untuk membuka modal atau gunakan panel di sebelah kanan.</p>
-                                    </div>
+                        <!-- LEFT: 7-DAY BAR CHART -->
+                        <div class="surface-card">
+                            <div class="card-header-row">
+                                <div>
+                                    <h2 class="card-title">Tren penjualan 7 hari</h2>
+                                    <p class="card-subtitle">Klik batang tanggal untuk memuat rincian penjualan hari tersebut</p>
                                 </div>
-
-                                <div class="table-responsive">
-                                    <table class="clean-table" id="stocks-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Produk</th>
-                                                <th class="align-right">Stok</th>
-                                                <th class="align-center">Status</th>
-                                                <th class="align-right">Aksi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="stocks-tbody"></tbody>
-                                    </table>
-                                    <p class="table-loading" id="stocks-loading">Memuat stok...</p>
-                                    <p class="table-empty" id="stocks-empty" hidden>Belum ada data stok.</p>
-                                </div>
+                                <span class="badge-pill badge-neutral" id="overview-location-date-label">Hari ini</span>
                             </div>
 
-                            <!-- RIWAYAT PERUBAHAN STOK -->
-                            <div class="surface-card mt-20">
-                                <div class="card-header-row">
-                                    <div>
-                                        <h2 class="card-title">Riwayat perubahan stok terakhir</h2>
-                                        <p class="card-subtitle">Audit log otomatis dari pesanan masuk, pembatalan, dan restock.</p>
-                                    </div>
+                            <div class="chart-7day" id="chart-7day"></div>
+
+                            <!-- PER LOKASI SUMMARY STRIP -->
+                            <div class="location-strip-grid mt-16" id="overview-location-strip">
+                                <div class="loc-strip-item">
+                                    <span class="loc-strip-title">SMAN 1 Karawang <small id="strip-sman1-count">0 pesanan</small></span>
+                                    <strong id="strip-sman1-rev">Rp 0</strong>
                                 </div>
-                                <div class="table-responsive">
-                                    <table class="clean-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Waktu</th>
-                                                <th>Produk / SKU</th>
-                                                <th>Alasan</th>
-                                                <th class="align-right">Perubahan</th>
-                                                <th class="align-right">Stok Akhir</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="stock-history-tbody">
-                                            <tr><td colspan="5" class="empty-state-sm">Memuat riwayat stok...</td></tr>
-                                        </tbody>
-                                    </table>
+                                <div class="loc-strip-item">
+                                    <span class="loc-strip-title">SMAN 5 Karawang <small id="strip-sman5-count">0 pesanan</small></span>
+                                    <strong id="strip-sman5-rev">Rp 0</strong>
+                                </div>
+                                <div class="loc-strip-item">
+                                    <span class="loc-strip-title">Pengiriman Luar <small id="strip-others-count">0 pesanan</small></span>
+                                    <strong id="strip-others-rev">Rp 0</strong>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- RIGHT COLUMN: INLINE STOCK ADJUSTMENT FORM -->
-                        <div class="surface-card stocks-side-form-card">
-                            <h2 class="card-title">Penyesuaian stok cepat</h2>
-                            <p class="card-subtitle">Pilih produk untuk memperbarui jumlah fisik terbaru.</p>
-
-                            <form id="inline-stock-form" class="mt-14">
-                                <div class="form-group">
-                                    <label class="form-label" for="inline-stock-select">Pilih Produk / SKU</label>
-                                    <select id="inline-stock-select" class="form-input" required>
-                                        <option value="">— Pilih produk —</option>
-                                    </select>
+                        <!-- RIGHT: WAWASAN PELANGGAN -->
+                        <div class="surface-card">
+                            <div class="card-header-row">
+                                <div>
+                                    <h2 class="card-title">Retensi &amp; wawasan pelanggan</h2>
+                                    <p class="card-subtitle">Dihitung dari nomor WhatsApp unik pesanan lunas</p>
                                 </div>
+                            </div>
 
-                                <div class="stock-current-box">
-                                    <span class="stock-current-label">Stok tercatat saat ini</span>
-                                    <strong class="stock-current-val" id="inline-stock-current">0 pcs</strong>
+                            <div class="customer-big-stat mt-12">
+                                <strong id="insight-total-customers">0</strong>
+                                <span>pelanggan unik terdaftar</span>
+                            </div>
+
+                            <div class="split-progress-bar">
+                                <div class="split-bar-new" id="insight-bar-new" style="width: 50%;"></div>
+                                <div class="split-bar-old" id="insight-bar-old" style="width: 50%;"></div>
+                            </div>
+
+                            <div class="customer-legend-list">
+                                <div class="legend-row">
+                                    <span class="legend-dot dot-gold"></span>
+                                    <span class="legend-name">Proporsi Order Baru vs Lama</span>
+                                    <strong id="insight-new-old-ratio">0% / 0%</strong>
                                 </div>
+                                <div class="legend-sub" id="insight-new-old-detail">Belum ada data</div>
 
-                                <div class="form-group mt-14">
-                                    <label class="form-label" for="inline-stock-input">Jumlah Stok Baru</label>
-                                    <div class="stock-stepper-wrap">
-                                        <button type="button" class="btn-stepper" id="inline-step-minus">−</button>
-                                        <input type="number" id="inline-stock-input" class="form-input stock-stepper-input" min="0" step="1" value="0" required>
-                                        <button type="button" class="btn-stepper" id="inline-step-plus">+</button>
-                                    </div>
+                                <div class="legend-row mt-8">
+                                    <span class="legend-dot dot-green"></span>
+                                    <span class="legend-name">Repeat Order Rate (Beli &gt;1x)</span>
+                                    <strong id="insight-repeat-rate">0%</strong>
                                 </div>
+                                <div class="legend-sub" id="insight-repeat-detail">Belum ada data</div>
+                            </div>
+                        </div>
 
-                                <div class="form-group">
-                                    <label class="form-label" for="inline-stock-reason">Alasan Perubahan</label>
-                                    <select id="inline-stock-reason" class="form-input">
-                                        <option value="restock">Restock (Produksi baru / bahan siap)</option>
-                                        <option value="admin_adjust">Penyesuaian Admin (Koreksi fisik / rusak)</option>
-                                    </select>
+                    </div>
+
+                    <!-- SPLIT: PENJUALAN PER VARIAN (LEFT) + BREAKDOWN LOKASI & VARIAN (RIGHT) -->
+                    <div class="reports-bottom-grid mt-20">
+
+                        <div class="surface-card">
+                            <div class="card-header-row">
+                                <div>
+                                    <h2 class="card-title">Penjualan per varian produk</h2>
+                                    <p class="card-subtitle">Kontribusi unit terjual dan omzet per SKU pada tanggal terpilih</p>
                                 </div>
+                                <span class="badge-pill badge-green" id="overview-variant-total-pcs">0 pcs</span>
+                            </div>
 
-                                <div class="form-group">
-                                    <label class="form-label" for="inline-stock-note">Catatan (Opsional)</label>
-                                    <textarea id="inline-stock-note" class="form-input" rows="2" placeholder="Contoh: Tambah batch baru..."></textarea>
+                            <div id="overview-variant-bars" class="variant-bars-list mt-12"></div>
+
+                            <div class="table-responsive mt-12">
+                                <table class="clean-table">
+                                    <thead>
+                                        <tr>
+                                            <th>VARIAN PRODUK</th>
+                                            <th class="align-right">TERJUAL (PCS)</th>
+                                            <th class="align-right">SUBTOTAL OMZET</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="report-tbody"></tbody>
+                                </table>
+                                <p class="empty-state-sm" id="report-empty" hidden>Belum ada pesanan lunas pada tanggal ini.</p>
+                            </div>
+                        </div>
+
+                        <div class="surface-card">
+                            <div class="card-header-row">
+                                <div>
+                                    <h2 class="card-title">Rincian per lokasi &amp; varian</h2>
+                                    <p class="card-subtitle">Rekap distribusi produk untuk persiapan pengantaran kurir</p>
                                 </div>
+                            </div>
 
-                                <button type="submit" class="btn-primary btn-full" id="inline-stock-submit">✓ Simpan perubahan stok</button>
-                                <p id="inline-stock-msg" class="settings-status mt-8"></p>
-                            </form>
+                            <div class="table-responsive mt-12">
+                                <table class="clean-table">
+                                    <thead>
+                                        <tr>
+                                            <th>LOKASI / VARIAN</th>
+                                            <th class="align-right">PESANAN / PCS</th>
+                                            <th class="align-right">SUBTOTAL</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="report-location-tbody"></tbody>
+                                </table>
+                                <p class="empty-state-sm" id="report-location-empty" hidden>Belum ada pesanan lunas pada tanggal ini.</p>
+                            </div>
                         </div>
 
                     </div>
@@ -938,90 +1485,81 @@
 
 
                 <!-- ============================================
-                     TAB 5: CHATBOT WHATSAPP & VERIFIKASI BUKTI BAYAR
+                     VIEW 7: WHATSAPP & CHATBOT AI (5 SUB-TABS)
                      ============================================ -->
                 <section class="tab-content" data-tab-content="whatsapp" hidden>
 
                     <div class="page-header">
                         <div>
                             <div class="page-title-row">
-                                <h1 class="page-title">Chatbot WhatsApp &amp; Verifikasi AI</h1>
+                                <h1 class="page-title">WhatsApp &amp; Chatbot AI</h1>
                                 <span class="badge-pill badge-green" id="wa-bot-status-pill">AI Aktif · gemini-3.8-flash</span>
                             </div>
-                            <p class="page-subtitle">Pantau percakapan pelanggan dari website, cek bukti transfer QRIS &amp; DP COD otomatis, dan setujui pesanan dalam satu klik.</p>
+                            <p class="page-subtitle">Inbox pelanggan, verifikasi bukti bayar dengan analisis AI Vision, basis pengetahuan, dan kesehatan bot.</p>
                         </div>
                         <div class="page-header-actions">
-                            <button type="button" class="btn-outline" id="wa-open-test-modal-btn">⚡ Uji Coba Pesan / Struk</button>
-                            <button type="button" class="btn-primary" id="wa-refresh-btn">↻ Segarkan Inbox</button>
+                            <button type="button" class="btn-outline" id="wa-open-test-modal-btn">Simulasi pesan / struk</button>
+                            <button type="button" class="btn-outline" id="wa-open-gateway-top-btn">Pengaturan koneksi</button>
+                            <button type="button" class="btn-primary" id="wa-refresh-btn">Muat ulang</button>
                         </div>
                     </div>
 
-                    <!-- 4 SUMMARY METRICS -->
-                    <div class="metrics-grid-4">
-                        <div class="metric-card metric-card-primary clickable-card" id="wa-card-filter-all" data-wa-filter="all">
-                            <span class="metric-label">Total Percakapan WA</span>
-                            <strong class="metric-value" id="wa-metric-total">0</strong>
-                            <span class="metric-sub">Terhubung ke nomor pelanggan</span>
-                        </div>
-                        <div class="metric-card clickable-card" id="wa-card-filter-verify" data-wa-filter="awaiting_verification">
-                            <span class="metric-label">Menunggu Verifikasi Struk</span>
-                            <strong class="metric-value" id="wa-metric-verify">0</strong>
-                            <span class="metric-sub">Bukti QRIS / DP siap disetujui</span>
-                        </div>
-                        <div class="metric-card clickable-card" id="wa-card-filter-dp" data-wa-filter="waiting_proof">
-                            <span class="metric-label">Pantauan Bukti &amp; DP COD</span>
-                            <strong class="metric-value" id="wa-metric-dp">0</strong>
-                            <span class="metric-sub">Order QRIS / COD ≥3 pcs belum kirim struk</span>
-                        </div>
-                        <div class="metric-card clickable-card" id="wa-card-filter-human" data-wa-filter="needs_human">
-                            <span class="metric-label">Mode Manual / Handover</span>
-                            <strong class="metric-value" id="wa-metric-human">0</strong>
-                            <span class="metric-sub">Diambil alih langsung oleh Admin</span>
-                        </div>
-                    </div>
-
-                    <!-- SUB-NAVIGATION BAR -->
+                    <!-- 5 SUB-TABS BAR (FIGMA LAYOUT) -->
                     <div class="wa-subnav-bar">
                         <div class="wa-subnav-tabs">
                             <button type="button" class="wa-subtab active" data-wa-subtab="inbox" id="wa-subtab-inbox-btn">
-                                💬 Live Inbox &amp; Verifikasi Order
+                                <span>Inbox</span>
+                                <strong class="tab-count" id="wa-metric-total">0</strong>
                             </button>
-                            <button type="button" class="wa-subtab" data-wa-subtab="gateway" id="wa-subtab-gateway-btn">
-                                ⚙ Koneksi WA Gateway &amp; Template Notifikasi
+                            <button type="button" class="wa-subtab" data-wa-subtab="verification" id="wa-subtab-verify-btn">
+                                <span>Verifikasi pembayaran</span>
+                                <strong class="tab-count count-warning" id="wa-metric-verify">0</strong>
                             </button>
                             <button type="button" class="wa-subtab" data-wa-subtab="knowledge" id="wa-subtab-knowledge-btn">
-                                🧠 Knowledge Bot &amp; Monitor AI
+                                <span>Basis pengetahuan</span>
+                            </button>
+                            <button type="button" class="wa-subtab" data-wa-subtab="health" id="wa-subtab-health-btn">
+                                <span>Kesehatan AI</span>
+                            </button>
+                            <button type="button" class="wa-subtab" data-wa-subtab="gateway" id="wa-subtab-gateway-btn">
+                                <span>Pengaturan chatbot</span>
                             </button>
                         </div>
-                        <div class="wa-filter-pills">
-                            <select id="wa-conv-filter-select" class="filter-select" aria-label="Filter Percakapan">
-                                <option value="all">Semua Percakapan</option>
-                                <option value="awaiting_verification">⏳ Menunggu Approval Struk</option>
-                                <option value="waiting_proof">📸 Belum Kirim Bukti</option>
-                                <option value="needs_human">👤 Mode Manual Admin</option>
-                                <option value="verified">✓ Sudah Diverifikasi</option>
-                            </select>
+                        <div hidden>
+                            <span id="wa-metric-dp">0</span>
+                            <span id="wa-metric-human">0</span>
                         </div>
                     </div>
 
-                    <!-- SUB-VIEW 1: 3-COLUMN INBOX & ORDER VERIFICATION WORKSPACE -->
+                    <!-- SUB-VIEW 1: 3-COLUMN INBOX -->
                     <div id="wa-subview-inbox" class="wa-workspace-grid">
 
                         <!-- LEFT COLUMN: CONVERSATION LIST -->
                         <div class="surface-card wa-conv-list-card">
-                            <div class="wa-col-header">
-                                <div>
-                                    <h2 class="card-title">Daftar Chat</h2>
-                                    <p class="card-subtitle" id="wa-conv-count-label">Memuat percakapan...</p>
-                                </div>
-                            </div>
                             <div class="wa-conv-search-box">
-                                <input type="search" id="wa-conv-search" class="search-input" style="padding-left:12px;" placeholder="Cari nama, WA, atau VC-XXXX...">
+                                <input type="search" id="wa-conv-search" class="form-input" placeholder="Cari nama, nomor, atau ID pesanan...">
+                            </div>
+                            <div class="wa-conv-filter-pills" id="wa-inbox-filter-pills">
+                                <button type="button" class="pill-filter active" data-wa-pill="all">Semua status</button>
+                                <button type="button" class="pill-filter" data-wa-pill="needs_human">Perlu admin</button>
+                                <button type="button" class="pill-filter" data-wa-pill="awaiting_verification">Cek struk</button>
+                                <button type="button" class="pill-filter" data-wa-pill="ai_only">Chatbot</button>
+                            </div>
+                            <select id="wa-conv-filter-select" class="filter-select" hidden>
+                                <option value="all">Semua</option>
+                                <option value="awaiting_verification">Menunggu Verifikasi</option>
+                                <option value="waiting_proof">Belum Kirim Bukti</option>
+                                <option value="needs_human">Perlu Admin</option>
+                                <option value="verified">Terverifikasi</option>
+                                <option value="ai_only">Chatbot</option>
+                            </select>
+                            <div class="wa-col-subbar">
+                                <span id="wa-conv-count-label">Memuat percakapan...</span>
                             </div>
                             <div class="wa-conv-list" id="wa-conv-list" role="list"></div>
                         </div>
 
-                        <!-- MIDDLE COLUMN: CHAT THREAD & HANDOVER -->
+                        <!-- MIDDLE COLUMN: CHAT THREAD -->
                         <div class="surface-card wa-chat-thread-card">
                             <div class="wa-chat-header" id="wa-chat-header">
                                 <div class="wa-chat-header-info">
@@ -1036,134 +1574,74 @@
                                     </div>
                                 </div>
                                 <div class="wa-chat-header-controls">
-                                    <button type="button" class="btn-outline-sm" id="wa-toggle-mode-btn" title="Ubah antara balasan AI otomatis atau manual Admin">
-                                        🤖 Mode AI Aktif
+                                    <button type="button" class="btn-outline-sm" id="wa-toggle-mode-btn">
+                                        Mode AI Aktif
                                     </button>
                                     <a href="#" target="_blank" rel="noopener" class="btn-outline-sm" id="wa-open-external-link">
-                                        Buka WA ↗
+                                        Buka WA
                                     </a>
                                 </div>
                             </div>
 
+                            <!-- HANDOVER BANNER -->
+                            <div class="wa-handover-strip" id="wa-handover-strip" hidden>
+                                <span id="wa-handover-strip-text">Percakapan ini diambil alih manual oleh Admin.</span>
+                                <button type="button" class="btn-link-sm" id="wa-return-to-bot-btn">Kembalikan ke chatbot</button>
+                            </div>
+
                             <div class="wa-messages-viewport" id="wa-messages-viewport">
-                                <p class="empty-state-sm">Pilih salah satu percakapan di sebelah kiri untuk melihat riwayat pesan dan bukti pembayaran.</p>
+                                <p class="empty-state-sm">Pilih salah satu percakapan di sebelah kiri untuk membaca riwayat pesan dan memverifikasi bukti pembayaran.</p>
+                            </div>
+
+                            <!-- QUICK REPLY PILLS -->
+                            <div class="wa-quick-replies">
+                                <span class="quick-reply-label">Balas cepat:</span>
+                                <button type="button" class="btn-quick-pill" data-quick-reply="Terima kasih Kak, bukti transfernya sedang kami periksa ya. Mohon ditunggu sebentar.">Sedang dicek</button>
+                                <button type="button" class="btn-quick-pill" data-quick-reply="Mohon maaf Kak, foto bukti transfernya kurang jelas/terpotong. Boleh kirim ulang screenshot bukti pembayaran yang terlihat nominal dan nomor referensinya?">Minta cek ulang</button>
+                                <button type="button" class="btn-quick-pill" data-quick-reply="Pesanan Kakak sudah terjadwal di produksi batch aktif dan akan diantar sesuai lokasi yang dipilih ya Kak.">Info pengantaran</button>
                             </div>
 
                             <form class="wa-reply-bar" id="wa-reply-form">
-                                <input type="text" id="wa-reply-input" class="form-input" placeholder="Ketik pesan balasan manual sebagai Admin Velacookies..." required>
-                                <button type="submit" class="btn-primary" id="wa-reply-submit">Kirim Balasan</button>
+                                <input type="text" id="wa-reply-input" class="form-input" placeholder="Tulis balasan sebagai Admin..." required>
+                                <button type="submit" class="btn-primary" id="wa-reply-submit">Kirim</button>
                             </form>
                         </div>
 
-                        <!-- RIGHT COLUMN: LINKED ORDER VC-XXXX & AI RECEIPT VERIFICATION -->
+                        <!-- RIGHT COLUMN: ORDER CONTEXT & AI ANALYSIS -->
                         <div class="surface-card wa-order-context-card">
                             <div id="wa-order-context-body">
-                                <p class="empty-state-sm">Rincian order VC-XXXX dan hasil pemeriksaan struk AI akan tampil di sini.</p>
+                                <p class="empty-state-sm">Konteks pesanan VC-XXXX dan analisis struk AI akan tampil di sini.</p>
                             </div>
                         </div>
 
                     </div>
 
-                    <!-- SUB-VIEW 2: WHATSAPP GATEWAY & NOTIFICATION SETTINGS -->
-                    <div id="wa-subview-gateway" class="settings-split-grid" hidden>
+                    <!-- SUB-VIEW 2: VERIFIKASI PEMBAYARAN QUEUE -->
+                    <div id="wa-subview-verification" class="mt-16" hidden>
                         <div class="surface-card">
-                            <h2 class="card-title">Koneksi WhatsApp Gateway</h2>
-                            <p class="card-subtitle">Hubungkan endpoint webhook ini ke penyedia WhatsApp API (Fonnte, Wablas, atau WhatsApp Cloud API Resmi) untuk nomor bisnis Velacookies.</p>
-
-                            <div class="wa-webhook-endpoint-box mt-14">
-                                <span class="mini-label">URL WEBHOOK MASUK (POST)</span>
-                                <code id="wa-webhook-url-display">/api/wa/webhook</code>
-                                <p class="form-help">Tempelkan URL ini di dashboard Fonnte / Wablas pada menu Webhook URL agar setiap chat &amp; foto bukti bayar pelanggan langsung masuk ke Admin Panel ini.</p>
+                            <div class="card-header-row">
+                                <div>
+                                    <h2 class="card-title">Antrean verifikasi bukti pembayaran</h2>
+                                    <p class="card-subtitle">Daftar pesanan pending yang sudah mengunggah foto struk QRIS / DP 50% COD atau mengklaim sudah membayar</p>
+                                </div>
+                                <span class="badge-pill badge-gold" id="wa-verify-queue-count">0 menunggu</span>
                             </div>
 
-                            <form id="wa-gateway-form" class="mt-16">
-                                <div class="form-row-2">
-                                    <div class="form-group">
-                                        <label class="form-label" for="wa-setting-provider">Provider WhatsApp Gateway</label>
-                                        <select id="wa-setting-provider" class="form-input">
-                                            <option value="fonnte">Fonnte (Rekomendasi UMKM Indonesia)</option>
-                                            <option value="wablas">Wablas WhatsApp Gateway</option>
-                                            <option value="meta_cloud">WhatsApp Cloud API (Official Meta)</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label" for="wa-setting-number">Nomor WhatsApp Bot Terhubung</label>
-                                        <input type="text" id="wa-setting-number" class="form-input" value="6285117122454">
-                                    </div>
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="form-label" for="wa-setting-secret">Webhook Secret / Token Verifikasi Gateway</label>
-                                    <input type="text" id="wa-setting-secret" class="form-input" placeholder="vc-webhook-karawang-2026">
-                                    <span class="form-help">Digunakan untuk memvalidasi request masuk dari provider gateway WhatsApp.</span>
-                                </div>
-
-                                <div class="wa-toggle-checks">
-                                    <label class="wa-checkbox-row" for="wa-setting-bot-active">
-                                        <input type="checkbox" id="wa-setting-bot-active" checked>
-                                        <div>
-                                            <strong id="wa-setting-bot-active-title">Aktifkan Balasan Otomatis AI (gemini-3.8-flash)</strong>
-                                            <span>Bot otomatis mengenali format Order ID VC-XXXX dari website, mengecek foto bukti bayar, dan menjawab info stok/PO.</span>
-                                        </div>
-                                    </label>
-
-                                    <label class="wa-checkbox-row" for="wa-setting-auto-notify">
-                                        <input type="checkbox" id="wa-setting-auto-notify" checked>
-                                        <div>
-                                            <strong>Kirim WA Otomatis Saat Admin Klik "Setujui"</strong>
-                                            <span>Otomatis mengirim pesan konfirmasi lunas ke WhatsApp pelanggan begitu status order diubah menjadi Success / Disetujui.</span>
-                                        </div>
-                                    </label>
-                                </div>
-
-                                <div class="settings-actions mt-16">
-                                    <button type="submit" class="btn-primary" id="wa-gateway-save-btn">✓ Simpan Konfigurasi Gateway</button>
-                                    <span class="settings-status" id="wa-gateway-status"></span>
-                                </div>
-                            </form>
-                        </div>
-
-                        <div class="surface-card">
-                            <h2 class="card-title">Template Pesan Konfirmasi Otomatis</h2>
-                            <p class="card-subtitle">Gunakan variabel <code>{name}</code>, <code>{orderId}</code>, <code>{total}</code>, dan <code>{reason}</code>.</p>
-
-                            <div class="form-group mt-14">
-                                <label class="form-label" for="wa-setting-approve-tpl">Pesan Saat Pembayaran Disetujui (Tombol Setujui)</label>
-                                <textarea id="wa-setting-approve-tpl" class="form-input" rows="4"></textarea>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label" for="wa-setting-reject-tpl">Pesan Saat Bukti Bayar Ditolak / Minta Kirim Ulang</label>
-                                <textarea id="wa-setting-reject-tpl" class="form-input" rows="4"></textarea>
-                            </div>
-
-                            <div class="wa-rules-summary-box mt-14">
-                                <strong>Aturan Bisnis Velacookies yang Ditanamkan di Bot:</strong>
-                                <ul>
-                                    <li><strong>Website-First Ordering:</strong> Pelanggan yang belum punya kode <code>VC-XXXX</code> diarahkan checkout di <code>velacookies.store</code> agar stok 6 SKU terkunci akurat.</li>
-                                    <li><strong>Deteksi Format QRIS &amp; Struk AI:</strong> Mengekstrak nominal transfer dari foto bukti bayar dan mencocokkannya dengan tagihan order.</li>
-                                    <li><strong>Aturan COD &amp; DP 50%:</strong> Order COD &lt; 3 pcs tanpa DP; Order COD ≥ 3 pcs otomatis diminta bukti transfer DP 50%.</li>
-                                </ul>
-                            </div>
+                            <div id="wa-verify-queue-grid" class="verify-queue-grid mt-14"></div>
                         </div>
                     </div>
 
-                    <!-- SUB-VIEW 3: KNOWLEDGE BASE EDITOR & AI HEALTH MONITOR (PHASE 3) -->
-                    <div id="wa-subview-knowledge" class="wa-knowledge-split-grid" hidden>
-                        <!-- LEFT CARD: KNOWLEDGE BASE EDITOR -->
-                        <div class="surface-card wa-knowledge-card">
+                    <!-- SUB-VIEW 3: BASIS PENGETAHUAN (KNOWLEDGE BASE) -->
+                    <div id="wa-subview-knowledge" class="mt-16" hidden>
+                        <div class="surface-card">
                             <div class="wa-knowledge-card-header">
                                 <div>
-                                    <h2 class="card-title">🧠 Knowledge Base AI Bot Velacookies</h2>
-                                    <p class="card-subtitle">Edit informasi produk, alergen, daya tahan, aturan order/COD, refund, dan kontak resmi tanpa menyentuh kode. Perubahan langsung dipakai AI pada pesan berikutnya.</p>
+                                    <h2 class="card-title">Basis pengetahuan Chatbot AI Velacookies</h2>
+                                    <p class="card-subtitle">Perbarui informasi katalog, alergen, daya tahan, aturan order/COD, refund, dan kontak resmi. Perubahan langsung digunakan Gemini pada pesan berikutnya.</p>
                                 </div>
                                 <div class="wa-knowledge-header-actions">
-                                    <button type="button" class="btn-outline-sm" id="wa-knowledge-reset-all-btn" title="Kembalikan seluruh bagian ke teks bawaan">
-                                        ↺ Reset Semua Default
-                                    </button>
-                                    <button type="button" class="btn-primary" id="wa-knowledge-save-btn">
-                                        💾 Simpan Semua Knowledge
-                                    </button>
+                                    <button type="button" class="btn-outline" id="wa-knowledge-reset-all-btn">Reset semua default</button>
+                                    <button type="button" class="btn-primary" id="wa-knowledge-save-btn">Simpan semua perubahan</button>
                                 </div>
                             </div>
 
@@ -1172,34 +1650,33 @@
                             </div>
 
                             <div id="wa-knowledge-sections-list" class="wa-knowledge-sections-list">
-                                <p class="empty-state-sm">Memuat bagian Knowledge Base AI Bot...</p>
+                                <p class="empty-state-sm">Memuat bagian basis pengetahuan...</p>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- RIGHT CARD: AI HEALTH & DIAGNOSTICS + RECENT AI LOGS -->
-                        <div class="surface-card wa-health-card">
+                    <!-- SUB-VIEW 4: KESEHATAN AI (AI HEALTH & TELEMETRY) -->
+                    <div id="wa-subview-health" class="mt-16" hidden>
+                        <div class="surface-card">
                             <div class="wa-knowledge-card-header">
                                 <div>
-                                    <div class="page-title-row" style="gap:8px;">
-                                        <h2 class="card-title">🩺 Monitor Kesehatan AI &amp; Log Panggilan</h2>
+                                    <div class="page-title-row">
+                                        <h2 class="card-title">Monitor kesehatan AI &amp; log panggilan</h2>
                                         <span class="badge-pill badge-green" id="wa-health-status-badge">Memeriksa...</span>
                                     </div>
                                     <p class="card-subtitle">Pantau model Gemini yang aktif, waktu respons rata-rata, status failover kuota, dan 25 riwayat pemanggilan AI terbaru.</p>
                                 </div>
-                                <button type="button" class="btn-outline-sm" id="wa-health-refresh-btn">
-                                    ↻ Segarkan Monitor
-                                </button>
+                                <button type="button" class="btn-outline" id="wa-health-refresh-btn">Segarkan monitor</button>
                             </div>
 
-                            <!-- MODEL & CONFIG GRID -->
                             <div class="wa-health-config-grid mt-14" id="wa-health-config-grid">
                                 <div class="wa-health-kv-box">
                                     <span class="mini-label">MODEL AKTIF SAAT INI</span>
                                     <strong id="wa-health-active-model">gemini-3.8-flash</strong>
                                 </div>
                                 <div class="wa-health-kv-box">
-                                    <span class="mini-label">MODEL UTAMA → CADANGAN</span>
-                                    <strong id="wa-health-models-pair">gemini-3.8-flash → gemini-3-flash-preview</strong>
+                                    <span class="mini-label">MODEL UTAMA &rarr; CADANGAN</span>
+                                    <strong id="wa-health-models-pair">gemini-3.8-flash &rarr; gemini-3-flash-preview</strong>
                                 </div>
                                 <div class="wa-health-kv-box">
                                     <span class="mini-label">THINKING &amp; HARD TIMEOUT</span>
@@ -1207,11 +1684,10 @@
                                 </div>
                                 <div class="wa-health-kv-box">
                                     <span class="mini-label">STATUS API KEY &amp; SDK</span>
-                                    <strong id="wa-health-apikey-status">✓ Aktif &amp; Siap</strong>
+                                    <strong id="wa-health-apikey-status">Aktif &amp; Siap</strong>
                                 </div>
                             </div>
 
-                            <!-- 24-HOUR TELEMETRY STATS -->
                             <div class="wa-health-stats-grid mt-14">
                                 <div class="wa-health-stat-box">
                                     <span class="mini-label">PANGGILAN (24 JAM)</span>
@@ -1231,40 +1707,119 @@
                                 </div>
                             </div>
 
-                            <!-- LAST ERROR BOX (HIDDEN IF NO ERROR) -->
                             <div class="wa-health-error-alert mt-14" id="wa-health-last-error-box" hidden>
                                 <div class="wa-health-error-title">
-                                    <strong>⚠️ Catatan Error / Fallback Terakhir</strong>
+                                    <strong>Catatan Error / Fallback Terakhir</strong>
                                     <span id="wa-health-last-error-time">—</span>
                                 </div>
                                 <p id="wa-health-last-error-msg">—</p>
                             </div>
 
-                            <!-- RECENT 25 LOGS TABLE -->
                             <div class="wa-health-logs-section mt-16">
                                 <div class="wa-health-logs-header">
-                                    <h3 class="card-title" style="font-size:14px;">Riwayat 25 Pemanggilan AI Terbaru</h3>
+                                    <h3 class="card-title">Riwayat 25 Pemanggilan AI Terbaru</h3>
                                     <span class="text-muted-sm" id="wa-health-logs-count">0 catatan</span>
                                 </div>
-                                <div class="table-responsive wa-ai-logs-table-wrap mt-8">
-                                    <table class="admin-table wa-ai-logs-table">
+                                <div class="table-responsive mt-8">
+                                    <table class="clean-table">
                                         <thead>
                                             <tr>
-                                                <th>Waktu</th>
-                                                <th>Tipe</th>
-                                                <th>Target / Order</th>
-                                                <th>Model &amp; Intent</th>
-                                                <th class="align-right">Latensi</th>
-                                                <th>Status</th>
+                                                <th>WAKTU</th>
+                                                <th>TIPE</th>
+                                                <th>TARGET / ORDER</th>
+                                                <th>MODEL &amp; INTENT</th>
+                                                <th class="align-right">LATENSI</th>
+                                                <th>STATUS</th>
                                             </tr>
                                         </thead>
                                         <tbody id="wa-ai-logs-tbody">
-                                            <tr>
-                                                <td colspan="6" class="empty-state-sm">Belum ada riwayat pemanggilan AI.</td>
-                                            </tr>
+                                            <tr><td colspan="6" class="empty-state-sm">Belum ada riwayat pemanggilan AI.</td></tr>
                                         </tbody>
                                     </table>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SUB-VIEW 5: PENGATURAN CHATBOT & GATEWAY -->
+                    <div id="wa-subview-gateway" class="settings-split-grid mt-16" hidden>
+                        <div class="surface-card">
+                            <h2 class="card-title">Koneksi WhatsApp Gateway</h2>
+                            <p class="card-subtitle">Hubungkan endpoint webhook ini ke penyedia WhatsApp API (Fonnte, Wablas, atau WhatsApp Cloud API) untuk nomor operasional Velacookies.</p>
+
+                            <div class="wa-webhook-endpoint-box mt-14">
+                                <span class="mini-label">URL WEBHOOK MASUK (POST)</span>
+                                <code id="wa-webhook-url-display">/api/wa/webhook</code>
+                                <p class="form-help">Tempelkan URL ini di dashboard Fonnte / Wablas agar setiap pesan &amp; foto struk pelanggan langsung masuk ke Admin Panel.</p>
+                            </div>
+
+                            <form id="wa-gateway-form" class="mt-16">
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label class="form-label" for="wa-setting-provider">Provider WhatsApp Gateway</label>
+                                        <select id="wa-setting-provider" class="form-input">
+                                            <option value="fonnte">Fonnte</option>
+                                            <option value="wablas">Wablas WhatsApp Gateway</option>
+                                            <option value="meta_cloud">WhatsApp Cloud API (Meta)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="wa-setting-number">Nomor WhatsApp Bot Terhubung</label>
+                                        <input type="text" id="wa-setting-number" class="form-input" value="6285117122454">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="wa-setting-secret">Webhook Secret / Token Verifikasi</label>
+                                    <input type="text" id="wa-setting-secret" class="form-input" placeholder="vc-webhook-karawang-2026">
+                                </div>
+
+                                <div class="wa-toggle-checks">
+                                    <label class="wa-checkbox-row" for="wa-setting-bot-active">
+                                        <input type="checkbox" id="wa-setting-bot-active" checked>
+                                        <div>
+                                            <strong id="wa-setting-bot-active-title">Aktifkan Balasan Otomatis AI (gemini-3.8-flash)</strong>
+                                            <span>Bot mengenali kode pesanan VC-XXXX, memeriksa foto bukti transfer, dan menjawab info stok/PO otomatis.</span>
+                                        </div>
+                                    </label>
+
+                                    <label class="wa-checkbox-row" for="wa-setting-auto-notify">
+                                        <input type="checkbox" id="wa-setting-auto-notify" checked>
+                                        <div>
+                                            <strong>Kirim Notifikasi WA Otomatis Saat Pembayaran Disetujui</strong>
+                                            <span>Mengirim pesan konfirmasi lunas ke WhatsApp pelanggan begitu Admin menyetujui bukti bayar.</span>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <div class="settings-actions mt-16">
+                                    <button type="submit" class="btn-primary" id="wa-gateway-save-btn">Simpan konfigurasi</button>
+                                    <span class="settings-status" id="wa-gateway-status"></span>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="surface-card">
+                            <h2 class="card-title">Template pesan konfirmasi otomatis</h2>
+                            <p class="card-subtitle">Variabel yang didukung: <code>{name}</code>, <code>{orderId}</code>, <code>{total}</code>, dan <code>{reason}</code>.</p>
+
+                            <div class="form-group mt-14">
+                                <label class="form-label" for="wa-setting-approve-tpl">Template saat pembayaran disetujui (Lunas)</label>
+                                <textarea id="wa-setting-approve-tpl" class="form-input" rows="4"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="wa-setting-reject-tpl">Template saat bukti pembayaran ditolak / diminta kirim ulang</label>
+                                <textarea id="wa-setting-reject-tpl" class="form-input" rows="4"></textarea>
+                            </div>
+
+                            <div class="wa-rules-summary-box mt-14">
+                                <strong>Aturan operasional aktif pada sistem:</strong>
+                                <ul>
+                                    <li><strong>Pemesanan via Website:</strong> Pelanggan tanpa kode <code>VC-XXXX</code> diarahkan ke <code>velacookies.store</code> agar stok terkunci akurat.</li>
+                                    <li><strong>Deteksi Struk AI Vision:</strong> Mengekstrak nominal, nama penerima, referensi, dan mendeteksi struk duplikat secara otomatis.</li>
+                                    <li><strong>Kebijakan COD &amp; DP 50%:</strong> Pesanan COD &ge; 3 pcs otomatis diwajibkan mengunggah bukti transfer DP 50%.</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
@@ -1273,153 +1828,157 @@
 
 
                 <!-- ============================================
-                     TAB 6: PENGATURAN TOKO (SETTINGS)
+                     VIEW 8: PENGATURAN (SETTINGS WITH SUB-NAV)
                      ============================================ -->
                 <section class="tab-content" data-tab-content="settings" hidden>
 
                     <div class="page-header">
                         <div>
-                            <div class="page-title-row">
-                                <h1 class="page-title">Pengaturan toko</h1>
-                            </div>
-                            <p class="page-subtitle">Kelola identitas, pembayaran, dan jadwal pre-order dalam satu tempat.</p>
+                            <h1 class="page-title">Pengaturan</h1>
+                            <p class="page-subtitle">Konfigurasi identitas toko, metode pembayaran QRIS, rasio alokasi anggaran, dan koneksi WhatsApp.</p>
                         </div>
                         <div class="page-header-actions">
                             <span class="text-muted-sm" id="settings-updated"></span>
                         </div>
                     </div>
 
-                    <div class="settings-split-grid">
+                    <div class="settings-figma-layout">
 
-                        <!-- LEFT COLUMN: INFORMASI TOKO & ADMINISTRATOR -->
-                        <div class="settings-col">
+                        <!-- LEFT SUB-NAVIGATION -->
+                        <aside class="settings-subnav">
+                            <button type="button" class="settings-nav-item active" data-settings-section="sec-store-payment">
+                                <strong>Toko &amp; Pembayaran QRIS</strong>
+                                <span>Nama penerima QRIS, gambar QR, dan nomor WA Admin</span>
+                            </button>
+                            <button type="button" class="settings-nav-item" data-settings-section="sec-budget-allocation">
+                                <strong>Alokasi Anggaran Keuangan</strong>
+                                <span>Persentase pembagian HPP, Operasional, dan Profit</span>
+                            </button>
+                            <button type="button" class="settings-nav-item" data-settings-section="sec-wa-shortcut">
+                                <strong>Chatbot &amp; Koneksi WhatsApp</strong>
+                                <span>Pintasan pengaturan provider WA &amp; basis pengetahuan AI</span>
+                            </button>
+                            <button type="button" class="settings-nav-item" data-settings-section="sec-account-security">
+                                <strong>Akun &amp; Sesi Administrator</strong>
+                                <span>Status sesi aktif dan keamanan akses</span>
+                            </button>
+                        </aside>
 
-                            <!-- CARD: PEMBAYARAN & KONTAK -->
-                            <div class="surface-card">
-                                <h2 class="card-title">Pembayaran &amp; Kontak</h2>
-                                <p class="card-subtitle">Kelola QRIS dan kontak admin yang dipakai di halaman pembayaran dan WhatsApp.</p>
+                        <!-- RIGHT CONTENT STACK -->
+                        <div class="settings-content-stack">
 
-                                <div class="store-identity-banner mt-14">
-                                    <div class="brand-monogram-lg">V.</div>
-                                    <div>
-                                        <strong>VelaCookies</strong>
-                                        <p>Cookies rumahan, dibuat dengan sepenuh hati.</p>
-                                    </div>
-                                </div>
-
-                                <form id="settings-form" class="mt-16">
-                                    <div class="form-group">
-                                        <label class="form-label" for="settings-qris-owner">Nama Penerima QRIS</label>
-                                        <input type="text" id="settings-qris-owner" class="form-input" placeholder="Velacookies">
-                                        <span class="form-help">Nama yang muncul di bawah QR code (contoh: nama toko / pemilik).</span>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label class="form-label" for="settings-qris-image">URL Gambar QRIS</label>
-                                        <input type="text" id="settings-qris-image" class="form-input" placeholder="/images/qris.jpeg">
-                                        <span class="form-help">Path ke file QR. Default: <code>/images/qris.jpeg</code>.</span>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label class="form-label" for="settings-wa">Nomor WhatsApp Admin</label>
-                                        <input type="tel" id="settings-wa" class="form-input" placeholder="6285117122454">
-                                        <span class="form-help">Format: <code>62xxxxxxxxxx</code> (tanpa tanda +, tanpa spasi). Contoh: <code>6285117122454</code>.</span>
-                                    </div>
-
-                                    <div class="settings-actions">
-                                        <button type="submit" class="btn-primary" id="settings-submit">Simpan Pengaturan</button>
-                                        <span class="settings-status" id="settings-status"></span>
-                                    </div>
-                                </form>
-                            </div>
-
-                            <!-- CARD: ADMINISTRATOR -->
-                            <div class="surface-card mt-20">
-                                <h2 class="card-title">Administrator</h2>
-                                <p class="card-subtitle">Informasi penanggung jawab ruang kerja VelaCookies.</p>
-
-                                <div class="admin-Account-box mt-14">
-                                    <div class="profile-avatar-lg">AD</div>
-                                    <div class="admin-account-info">
-                                        <strong>Administrator Utama</strong>
-                                        <span>Akses pengelolaan penuh · Sesi token 8 jam</span>
-                                    </div>
-                                    <span class="badge-pill badge-green">Aktif</span>
-                                </div>
-                            </div>
-
-                        </div>
-
-                        <!-- RIGHT COLUMN: PRE-ORDER & PRATINJAU QRIS -->
-                        <div class="settings-col">
-
-                            <!-- CARD: PRE-ORDER MANAGEMENT -->
-                            <div class="surface-card" id="po-settings-card">
+                            <!-- SECTION 1: TOKO & PEMBAYARAN QRIS -->
+                            <div class="surface-card" id="sec-store-payment">
                                 <div class="card-header-row">
                                     <div>
-                                        <h2 class="card-title">📅 Status &amp; Jadwal Pre-Order (PO)</h2>
-                                        <p class="card-subtitle">Atur status buka/tutup Pre-Order serta jadwal batas pemesanan dan produksi.</p>
+                                        <h2 class="card-title">Identitas Toko &amp; Pembayaran QRIS</h2>
+                                        <p class="card-subtitle">Digunakan pada halaman pembayaran pelanggan dan pencocokan nama merchant oleh AI Vision.</p>
                                     </div>
-                                    <span class="po-badge" id="po-current-badge">Memuat status...</span>
+                                    <span class="badge-pill badge-green">Aktif di Website</span>
                                 </div>
 
-                                <div class="po-status-banner mt-14">
+                                <div class="settings-qr-split mt-14">
+                                    <form id="settings-form" class="settings-qr-form">
+                                        <div class="form-group">
+                                            <label class="form-label" for="settings-qris-owner">Nama Merchant / Penerima QRIS *</label>
+                                            <input type="text" id="settings-qris-owner" class="form-input" placeholder="Velacookies" required>
+                                            <span class="form-help">Nama yang tertera pada QRIS dan dicocokkan saat verifikasi struk.</span>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="form-label" for="settings-qris-image">Path / URL Gambar QRIS *</label>
+                                            <input type="text" id="settings-qris-image" class="form-input" placeholder="images/qris.jpeg" required>
+                                            <span class="form-help">Default: <code>images/qris.jpeg</code>.</span>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="form-label" for="settings-wa">Nomor WhatsApp Admin Resmi *</label>
+                                            <input type="tel" id="settings-wa" class="form-input" placeholder="6285117122454" required>
+                                            <span class="form-help">Format internasional tanpa tanda + (contoh: <code>6285117122454</code>).</span>
+                                        </div>
+
+                                        <div class="settings-actions mt-12">
+                                            <button type="submit" class="btn-primary" id="settings-submit">Simpan pengaturan pembayaran</button>
+                                            <span class="settings-status" id="settings-status"></span>
+                                        </div>
+                                    </form>
+
+                                    <div class="qris-preview-box">
+                                        <span class="mini-label">PRATINJAU KODE QRIS</span>
+                                        <div class="settings-preview-qr mt-8">
+                                            <img id="settings-qris-preview" src="images/qris.jpeg" alt="Pratinjau QRIS Velacookies" onerror="if(!this.dataset.fallbackTried){this.dataset.fallbackTried='1';this.src='images/qris.jpeg';}">
+                                        </div>
+                                        <p class="form-help mt-8">Metode pembayaran yang didukung: QRIS (batas waktu 3 jam) &amp; Tunai/COD (wajib DP 50% untuk pesanan &ge; 3 pcs).</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SECTION 2: ALOKASI ANGGARAN KEUANGAN -->
+                            <div class="surface-card mt-20" id="sec-budget-allocation">
+                                <div class="card-header-row">
                                     <div>
-                                        <strong id="po-info-status">—</strong>
-                                        <p class="text-muted-sm">Saat ditutup, pelanggan tidak dapat membuat pesanan baru.</p>
+                                        <h2 class="card-title">Rasio Alokasi Anggaran Keuangan</h2>
+                                        <p class="card-subtitle">Atur persentase pembagian omzet bulanan ke pos HPP, Operasional (Cashflow), dan Profit. Total wajib 100%.</p>
                                     </div>
-                                    <button type="button" class="btn-danger-sm" id="btn-close-po" style="display: none;">
-                                        🛑 Tutup Pre-Order Sekarang
-                                    </button>
+                                    <span class="badge-pill badge-neutral" id="budget-total-pct-badge">Total: 100%</span>
                                 </div>
 
-                                <div class="po-active-summary mt-14">
-                                    <div class="po-summary-col">
-                                        <span class="mini-label">BATAS TUTUP PO (CUTOFF)</span>
-                                        <strong id="po-info-close">—</strong>
-                                    </div>
-                                    <div class="po-summary-col">
-                                        <span class="mini-label">TANGGAL PRODUKSI / KIRIM</span>
-                                        <strong id="po-info-production">—</strong>
-                                    </div>
-                                </div>
-
-                                <form id="po-form" class="mt-16">
-                                    <h3 class="section-Label-sm" id="po-form-title">Buka Periode Pre-Order Baru</h3>
-
-                                    <div class="form-row-2 mt-8">
+                                <form id="budget-settings-form" class="mt-14">
+                                    <div class="metrics-grid-3">
                                         <div class="form-group">
-                                            <label class="form-label" for="po-close-date">Batas Waktu Tutup PO *</label>
-                                            <input type="datetime-local" id="po-close-date" class="form-input" required>
-                                            <span class="form-help">Waktu PO otomatis ditutup (WIB).</span>
+                                            <label class="form-label" for="budget-hpp-pct">Pos HPP / Bahan Baku (%)</label>
+                                            <input type="number" id="budget-hpp-pct" class="form-input" min="0" max="100" value="40" required>
                                         </div>
                                         <div class="form-group">
-                                            <label class="form-label" for="po-production-date">Tanggal Produksi / Kirim *</label>
-                                            <input type="date" id="po-production-date" class="form-input" required>
-                                            <span class="form-help">Tanggal pesanan dibuat / diantar.</span>
+                                            <label class="form-label" for="budget-cf-pct">Pos Operasional / Cashflow (%)</label>
+                                            <input type="number" id="budget-cf-pct" class="form-input" min="0" max="100" value="40" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="budget-profit-pct">Pos Target Profit (%)</label>
+                                            <input type="number" id="budget-profit-pct" class="form-input" min="0" max="100" value="20" required>
                                         </div>
                                     </div>
 
-                                    <div class="settings-actions">
-                                        <button type="submit" class="btn-primary" id="po-submit-btn">🚀 Buka Pre-Order</button>
-                                        <span class="settings-status" id="po-status-msg"></span>
+                                    <div class="settings-actions mt-8">
+                                        <button type="submit" class="btn-primary" id="budget-settings-submit">Simpan rasio anggaran</button>
+                                        <span class="settings-status" id="budget-settings-status"></span>
                                     </div>
                                 </form>
                             </div>
 
-                            <!-- CARD: PREVIEW QRIS -->
-                            <div class="surface-card mt-20">
-                                <h2 class="card-title">Preview QRIS</h2>
-                                <p class="card-subtitle">Tampilan kode QRIS yang muncul di halaman pembayaran pelanggan.</p>
+                            <!-- SECTION 3: PINTASAN KONFIGURASI WHATSAPP & AI BOT -->
+                            <div class="surface-card mt-20" id="sec-wa-shortcut">
+                                <div class="card-header-row">
+                                    <div>
+                                        <h2 class="card-title">Integrasi WhatsApp Gateway &amp; Basis Pengetahuan AI</h2>
+                                        <p class="card-subtitle">Kelola provider Fonnte/Wablas, template konfirmasi otomatis, dan 7 bagian pengetahuan asisten AI.</p>
+                                    </div>
+                                </div>
 
-                                <div class="qris-preview-container mt-14">
-                                    <div class="settings-preview-qr">
-                                        <img id="settings-qris-preview" src="/images/qris.jpeg" alt="QRIS Preview">
+                                <div class="settings-shortcut-row mt-12">
+                                    <button type="button" class="btn-outline" id="settings-go-wa-gateway-btn">Buka Pengaturan Koneksi WA &rarr;</button>
+                                    <button type="button" class="btn-outline" id="settings-go-wa-knowledge-btn">Edit Basis Pengetahuan AI &rarr;</button>
+                                    <button type="button" class="btn-outline" id="settings-go-po-btn">Atur Jadwal Pre-Order &rarr;</button>
+                                </div>
+                            </div>
+
+                            <!-- SECTION 4: AKUN & SESI ADMINISTRATOR -->
+                            <div class="surface-card mt-20" id="sec-account-security">
+                                <div class="card-header-row">
+                                    <div>
+                                        <h2 class="card-title">Sesi Administrator</h2>
+                                        <p class="card-subtitle">Informasi autentikasi ruang kerja admin saat ini.</p>
                                     </div>
-                                    <div class="qris-preview-info">
-                                        <strong>Metode Aktif: QRIS &amp; Cash (COD)</strong>
-                                        <p>Ganti file di folder <code>images/</code> atau ubah URL gambar di atas jika ingin mengganti kode QR.</p>
+                                    <span class="badge-pill badge-green">Sesi Aktif</span>
+                                </div>
+
+                                <div class="admin-account-box mt-12">
+                                    <div class="profile-avatar-lg">AD</div>
+                                    <div class="admin-account-info">
+                                        <strong>Administrator Utama Velacookies</strong>
+                                        <span>Token terenkripsi berlaku selama 8 jam sejak login terakhir.</span>
                                     </div>
+                                    <button type="button" class="btn-outline btn-danger-outline" id="settings-logout-btn">Keluar dari sesi</button>
                                 </div>
                             </div>
 
@@ -1432,8 +1991,8 @@
             </main>
 
             <footer class="workspace-footer">
-                <span>Ruang Kerja Admin VelaCookies</span>
-                <span>Seluruh waktu dalam WIB (Asia/Jakarta)</span>
+                <span>Ruang Kerja Admin Velacookies</span>
+                <span>Seluruh waktu ditampilkan dalam WIB (Asia/Jakarta)</span>
             </footer>
 
         </div>
@@ -1441,7 +2000,7 @@
     </div>
 
     <!-- =====================================================
-         ORDER DETAIL MODAL
+         ORDER DETAIL MODAL (QUICK POPUP FALLBACK)
          ===================================================== -->
     <div class="admin-modal-overlay" id="order-modal">
         <div class="admin-modal">
@@ -1457,18 +2016,18 @@
         <div class="admin-modal bulk-modal-card">
             <button class="admin-modal-close" id="bulk-delete-close" aria-label="Tutup">&times;</button>
             <div class="bulk-modal-header">
-                <h3>🗑️ Hapus Massal Pesanan</h3>
-                <p>Pilih kriteria pesanan yang ingin dihapus dari database.</p>
+                <h3>Hapus Massal Pesanan</h3>
+                <p>Pilih kriteria pesanan yang ingin dihapus secara permanen dari database.</p>
             </div>
 
             <div class="bulk-modal-body">
                 <div class="form-group">
                     <label class="form-label" for="bulk-status-select">Status Pesanan</label>
                     <select id="bulk-status-select" class="form-input">
-                        <option value="expired">Hanya Expired (Rekomendasi Bersih-bersih)</option>
-                        <option value="failed">Hanya Failed</option>
-                        <option value="pending">Hanya Pending</option>
-                        <option value="success">Hanya Success</option>
+                        <option value="expired">Hanya Kedaluwarsa / Expired (Rekomendasi)</option>
+                        <option value="failed">Hanya Gagal / Failed</option>
+                        <option value="pending">Hanya Menunggu / Pending</option>
+                        <option value="success">Hanya Terbayar / Success</option>
                         <option value="all">Semua Status</option>
                     </select>
                 </div>
@@ -1486,7 +2045,7 @@
 
                 <div class="bulk-preview-box">
                     <div class="bulk-preview-header">
-                        <span>Pratinjau Pesanan Terpilih:</span>
+                        <span>Pratinjau pesanan terpilih:</span>
                         <strong id="bulk-preview-count">0 pesanan</strong>
                     </div>
                     <p class="bulk-preview-sub" id="bulk-preview-note">Memuat pratinjau...</p>
@@ -1507,7 +2066,7 @@
         <div class="admin-modal bulk-modal-card">
             <button class="admin-modal-close" id="stock-modal-close" aria-label="Tutup">&times;</button>
             <div class="bulk-modal-header">
-                <h3>🍪 Ubah Stok Produk</h3>
+                <h3>Ubah Stok Produk</h3>
                 <p id="stock-modal-product-name">Memuat nama produk...</p>
             </div>
 
@@ -1522,7 +2081,7 @@
                 <div class="form-group mt-14">
                     <label class="form-label" for="stock-modal-new-input">Jumlah Stok Baru *</label>
                     <div class="stock-stepper-wrap">
-                        <button type="button" class="btn-stepper" id="stock-step-minus">−</button>
+                        <button type="button" class="btn-stepper" id="stock-step-minus">&minus;</button>
                         <input type="number" id="stock-modal-new-input" class="form-input stock-stepper-input" min="0" step="1" required>
                         <button type="button" class="btn-stepper" id="stock-step-plus">+</button>
                     </div>
@@ -1532,18 +2091,18 @@
                     <label class="form-label" for="stock-modal-reason">Alasan Perubahan Stok</label>
                     <select id="stock-modal-reason" class="form-input">
                         <option value="restock">Restock (Produksi baru / bahan siap)</option>
-                        <option value="admin_adjust">Penyesuaian Admin (Koreksi fisik / rusak / batal)</option>
+                        <option value="admin_adjust">Penyesuaian Admin (Koreksi fisik / rusak)</option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label" for="stock-modal-note">Catatan (Opsional)</label>
-                    <input type="text" id="stock-modal-note" class="form-input" placeholder="Contoh: Tambah batch 2, atau koreksi toples pecah">
+                    <input type="text" id="stock-modal-note" class="form-input" placeholder="Contoh: Tambah batch produksi baru">
                 </div>
 
                 <div class="bulk-actions">
                     <button type="button" class="btn-outline" id="stock-modal-cancel">Batal</button>
-                    <button type="submit" class="btn-primary" id="stock-modal-save">💾 Simpan Stok</button>
+                    <button type="submit" class="btn-primary" id="stock-modal-save">Simpan Stok</button>
                 </div>
                 <p id="stock-modal-error" class="settings-status error" style="display: none;"></p>
             </form>
@@ -1557,8 +2116,8 @@
         <div class="admin-modal bulk-modal-card">
             <button class="admin-modal-close" id="wa-test-modal-close" aria-label="Tutup">&times;</button>
             <div class="bulk-modal-header">
-                <h3>⚡ Simulasi Pesan &amp; Struk Pelanggan</h3>
-                <p>Uji bagaimana Chatbot AI merespons pesan WhatsApp atau memeriksa foto bukti bayar QRIS/DP.</p>
+                <h3>Simulasi Pesan &amp; Struk Pelanggan</h3>
+                <p>Uji bagaimana Chatbot AI merespons pesan WhatsApp atau memeriksa foto bukti bayar QRIS / DP COD.</p>
             </div>
 
             <form id="wa-test-form" class="bulk-modal-body">
@@ -1566,7 +2125,7 @@
                     <label class="form-label" for="wa-test-preset">Pilih Skenario Uji Cepat</label>
                     <select id="wa-test-preset" class="form-input">
                         <option value="qris_proof">1. Konfirmasi Order QRIS + Kirim Struk Lunas</option>
-                        <option value="cod_dp">2. Order COD ≥ 3 pcs (Tanya Info DP 50%)</option>
+                        <option value="cod_dp">2. Order COD &ge; 3 pcs (Tanya Info DP 50%)</option>
                         <option value="stock_ask">3. Pelanggan Tanya Stok &amp; Harga Menu</option>
                         <option value="want_order">4. Pelanggan Mau Order Manual di Chat WA</option>
                         <option value="human">5. Pelanggan Minta Bantuan Admin Manusia</option>
@@ -1594,7 +2153,7 @@
                         <input type="checkbox" id="wa-test-attach-receipt" checked>
                         <div>
                             <strong>Lampirkan Simulasi Gambar Struk Transfer QRIS</strong>
-                            <span>Sistem akan men-generate gambar struk otomatis untuk dianalisis oleh AI.</span>
+                            <span>Sistem akan menghasilkan gambar struk uji coba untuk dianalisis oleh AI.</span>
                         </div>
                     </label>
                 </div>
@@ -1612,7 +2171,7 @@
 
                 <div class="bulk-actions">
                     <button type="button" class="btn-outline" id="wa-test-cancel-btn">Batal</button>
-                    <button type="submit" class="btn-primary" id="wa-test-submit-btn">🚀 Kirim Simulasi ke Bot</button>
+                    <button type="submit" class="btn-primary" id="wa-test-submit-btn">Kirim Simulasi ke Bot</button>
                 </div>
             </form>
         </div>

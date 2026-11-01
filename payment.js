@@ -65,7 +65,7 @@ const modalCloseBtn = document.getElementById("payment-modal-close");
 let currentOrder = null;
 let paymentSettings = {
     adminWaNumber: "6285117122454",
-    qrisImageUrl: "/images/qris.jpeg",
+    qrisImageUrl: "images/qris.jpeg",
     qrisOwnerName: "Velacookies"
 };
 
@@ -298,7 +298,15 @@ function renderOrder(order) {
 
     /* QR */
     if (qrImageEl) {
-        qrImageEl.src = paymentSettings.qrisImageUrl || "/images/qris.jpeg";
+        let imgUrl = (paymentSettings.qrisImageUrl || "images/qris.jpeg").trim();
+        if (imgUrl.startsWith("/images/")) imgUrl = imgUrl.slice(1);
+        qrImageEl.src = imgUrl;
+        qrImageEl.onerror = function() {
+            if (!this.dataset.fallbackTried) {
+                this.dataset.fallbackTried = "1";
+                this.src = "images/qris.jpeg";
+            }
+        };
     }
     if (qrisOwnerEl) {
         qrisOwnerEl.innerText = paymentSettings.qrisOwnerName || "Velacookies";

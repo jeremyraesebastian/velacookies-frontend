@@ -109,6 +109,7 @@
                         alt="QRIS Velacookies"
                         id="payment-qr-image"
                         class="payment-qr-image"
+                        onerror="if(!this.dataset.fallbackTried){this.dataset.fallbackTried='1';this.src='images/qris.jpeg';}"
                     >
                 </div>
 

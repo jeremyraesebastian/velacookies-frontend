@@ -349,14 +349,17 @@ QR CODE
     background: #FFFFFF;
     border-radius: 16px;
     border: 1px solid var(--border);
-    max-width: 320px;
+    max-width: 240px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
 }
 
 .payment-qr-image {
     width: 100%;
+    max-width: 212px;
     height: auto;
     display: block;
     border-radius: 8px;
+    object-fit: contain;
 }
 
 .payment-qr-owner {
@@ -887,7 +890,7 @@ RESPONSIVE
 
     .payment-qr-wrap {
         padding: 12px;
-        max-width: 100%;
+        max-width: 240px;
     }
 
     .payment-expiry-value {

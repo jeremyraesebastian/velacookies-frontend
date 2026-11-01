@@ -44,8 +44,6 @@ const tableLoading = document.getElementById("table-loading");
 /* Pagination & Inline Detail */
 const ordersPaginationInfo = document.getElementById("orders-pagination-info");
 const ordersPaginationBtns = document.getElementById("orders-pagination-btns");
-const inlineOrderDetailCard = document.getElementById("inline-order-detail-card");
-const inlineOrderDetailBody = document.getElementById("inline-order-detail-body");
 const ordersExportCsvBtn = document.getElementById("orders-export-csv-btn");
 
 /* Summary Metrics */
@@ -133,7 +131,6 @@ const settingsUpdated = document.getElementById("settings-updated");
 /* PO Management DOM */
 const headerPoBadge = document.getElementById("header-po-badge");
 const headerPoText = document.getElementById("header-po-text");
-const sidebarPoDates = document.getElementById("sidebar-po-dates");
 const poCurrentBadge = document.getElementById("po-current-badge");
 const poInfoStatus = document.getElementById("po-info-status");
 const poInfoClose = document.getElementById("po-info-close");
@@ -346,6 +343,11 @@ let currentFinanceMonth = "";
 let currentFinanceSummary = null;
 let cashflowCategories = [];
 let currentPOData = null;
+let poStatusCache = null;
+let currentStockFilter = "all";
+let stockAdjustMode = "add";
+let financeHppItems = [];
+let financeCfItems = [];
 
 /* WA Chatbot State */
 let waConversationsCache = [];
@@ -589,17 +591,23 @@ if (sidebarOverlay) {
 }
 
 const TAB_LABELS = {
-    overview: "Ringkasan",
+    dashboard: "Dashboard",
     orders: "Pesanan",
+    "order-detail": "Detail pesanan",
+    stocks: "Stok produk",
+    preorder: "Pre-order",
     finance: "Keuangan",
-    stocks: "Stok",
-    whatsapp: "Chatbot WA",
+    reports: "Laporan harian",
+    whatsapp: "WhatsApp",
     settings: "Pengaturan"
 };
 
 function switchTab(targetTab) {
+    if (!TAB_LABELS[targetTab]) targetTab = "dashboard";
+    const navTab = targetTab === "order-detail" ? "orders" : targetTab;
+
     adminTabs.forEach((t) => {
-        t.classList.toggle("active", t.dataset.tab === targetTab);
+        t.classList.toggle("active", t.dataset.tab === navTab);
     });
 
     tabContents.forEach((content) => {
@@ -609,17 +617,21 @@ function switchTab(targetTab) {
     });
 
     if (topbarCurrentPage) {
-        topbarCurrentPage.innerText = TAB_LABELS[targetTab] || "Ringkasan";
+        topbarCurrentPage.innerText = TAB_LABELS[targetTab];
     }
 
     closeMobileSidebar();
+    window.scrollTo({ top: 0 });
 
+    if (targetTab === "dashboard") renderDashboard();
     if (targetTab === "finance") loadFinance();
     if (targetTab === "stocks") loadStocks();
+    if (targetTab === "preorder") loadPOSettings();
+    if (targetTab === "reports") renderDailyReport();
     if (targetTab === "whatsapp") loadWaWorkspace();
     if (targetTab === "settings") {
         loadSettings();
-        loadPOSettings();
+        loadBudgetSettings();
     }
 }
 
@@ -661,9 +673,7 @@ if (loginForm) {
 
             setToken(result.token);
             showDashboardView();
-            loadOrders();
-            loadPOSettings();
-            loadWaWorkspace({ silent: true });
+            bootWorkspace();
 
         } catch (error) {
             console.error("Login error:", error);
@@ -675,13 +685,21 @@ if (loginForm) {
     });
 }
 
-if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-        clearToken();
-        allOrders = [];
-        currentFinanceSummary = null;
-        showLoginView();
-    });
+function doLogout() {
+    clearToken();
+    allOrders = [];
+    currentFinanceSummary = null;
+    showLoginView();
+}
+
+if (logoutBtn) logoutBtn.addEventListener("click", doLogout);
+
+function bootWorkspace() {
+    switchTab("dashboard");
+    loadOrders();
+    loadStocks();
+    loadPOSettings();
+    loadWaWorkspace({ silent: true });
 }
 
 /* =========================
@@ -721,6 +739,9 @@ async function loadOrders() {
         applyFilters();
         renderOverviewRecentOrders();
         renderDailyReport();
+        renderDashboard();
+        if (allStocks.length) renderStocks(allStocks);
+        if (poStatusCache) renderPOPage();
 
     } catch (error) {
         console.error("Load orders error:", error);
@@ -773,6 +794,8 @@ function renderSummary() {
     }
 
     if (ordersCardSuccess) ordersCardSuccess.innerText = successOrders.length;
+    const verifyCountEl = document.getElementById("orders-card-verify");
+    if (verifyCountEl) verifyCountEl.innerText = pendingOrders.filter(isAwaitingVerification).length;
     if (ordersCardReview) ordersCardReview.innerText = expiredOrders.length + failedOrders.length;
     if (ordersCardReviewSub) {
         ordersCardReviewSub.innerText = `${expiredOrders.length} kedaluwarsa · ${failedOrders.length} gagal`;
@@ -782,14 +805,219 @@ function renderSummary() {
     }
 }
 
+function isAwaitingVerification(o) {
+    return (o.status || "pending") === "pending" && Boolean(o.paymentProofUrl || o.customerConfirmed);
+}
+
 document.querySelectorAll("[data-quick-status]").forEach((card) => {
     card.addEventListener("click", () => {
         if (!statusFilter) return;
-        const val = card.dataset.quickStatus;
-        statusFilter.value = val === "review" ? "expired" : val;
+        statusFilter.value = card.dataset.quickStatus;
+        document.querySelectorAll("[data-quick-status]").forEach((c) => c.classList.toggle("active", c === card));
         currentOrderPage = 1;
         applyFilters();
     });
+});
+
+/* =========================
+   DASHBOARD (FIGMA)
+   ========================= */
+
+let waMetricsCache = {};
+
+function setText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.innerText = value;
+}
+
+function getStockReservedMap() {
+    const map = {};
+    allOrders.forEach((o) => {
+        if ((o.status || "pending") !== "pending") return;
+        (o.items || []).forEach((it) => {
+            const key = `${it.productId || ""}||${it.addonName || ""}`;
+            map[key] = (map[key] || 0) + (it.quantity || 0);
+        });
+    });
+    return map;
+}
+
+function getReservedForStock(item, reservedMap) {
+    return reservedMap[`${item.productId || ""}||${item.addonName || ""}`] || 0;
+}
+
+function getLowStockItems() {
+    return allStocks.filter((s) => (s.stock || 0) <= 5);
+}
+
+function renderDashboard() {
+    const todayWIB = getTodayDateString();
+    const yesterday = getDateStringOffset(todayWIB, -1);
+    const successOrders = allOrders.filter((o) => o.status === "success");
+    const pendingOrders = allOrders.filter((o) => (o.status || "pending") === "pending");
+    const verifyOrders = pendingOrders.filter(isAwaitingVerification);
+    const todayMetrics = getMetrics(successOrders.filter((o) => getLocalDateString(o.createdAt) === todayWIB));
+    const yesterdayMetrics = getMetrics(successOrders.filter((o) => getLocalDateString(o.createdAt) === yesterday));
+    const allMetrics = getMetrics(successOrders);
+
+    const todayDate = new Date().toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta", weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    setText("dashboard-date-subtitle", `${todayDate} · ${pendingOrders.length} pesanan menunggu tindakan`);
+
+    setText("dash-today-revenue", formatRupiah(todayMetrics.revenue));
+    renderDelta(document.getElementById("dash-today-rev-delta"), todayMetrics.revenue, yesterdayMetrics.revenue);
+    setText("dash-today-rev-sub", `Dari ${todayMetrics.orders} pesanan terbayar · total semua waktu ${formatRupiah(allMetrics.revenue)}`);
+
+    setText("dash-active-orders", String(pendingOrders.length + todayMetrics.orders));
+    setText("dash-pending-pill", `${pendingOrders.length} menunggu`);
+    setText("dash-active-orders-sub", `${todayMetrics.orders} terbayar hari ini · ${verifyOrders.length} menunggu verifikasi`);
+
+    setText("dash-today-pcs", `${todayMetrics.items} pcs`);
+    const avg = todayMetrics.orders ? (todayMetrics.items / todayMetrics.orders).toFixed(1).replace(".0", "") : 0;
+    setText("dash-avg-pcs", `Rata-rata ${avg} pcs per pesanan`);
+
+    const needsHuman = Number(waMetricsCache.needsHumanCount || 0);
+    const lowStocks = getLowStockItems();
+    setText("dash-action-count", String(verifyOrders.length + needsHuman + lowStocks.length));
+    setText("dash-action-sub", `${verifyOrders.length} bukti bayar · ${needsHuman} chat · ${lowStocks.length} stok rendah`);
+
+    setText("dash-q-verify-badge", `${verifyOrders.length} menunggu`);
+    setText("dash-q-verify-desc", verifyOrders.length
+        ? `${verifyOrders.slice(0, 3).map((o) => o.orderId).join(", ")}${verifyOrders.length > 3 ? " dan lainnya" : ""} menunggu dicocokkan dengan mutasi.`
+        : "Belum ada kiriman struk baru yang menunggu verifikasi.");
+    setText("dash-q-wa-badge", `${needsHuman} chat`);
+    setText("dash-q-wa-desc", needsHuman
+        ? `${needsHuman} percakapan diserahkan ke admin dan menunggu balasan manual.`
+        : "Semua percakapan pelanggan ditangani oleh AI Bot.");
+    setText("dash-q-stock-badge", lowStocks.length ? `${lowStocks.length} SKU` : "Aman");
+    setText("dash-q-stock-desc", lowStocks.length
+        ? lowStocks.map((s) => `${s.displayName} (${s.stock} pcs)`).join(", ")
+        : "Seluruh SKU memiliki stok cukup untuk dipesan.");
+
+    renderDashboardChart();
+    renderDashboardPOCard();
+    renderDashboardStockList();
+}
+
+function renderDashboardChart() {
+    const chartEl = document.getElementById("dash-chart-7day");
+    if (!chartEl) return;
+    const today = getTodayDateString();
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+        const dateStr = getDateStringOffset(today, -i);
+        const m = getMetrics(allOrders.filter((o) => o.status === "success" && getLocalDateString(o.createdAt) === dateStr));
+        days.push({ date: dateStr, ...m });
+    }
+    const maxRev = Math.max(...days.map((d) => d.revenue), 1);
+    const maxPcs = Math.max(...days.map((d) => d.items), 1);
+
+    chartEl.innerHTML = days.map((d) => {
+        const [, mm, dd] = d.date.split("-");
+        return `
+            <div class="chart-bar-wrap ${d.date === today ? "is-active" : ""}" data-date="${d.date}" title="${formatRupiah(d.revenue)} · ${d.orders} pesanan · ${d.items} pcs">
+                <span class="chart-bar-value">${d.orders}</span>
+                <div class="chart-bar-pair">
+                    <div class="chart-bar bar-rev" style="height:${Math.max((d.revenue / maxRev) * 100, 3)}%;"></div>
+                    <div class="chart-bar bar-pcs" style="height:${Math.max((d.items / maxPcs) * 100, 3)}%;"></div>
+                </div>
+                <span class="chart-bar-label">${dd}/${mm}</span>
+            </div>
+        `;
+    }).join("");
+
+    chartEl.querySelectorAll(".chart-bar-wrap").forEach((bar) => {
+        bar.addEventListener("click", () => {
+            if (reportDateInput) reportDateInput.value = bar.dataset.date;
+            switchTab("reports");
+        });
+    });
+
+    const totalRev = days.reduce((s, d) => s + d.revenue, 0);
+    setText("dash-7d-total-rev", formatRupiah(totalRev));
+    setText("dash-7d-avg-rev", formatRupiah(Math.round(totalRev / 7)));
+    setText("dash-7d-total-orders", `${days.reduce((s, d) => s + d.orders, 0)} pesanan`);
+    setText("dash-7d-total-pcs", `${days.reduce((s, d) => s + d.items, 0)} pcs`);
+}
+
+function getPOBatchOrders(poId) {
+    if (!poId) return [];
+    return allOrders.filter((o) => String(o.poPeriodId) === String(poId) && ["pending", "success"].includes(o.status || "pending"));
+}
+
+function renderDashboardPOCard() {
+    const po = currentPOData;
+    const isOpen = poStatusCache ? poStatusCache.isOpen === true : false;
+    const pill = document.getElementById("dash-po-status-pill");
+    if (pill) {
+        pill.innerText = po ? (isOpen ? "Dibuka" : "Ditutup") : "Belum ada batch";
+        pill.className = `badge-pill ${isOpen ? "badge-green" : "badge-neutral"}`;
+    }
+    setText("dash-po-batch-code", po ? `Periode #${po.id}` : "Batch PO");
+    setText("dash-po-title", po ? po.batchName : "Belum ada batch pre-order");
+
+    const orders = po ? getPOBatchOrders(po.id) : [];
+    const pcs = orders.reduce((s, o) => s + getOrderTotalCookies(o), 0);
+    const quota = po ? Number(po.maxQuota || 100) : 100;
+    const pct = quota > 0 ? Math.min(Math.round((pcs / quota) * 100), 100) : 0;
+    setText("dash-po-quota-text", `${pcs} / ${quota} pcs (${pct}%)`);
+    const bar = document.getElementById("dash-po-quota-bar");
+    if (bar) bar.style.width = `${pct}%`;
+
+    const closeD = po && parseISOString(po.tanggalTutup);
+    const closeP = closeD ? getWIBParts(closeD) : null;
+    setText("dash-po-close-date", po?.tanggalTutup ? formatDateShort(getLocalDateString(po.tanggalTutup)) : "-");
+    setText("dash-po-close-time", closeP ? `${closeP.hour}:${closeP.minute} WIB` : "WIB");
+    setText("dash-po-prod-date", po?.tanggalProduksi ? formatDateShort(getLocalDateString(po.tanggalProduksi)) : "-");
+
+    const locList = document.getElementById("dash-po-loc-list");
+    if (locList) {
+        const locs = [["sman1", "SMAN 1 Karawang"], ["sman5", "SMAN 5 Karawang"], ["others", "Pengiriman luar"]];
+        locList.innerHTML = locs.map(([key, label]) => {
+            const lo = orders.filter((o) => (key === "others" ? !["sman1", "sman5"].includes(o.location) : o.location === key));
+            const lpcs = lo.reduce((s, o) => s + getOrderTotalCookies(o), 0);
+            return `<div class="meta-kv-row"><span>${label}</span><strong>${lo.length} pesanan · ${lpcs} pcs</strong></div>`;
+        }).join("");
+    }
+}
+
+function getStockStatus(stock) {
+    if (stock <= 0) return { key: "out", label: "Habis" };
+    if (stock <= 5) return { key: "low", label: "Stok rendah" };
+    return { key: "available", label: "Tersedia" };
+}
+
+function renderDashboardStockList() {
+    const listEl = document.getElementById("dash-stock-list");
+    if (!listEl) return;
+    if (!allStocks.length) {
+        listEl.innerHTML = `<p class="empty-state-sm">Belum ada data stok.</p>`;
+        return;
+    }
+    listEl.innerHTML = allStocks.map((s) => {
+        const st = getStockStatus(s.stock || 0);
+        return `
+            <div class="dash-stock-row">
+                <span class="dash-stock-name">${escapeHtml(s.displayName || s.productId)}</span>
+                <strong class="stocks-count ${st.key === "available" ? "" : st.key}">${s.stock} pcs</strong>
+                <span class="stocks-badge ${st.key}">${st.label}</span>
+            </div>
+        `;
+    }).join("");
+}
+
+function bindClick(id, handler) {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("click", handler);
+}
+
+bindClick("dash-queue-verify", () => { switchTab("whatsapp"); switchWaSubtab("verification"); });
+bindClick("dash-queue-wa", () => { switchTab("whatsapp"); setWaInboxFilter("needs_human"); switchWaSubtab("inbox"); });
+bindClick("dash-queue-stock", () => { currentStockFilter = "low"; switchTab("stocks"); });
+bindClick("dash-go-po-btn", () => switchTab("preorder"));
+bindClick("dash-go-stocks-btn", () => switchTab("stocks"));
+bindClick("dash-export-btn", () => {
+    setReportDateToToday();
+    exportDailyCSV();
 });
 
 /* =========================
@@ -872,8 +1100,17 @@ function applyFilters() {
         filtered = filtered.filter((o) => o.location === locFilter);
     }
 
-    if (statFilter !== "all") {
+    if (statFilter === "awaiting_verification") {
+        filtered = filtered.filter(isAwaitingVerification);
+    } else if (statFilter === "review") {
+        filtered = filtered.filter((o) => o.status === "expired" || o.status === "failed");
+    } else if (statFilter !== "all") {
         filtered = filtered.filter((o) => (o.status || "pending") === statFilter);
+    }
+
+    const payFilter = document.getElementById("payment-filter")?.value || "all";
+    if (payFilter !== "all") {
+        filtered = filtered.filter((o) => (o.paymentMethod || "cash") === payFilter);
     }
 
     if (query) {
@@ -881,7 +1118,8 @@ function applyFilters() {
             const name = (order.customerName || "").toLowerCase();
             const wa = (order.whatsapp || "").toLowerCase();
             const orderId = (order.orderId || "").toLowerCase();
-            return name.includes(query) || wa.includes(query) || orderId.includes(query);
+            const items = (order.items || []).map((it) => `${it.name} ${it.addonName || ""}`).join(" ").toLowerCase();
+            return name.includes(query) || wa.includes(query) || orderId.includes(query) || items.includes(query);
         });
     }
 
@@ -904,42 +1142,101 @@ if (clearDateBtn) {
     });
 }
 if (refreshBtn) refreshBtn.addEventListener("click", () => loadOrders());
-if (overviewRefreshBtn) overviewRefreshBtn.addEventListener("click", () => loadOrders());
+if (overviewRefreshBtn) overviewRefreshBtn.addEventListener("click", () => { loadOrders(); loadStocks(); loadPOSettings(); loadWaWorkspace({ silent: true }); });
+
+const paymentFilterEl = document.getElementById("payment-filter");
+if (paymentFilterEl) paymentFilterEl.addEventListener("change", () => { currentOrderPage = 1; applyFilters(); });
+
+const ordersResetFilterBtn = document.getElementById("orders-reset-filter-btn");
+if (ordersResetFilterBtn) {
+    ordersResetFilterBtn.addEventListener("click", () => {
+        if (searchInput) searchInput.value = "";
+        if (locationFilter) locationFilter.value = "all";
+        if (paymentFilterEl) paymentFilterEl.value = "all";
+        if (dateFilter) dateFilter.value = "";
+        if (statusFilter) statusFilter.value = "all";
+        document.querySelectorAll("[data-quick-status]").forEach((c) => c.classList.toggle("active", c.dataset.quickStatus === "all"));
+        currentOrderPage = 1;
+        applyFilters();
+    });
+}
+
+const globalSearchInput = document.getElementById("global-search-input");
+if (globalSearchInput) {
+    const runGlobalSearch = () => {
+        if (searchInput) searchInput.value = globalSearchInput.value;
+        currentOrderPage = 1;
+        switchTab("orders");
+        applyFilters();
+    };
+    globalSearchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); runGlobalSearch(); }
+    });
+    globalSearchInput.addEventListener("search", runGlobalSearch);
+}
+
+function getOrderItemsSummary(order) {
+    const items = order.items || [];
+    if (items.length === 0) return "-";
+    return items.map((it) => `${it.quantity}x ${it.name}${it.addonName ? " + " + it.addonName : ""}`).join(", ");
+}
+
+function getPaymentStatusSub(order) {
+    const statusVal = order.status || "pending";
+    if (statusVal === "success") return { text: "Lunas", cls: "" };
+    if (statusVal === "pending" && order.paymentProofUrl) return { text: "Bukti terunggah", cls: "claimed" };
+    if (statusVal === "pending" && order.customerConfirmed) return { text: "Klaim sudah bayar", cls: "claimed" };
+    if (statusVal === "pending") return { text: "Belum lunas", cls: "" };
+    return { text: "-", cls: "" };
+}
+
+function getOrderStatusBadgeHtml(order) {
+    if (isAwaitingVerification(order)) {
+        return `<span class="status-badge status-pending">Perlu verifikasi</span>`;
+    }
+    const statusVal = order.status || "pending";
+    return `<span class="status-badge ${getStatusClass(statusVal)}">${getStatusLabel(statusVal)}</span>`;
+}
 
 function buildOrderRowHtml(order, isOverviewTable = false) {
-    const waLink = `https://wa.me/${normalizeWA(order.whatsapp)}`;
     const locLabel = getLocationLabel(order.location);
     const locClass = getLocationClass(order.location);
     const custType = getCustomerType(order);
-    const statusVal = order.status || "pending";
-    const statusClass = getStatusClass(statusVal);
-    const statusLabel = getStatusLabel(statusVal);
-    const paymentMethod = order.paymentMethod || "cash";
-    const paymentLabel = paymentMethod === "qris" ? "QRIS" : "Cash";
+    const paymentLabel = (order.paymentMethod || "cash") === "qris" ? "QRIS" : "COD";
     const pcsCount = getOrderTotalCookies(order);
-    const isSelected = selectedInlineOrderId === order.orderId && !isOverviewTable;
+    const paySub = getPaymentStatusSub(order);
+    const itemsText = escapeHtml(getOrderItemsSummary(order));
+    const detailBtn = `<button type="button" class="btn-detail" data-order-id="${escapeHtml(order.orderId)}">Detail &rarr;</button>`;
 
-    let paymentSub = statusVal === "success" ? "Lunas" : "Belum lunas";
-    let paymentSubClass = "";
-    if (statusVal === "pending" && order.customerConfirmed) {
-        paymentSub = "✓ Klaim sudah bayar";
-        paymentSubClass = "claimed";
+    if (isOverviewTable) {
+        return `
+            <tr>
+                <td><span class="cell-order-id">${escapeHtml(order.orderId || "-")}</span></td>
+                <td><span class="customer-name">${escapeHtml(order.customerName || "-")}</span></td>
+                <td><span class="cell-items-text">${itemsText}</span></td>
+                <td><span class="location-badge ${locClass}">${escapeHtml(locLabel)}</span></td>
+                <td>${paymentLabel}</td>
+                <td class="align-right"><span class="cell-total-amount">${formatRupiah(order.total || 0)}</span></td>
+                <td>${getOrderStatusBadgeHtml(order)}</td>
+                <td class="align-right">${detailBtn}</td>
+            </tr>
+        `;
     }
 
     return `
-        <tr class="${isSelected ? "is-selected-row" : ""}">
-            <td>
-                <span class="cell-order-id">${escapeHtml(order.orderId || "-")}</span>
-                <span class="cell-order-date">${formatDate(order.createdAt)}</span>
-            </td>
+        <tr>
+            <td><span class="cell-order-id">${escapeHtml(order.orderId || "-")}</span></td>
+            <td><span class="cell-order-date">${formatDate(order.createdAt)}</span></td>
             <td>
                 <div class="cell-customer">
                     <span class="customer-name">${escapeHtml(order.customerName || "-")}</span>
                     <span class="customer-badge ${custType}">${custType === "baru" ? "Baru" : "Lama"}</span>
                 </div>
+                <span class="location-subtext">${escapeHtml(order.whatsapp || "-")}</span>
             </td>
-            <td class="cell-wa">
-                <a href="${waLink}" target="_blank" rel="noopener">💬 ${escapeHtml(order.whatsapp || "-")}</a>
+            <td>
+                <span class="cell-items-text">${itemsText}</span>
+                <span class="cell-total-pcs">${pcsCount} pcs</span>
             </td>
             <td>
                 <span class="location-badge ${locClass}">${escapeHtml(locLabel)}</span>
@@ -947,20 +1244,11 @@ function buildOrderRowHtml(order, isOverviewTable = false) {
             </td>
             <td>
                 <span class="payment-cell-title">${paymentLabel}</span>
-                <span class="payment-cell-sub ${paymentSubClass}">${paymentSub}</span>
+                <span class="payment-cell-sub ${paySub.cls}">${paySub.text}</span>
             </td>
-            <td>
-                <span class="status-badge ${statusClass}">${statusLabel}</span>
-            </td>
-            <td class="align-right">
-                <span class="cell-total-amount">${formatRupiah(order.total || 0)}</span>
-                <span class="cell-total-pcs">${pcsCount} cookies</span>
-            </td>
-            <td class="align-right">
-                <button type="button" class="btn-detail ${isSelected ? "is-open" : ""}" data-order-id="${escapeHtml(order.orderId)}" data-overview="${isOverviewTable ? "1" : "0"}">
-                    ${isSelected ? "Terbuka" : "Detail"}
-                </button>
-            </td>
+            <td class="align-right"><span class="cell-total-amount">${formatRupiah(order.total || 0)}</span></td>
+            <td>${getOrderStatusBadgeHtml(order)}</td>
+            <td class="align-right">${detailBtn}</td>
         </tr>
     `;
 }
@@ -974,10 +1262,7 @@ function renderOverviewRecentOrders() {
     }
     overviewRecentTbody.innerHTML = recent.map((o) => buildOrderRowHtml(o, true)).join("");
     overviewRecentTbody.querySelectorAll(".btn-detail").forEach((btn) => {
-        btn.addEventListener("click", () => {
-            const ord = allOrders.find((o) => o.orderId === btn.dataset.orderId);
-            if (ord) openOrderModal(ord);
-        });
+        btn.addEventListener("click", () => openOrderDetailPage(btn.dataset.orderId));
     });
 }
 
@@ -988,11 +1273,10 @@ function renderOrders(orders) {
         if (ordersTbody) ordersTbody.innerHTML = "";
         if (tableEmpty) {
             tableEmpty.hidden = false;
-            tableEmpty.innerText = "Belum ada pesanan.";
+            tableEmpty.innerText = allOrders.length ? "Tidak ada pesanan yang cocok dengan filter." : "Belum ada pesanan.";
         }
         if (ordersPaginationInfo) ordersPaginationInfo.innerText = "Menampilkan 0 pesanan";
         if (ordersPaginationBtns) ordersPaginationBtns.innerHTML = "";
-        if (inlineOrderDetailCard) inlineOrderDetailCard.hidden = true;
         return;
     }
 
@@ -1003,25 +1287,15 @@ function renderOrders(orders) {
     const startIdx = (currentOrderPage - 1) * ORDERS_PER_PAGE;
     const pageOrders = orders.slice(startIdx, startIdx + ORDERS_PER_PAGE);
 
-    if (!selectedInlineOrderId || !orders.some((o) => o.orderId === selectedInlineOrderId)) {
-        selectedInlineOrderId = pageOrders[0]?.orderId || null;
-    }
-
     ordersTbody.innerHTML = pageOrders.map((o) => buildOrderRowHtml(o, false)).join("");
 
     ordersTbody.querySelectorAll(".btn-detail").forEach((btn) => {
-        btn.addEventListener("click", () => {
-            const orderId = btn.dataset.orderId;
-            selectedInlineOrderId = orderId;
-            renderOrders(orders);
-            const targetOrder = allOrders.find((o) => o.orderId === orderId);
-            renderInlineOrderDetail(targetOrder);
-        });
+        btn.addEventListener("click", () => openOrderDetailPage(btn.dataset.orderId));
     });
 
     if (ordersPaginationInfo) {
         const endNum = Math.min(startIdx + ORDERS_PER_PAGE, totalItems);
-        ordersPaginationInfo.innerText = `Menampilkan ${startIdx + 1}–${endNum} dari ${totalItems} pesanan`;
+        ordersPaginationInfo.innerText = `Menampilkan ${startIdx + 1}-${endNum} dari ${totalItems} pesanan`;
     }
 
     if (ordersPaginationBtns) {
@@ -1044,122 +1318,207 @@ function renderOrders(orders) {
             });
         });
     }
-
-    const activeOrder = allOrders.find((o) => o.orderId === selectedInlineOrderId);
-    renderInlineOrderDetail(activeOrder);
 }
 
 /* =========================
-   INLINE ORDER DETAIL & MODAL
+   DETAIL PESANAN (FULL SUB-VIEW)
    ========================= */
 
-function renderInlineOrderDetail(order) {
-    if (!inlineOrderDetailCard || !inlineOrderDetailBody) return;
-    if (!order) {
-        inlineOrderDetailCard.hidden = true;
-        return;
+const orderDetailContainer = document.getElementById("order-detail-full-container");
+
+function getDetailNavList() {
+    return filteredOrdersList.length ? filteredOrdersList : allOrders;
+}
+
+function openOrderDetailPage(orderId) {
+    const order = allOrders.find((o) => o.orderId === orderId);
+    if (!order) return;
+    selectedInlineOrderId = orderId;
+    renderOrderDetailPage(order);
+    switchTab("order-detail");
+}
+
+function buildOrderTimelineHtml(order) {
+    const steps = [{ label: "Pesanan dibuat", time: order.createdAt, done: true }];
+    if (order.customerConfirmed || order.paymentProofUrl) {
+        steps.push({ label: order.paymentProofUrl ? "Bukti pembayaran diunggah" : "Pelanggan klaim sudah bayar", time: order.customerConfirmedAt, done: true });
     }
+    if (order.status === "success") steps.push({ label: "Pembayaran diverifikasi (Lunas)", time: order.paidAt, done: true });
+    else if (order.status === "expired") steps.push({ label: "Pesanan kedaluwarsa", time: order.expiredAt, done: true });
+    else if (order.status === "failed") steps.push({ label: "Pesanan gagal / dibatalkan", time: null, done: true });
+    else steps.push({ label: "Menunggu verifikasi admin", time: null, done: false });
 
-    inlineOrderDetailCard.hidden = false;
-
-    const locLabel = getLocationLabel(order.location);
-    const custType = getCustomerType(order);
-    const statusVal = order.status || "pending";
-    const statusClass = getStatusClass(statusVal);
-    const statusLabel = getStatusLabel(statusVal);
-    const paymentMethod = order.paymentMethod || "cash";
-    const paymentLabel = paymentMethod === "qris" ? "QRIS" : "Cash (COD)";
-    const locFieldLabel = order.location === "others" ? "Alamat" : "Kelas / Detail";
-
-    const itemsHtml = (order.items || []).map((item) => `
-        <div class="inline-item-row">
-            <span>
-                ${item.quantity}x ${escapeHtml(item.name)}
-                ${item.addonName ? `<small style="display:block;color:var(--gold-text);">+ ${escapeHtml(item.addonName)}</small>` : ""}
-            </span>
-            <strong>${formatRupiah(item.subtotal || (item.price * item.quantity))}</strong>
+    return steps.map((s) => `
+        <div class="timeline-row ${s.done ? "is-done" : "is-pending"}">
+            <span class="timeline-dot"></span>
+            <div>
+                <strong>${escapeHtml(s.label)}</strong>
+                <span class="text-muted-sm">${s.time ? formatDate(s.time) + " WIB" : "-"}</span>
+            </div>
         </div>
     `).join("");
+}
 
-    inlineOrderDetailBody.innerHTML = `
-        <div class="card-header-row">
+function renderOrderDetailPage(order) {
+    if (!orderDetailContainer || !order) return;
+
+    const statusVal = order.status || "pending";
+    const custType = getCustomerType(order);
+    const paymentLabel = (order.paymentMethod || "cash") === "qris" ? "QRIS" : "Tunai / COD";
+    const pcs = getOrderTotalCookies(order);
+    const rules = order.paymentRules || {};
+    const oid = escapeHtml(order.orderId);
+
+    const itemsRows = (order.items || []).map((item) => `
+        <tr>
+            <td>
+                <strong>${escapeHtml(item.name)}</strong>
+                ${item.addonName ? `<span class="location-subtext">+ ${escapeHtml(item.addonName)}</span>` : ""}
+            </td>
+            <td class="align-right">${item.quantity}</td>
+            <td class="align-right">${formatRupiah(item.price || 0)}</td>
+            <td class="align-right"><strong>${formatRupiah(item.subtotal || (item.price * item.quantity))}</strong></td>
+        </tr>
+    `).join("");
+
+    const actionButtons = [];
+    if (statusVal !== "success") {
+        actionButtons.push(`<button type="button" class="btn-primary detail-action-btn" data-action="approve">Terima pembayaran</button>`);
+    }
+    if (statusVal === "pending" && (order.paymentProofUrl || order.customerConfirmed)) {
+        actionButtons.push(`<button type="button" class="btn-outline btn-danger-outline detail-action-btn" data-action="reject">Tolak bukti</button>`);
+    }
+    if (statusVal === "pending") {
+        actionButtons.push(`<button type="button" class="btn-outline detail-action-btn" data-action="expired">Tandai kedaluwarsa</button>`);
+    }
+    if (statusVal !== "pending") {
+        actionButtons.push(`<button type="button" class="btn-outline detail-action-btn" data-action="pending">Kembalikan ke pending</button>`);
+    }
+    actionButtons.push(`<a class="btn-outline" href="https://wa.me/${normalizeWA(order.whatsapp)}" target="_blank" rel="noopener">Hubungi WA</a>`);
+    actionButtons.push(`<button type="button" class="btn-outline btn-danger-outline detail-action-btn" data-action="delete">Hapus</button>`);
+
+    orderDetailContainer.innerHTML = `
+        <div class="page-header">
             <div>
-                <h2 class="card-title">Detail pesanan · ${escapeHtml(order.orderId)}</h2>
-                <p class="card-subtitle">Pesanan terpilih dari daftar di atas · Dibuat ${formatDate(order.createdAt)} WIB</p>
+                <div class="page-title-row">
+                    <h1 class="page-title">${oid}</h1>
+                    ${getOrderStatusBadgeHtml(order)}
+                </div>
+                <p class="page-subtitle">Dibuat ${formatDate(order.createdAt)} WIB · ${pcs} pcs · ${paymentLabel}</p>
             </div>
-            <button type="button" class="btn-outline-sm" id="inline-open-modal-btn">Buka Pop-up Detail ↗</button>
+            <div class="page-header-actions">${actionButtons.join("")}</div>
         </div>
 
-        <div class="inline-detail-grid">
-            <div class="inline-detail-col">
-                <div class="page-title-row" style="margin-bottom:10px;">
-                    <strong>${escapeHtml(order.customerName || "-")}</strong>
-                    <span class="customer-badge ${custType}">${custType === "baru" ? "Customer Baru" : "Customer Lama"}</span>
-                </div>
-                <div class="meta-kv-row"><span>WhatsApp</span><strong>${escapeHtml(order.whatsapp || "-")}</strong></div>
-                <div class="meta-kv-row"><span>Lokasi</span><strong>${escapeHtml(locLabel)}</strong></div>
-                <div class="meta-kv-row"><span>${locFieldLabel}</span><strong>${escapeHtml(order.locationDetail || "-")}</strong></div>
-                <div class="meta-kv-row"><span>Catatan</span><strong>${escapeHtml(order.note || "-")}</strong></div>
-                <div class="mt-12">
-                    <a href="https://wa.me/${normalizeWA(order.whatsapp)}" target="_blank" rel="noopener" class="btn-outline-sm">
-                        💬 Hubungi via WhatsApp
-                    </a>
-                </div>
-            </div>
-
-            <div class="inline-detail-col">
-                <h4>Produk &amp; tambahan</h4>
-                <div class="inline-items-list">
-                    ${itemsHtml || "<span>-</span>"}
-                </div>
-                <div class="inline-total-row">
-                    <span>Total pesanan</span>
-                    <strong>${formatRupiah(order.total || 0)}</strong>
-                </div>
-            </div>
-
-            <div class="inline-detail-col">
-                <div class="page-title-row" style="margin-bottom:8px;">
-                    <span class="badge-pill badge-gold">${paymentLabel}</span>
-                    <span class="status-badge ${statusClass}">${statusLabel}</span>
-                </div>
-                <p class="text-muted-sm" style="margin-bottom:12px;">
-                    ${order.customerConfirmed
-                        ? `✓ Customer klaim sudah bayar (${formatDate(order.customerConfirmedAt)}). Cocokkan penerimaan sebelum konfirmasi.`
-                        : "Pastikan pembayaran telah diterima sebelum menandai pesanan sukses."}
-                </p>
-                ${buildAdminReceiptAnalysisBoxHtml(order, true)}
-                <div class="inline-actions-stack">
-                    ${statusVal !== "success"
-                        ? `<button type="button" class="btn-primary inline-action-btn" data-action="success" data-order-id="${escapeHtml(order.orderId)}">✓ Tandai Sukses</button>`
-                        : ""}
-                    <div class="inline-actions-row">
-                        ${statusVal !== "pending"
-                            ? `<button type="button" class="btn-outline-sm inline-action-btn" data-action="pending" data-order-id="${escapeHtml(order.orderId)}">⏳ Tandai Pending</button>`
-                            : ""}
-                        ${statusVal !== "expired"
-                            ? `<button type="button" class="btn-outline-sm inline-action-btn" data-action="expired" data-order-id="${escapeHtml(order.orderId)}">× Tandai Expired</button>`
-                            : ""}
-                        <button type="button" class="btn-outline-sm btn-danger-outline inline-action-btn" data-action="delete" data-order-id="${escapeHtml(order.orderId)}">🗑️ Hapus Pesanan</button>
+        <div class="order-detail-layout-grid">
+            <div class="order-detail-main-col">
+                <div class="surface-card">
+                    <div class="card-header-row">
+                        <div>
+                            <h2 class="card-title">Item pesanan</h2>
+                            <p class="card-subtitle">${pcs} pcs dalam pesanan ini</p>
+                        </div>
                     </div>
+                    <div class="table-responsive">
+                        <table class="clean-table">
+                            <thead>
+                                <tr>
+                                    <th>PRODUK</th>
+                                    <th class="align-right">QTY</th>
+                                    <th class="align-right">HARGA</th>
+                                    <th class="align-right">SUBTOTAL</th>
+                                </tr>
+                            </thead>
+                            <tbody>${itemsRows || `<tr><td colspan="4" class="empty-state-sm">Tidak ada item.</td></tr>`}</tbody>
+                        </table>
+                    </div>
+                    <div class="inline-total-row">
+                        <span>Total tagihan</span>
+                        <strong>${formatRupiah(order.total || 0)}</strong>
+                    </div>
+                    ${rules.requiresDp50 ? `<div class="meta-kv-row"><span>Syarat DP 50% COD</span><strong>${formatRupiah(rules.dpRequiredAmount || 0)}</strong></div>` : ""}
+                </div>
+
+                <div class="surface-card mt-20">
+                    <div class="card-header-row">
+                        <div>
+                            <h2 class="card-title">Bukti pembayaran &amp; analisis AI Vision</h2>
+                            <p class="card-subtitle">Bandingkan nominal di struk dengan total tagihan sebelum menerima pembayaran</p>
+                        </div>
+                    </div>
+                    ${buildAdminReceiptAnalysisBoxHtml(order, false)}
+                </div>
+            </div>
+
+            <div class="order-detail-side-col">
+                <div class="surface-card">
+                    <h2 class="card-title">Pelanggan &amp; lokasi</h2>
+                    <div class="meta-kv-row mt-12"><span>Nama</span><strong>${escapeHtml(order.customerName || "-")}</strong></div>
+                    <div class="meta-kv-row"><span>Tipe</span><strong>${custType === "baru" ? "Pelanggan baru" : "Pelanggan lama"}</strong></div>
+                    <div class="meta-kv-row"><span>WhatsApp</span><strong>${escapeHtml(order.whatsapp || "-")}</strong></div>
+                    <div class="meta-kv-row"><span>Lokasi</span><strong>${escapeHtml(getLocationLabel(order.location))}</strong></div>
+                    <div class="meta-kv-row"><span>${order.location === "others" ? "Alamat" : "Kelas / detail"}</span><strong>${escapeHtml(order.locationDetail || "-")}</strong></div>
+                    <div class="meta-kv-row"><span>Catatan</span><strong>${escapeHtml(order.note || "-")}</strong></div>
+                </div>
+
+                <div class="surface-card mt-20">
+                    <h2 class="card-title">Riwayat status</h2>
+                    <div class="order-timeline mt-12">${buildOrderTimelineHtml(order)}</div>
                 </div>
             </div>
         </div>
     `;
 
-    const popupBtn = document.getElementById("inline-open-modal-btn");
-    if (popupBtn) popupBtn.addEventListener("click", () => openOrderModal(order));
-
-    inlineOrderDetailBody.querySelectorAll(".inline-action-btn").forEach((btn) => {
-        btn.addEventListener("click", () => {
+    orderDetailContainer.querySelectorAll(".detail-action-btn").forEach((btn) => {
+        btn.addEventListener("click", async () => {
             const action = btn.dataset.action;
-            const orderId = btn.dataset.orderId;
-            if (!action || !orderId) return;
-            if (action === "delete") deleteOrder(orderId, btn);
-            else updateOrderStatus(orderId, action, btn);
+            if (action === "approve") {
+                if (order.paymentProofUrl || order.customerConfirmed) {
+                    await verifyOrderProof(order.orderId, "approve", btn);
+                } else {
+                    await updateOrderStatus(order.orderId, "success", btn);
+                }
+            } else if (action === "reject") {
+                const reason = prompt("Alasan penolakan bukti (dikirim ke WA pelanggan):", "Nominal belum sesuai atau foto struk kurang jelas");
+                if (reason) await verifyOrderProof(order.orderId, "reject", btn, reason);
+            } else if (action === "delete") {
+                const deleted = await deleteOrder(order.orderId, btn);
+                if (deleted) switchTab("orders");
+                return;
+            } else {
+                await updateOrderStatus(order.orderId, action, btn);
+            }
+            const fresh = allOrders.find((o) => o.orderId === order.orderId);
+            if (fresh) renderOrderDetailPage(fresh);
         });
     });
+
+    const list = getDetailNavList();
+    const idx = list.findIndex((o) => o.orderId === order.orderId);
+    const prevBtn = document.getElementById("detail-prev-order-btn");
+    const nextBtn = document.getElementById("detail-next-order-btn");
+    if (prevBtn) prevBtn.disabled = idx <= 0;
+    if (nextBtn) nextBtn.disabled = idx < 0 || idx >= list.length - 1;
 }
+
+const detailBackBtn = document.getElementById("detail-back-to-orders-btn");
+if (detailBackBtn) detailBackBtn.addEventListener("click", () => switchTab("orders"));
+
+function stepOrderDetail(delta) {
+    const list = getDetailNavList();
+    const idx = list.findIndex((o) => o.orderId === selectedInlineOrderId);
+    const target = list[idx + delta];
+    if (target) openOrderDetailPage(target.orderId);
+}
+const detailPrevBtn = document.getElementById("detail-prev-order-btn");
+const detailNextBtn = document.getElementById("detail-next-order-btn");
+if (detailPrevBtn) detailPrevBtn.addEventListener("click", () => stepOrderDetail(-1));
+if (detailNextBtn) detailNextBtn.addEventListener("click", () => stepOrderDetail(1));
+
+/* =========================
+   ORDER MODAL (FALLBACK)
+   ========================= */
+
+function renderInlineOrderDetail() { /* digantikan halaman Detail pesanan */ }
 
 function openOrderModal(order) {
     if (!order) return;
@@ -1239,7 +1598,7 @@ function openOrderModal(order) {
                 ? `<div class="detail-row">
                        <span class="label">Konfirmasi</span>
                        <span class="value">
-                           <span class="badge-pill badge-green">✓ Customer klaim sudah bayar</span>
+                           <span class="badge-pill badge-green">Customer klaim sudah bayar</span>
                        </span>
                    </div>`
                 : ""
@@ -1277,18 +1636,18 @@ function openOrderModal(order) {
             <p class="mini-label" style="margin-bottom:4px;">Ubah Status</p>
 
             ${statusVal !== "success"
-                ? `<button class="action-btn success" data-action="success" data-order-id="${order.orderId}">✓ Tandai Sukses</button>`
+                ? `<button class="action-btn success" data-action="success" data-order-id="${order.orderId}">Tandai Sukses</button>`
                 : ""}
 
             ${statusVal !== "pending"
-                ? `<button class="action-btn pending" data-action="pending" data-order-id="${order.orderId}">⏳ Tandai Pending</button>`
+                ? `<button class="action-btn pending" data-action="pending" data-order-id="${order.orderId}">Tandai Pending</button>`
                 : ""}
 
             ${statusVal !== "expired"
-                ? `<button class="action-btn expired" data-action="expired" data-order-id="${order.orderId}">× Tandai Expired</button>`
+                ? `<button class="action-btn expired" data-action="expired" data-order-id="${order.orderId}">Tandai Expired</button>`
                 : ""}
 
-            <button class="action-btn delete" data-action="delete" data-order-id="${order.orderId}">🗑️ Hapus Pesanan</button>
+            <button class="action-btn delete" data-action="delete" data-order-id="${order.orderId}">Hapus Pesanan</button>
         </div>
     `;
 
@@ -1369,17 +1728,23 @@ async function updateOrderStatus(orderId, newStatus, btnEl) {
         renderSummary();
         renderCustomerInsights();
         renderDailyReport();
+        renderDashboard();
+        if (poStatusCache) renderPOPage();
+        if (newStatus !== "success") loadStocks();
 
-        btnEl.innerText = "✓ Berhasil";
+        btnEl.disabled = false;
+        btnEl.innerText = "Berhasil";
         setTimeout(() => {
             closeOrderModal();
         }, 600);
+        return true;
 
     } catch (error) {
         console.error("Update status error:", error);
         alert("Gagal terhubung ke server.");
         btnEl.disabled = false;
         btnEl.innerText = originalText;
+        return false;
     }
 }
 
@@ -1435,18 +1800,22 @@ async function deleteOrder(orderId, btnEl) {
         renderSummary();
         renderCustomerInsights();
         renderDailyReport();
+        renderDashboard();
+        if (poStatusCache) renderPOPage();
 
         if (isPending) {
             loadStocks();
         }
 
         alert(`Pesanan ${orderId} berhasil dihapus.`);
+        return true;
 
     } catch (error) {
         console.error("Delete order error:", error);
         alert("Gagal terhubung ke server.");
         btnEl.disabled = false;
         btnEl.innerText = originalText;
+        return false;
     }
 }
 
@@ -1504,7 +1873,7 @@ function updateBulkPreview() {
         } else {
             const hasPending = matching.some((o) => (o.status || "pending") === "pending");
             if (hasPending) {
-                bulkPreviewNote.innerHTML = `⚠️ Termasuk pesanan berstatus <strong>pending</strong>. Stok pesanan pending akan otomatis dikembalikan ke inventaris.`;
+                bulkPreviewNote.innerHTML = `Perhatian: Termasuk pesanan berstatus <strong>pending</strong>. Stok pesanan pending akan otomatis dikembalikan ke inventaris.`;
             } else {
                 bulkPreviewNote.innerText = "Stok untuk pesanan expired/success/failed tidak akan berubah.";
             }
@@ -1684,6 +2053,9 @@ function renderDailyReport() {
     renderDelta(reportDeltaRevenue, currentMetrics.revenue, previousMetrics.revenue);
 
     if (overviewVariantTotalPcs) overviewVariantTotalPcs.innerText = `${currentMetrics.items} pcs`;
+
+    setText("report-aov-value", formatRupiah(currentMetrics.orders ? Math.round(currentMetrics.revenue / currentMetrics.orders) : 0));
+    setText("report-aov-sub", `${currentMetrics.orders ? (currentMetrics.items / currentMetrics.orders).toFixed(1).replace(".0", "") : 0} pcs / pesanan`);
 
     if (dayOrders.length === 0) {
         reportTotalOrders.innerText = "0";
@@ -2120,43 +2492,69 @@ async function loadStocks() {
     }
 }
 
+const SKU_PRICES = {
+    "chocochip||": 12000,
+    "biscoff||": 15000,
+    "scoopable||": 28000,
+    "scoopable||Strawberry + Extra Nutella": 36000,
+    "nutella-tin||": 80000,
+    "nutella-tin||Strawberry + Extra Nutella": 95000
+};
+
+function getSkuPrice(item) {
+    const key = `${item.productId || ""}||${item.addonName || ""}`;
+    if (SKU_PRICES[key]) return SKU_PRICES[key];
+    if (item.productId === "nutella-tin") return item.addonName ? 95000 : 80000;
+    if (item.productId === "scoopable") return item.addonName ? 36000 : 28000;
+    if (item.productId === "biscoff") return 15000;
+    return 12000;
+}
+
 function renderStocks(items) {
     if (!stocksTbody) return;
     if (stocksLoading) stocksLoading.hidden = true;
 
-    let totalPcs = 0;
+    const reservedMap = getStockReservedMap();
+    let totalAvailPcs = 0;
+    let totalReservedPcs = 0;
     let lowCount = 0;
     let outCount = 0;
 
     (items || []).forEach((it) => {
-        totalPcs += Math.max(0, it.stock || 0);
-        if (it.stock <= 0) outCount += 1;
-        else if (it.stock <= 5) lowCount += 1;
+        const avail = Math.max(0, it.stock || 0);
+        const resv = getReservedForStock(it, reservedMap);
+        totalAvailPcs += avail;
+        totalReservedPcs += resv;
+        if (avail <= 0) outCount += 1;
+        else if (avail <= 5) lowCount += 1;
     });
 
-    if (stocksSummaryTotalPcs) stocksSummaryTotalPcs.innerText = `${totalPcs} pcs`;
+    const totalPhysical = totalAvailPcs + totalReservedPcs;
+    if (stocksSummaryTotalPcs) stocksSummaryTotalPcs.innerText = `${totalAvailPcs} pcs`;
     if (stocksSummarySkuCount) stocksSummarySkuCount.innerText = (items || []).length;
-    if (stocksSummaryLowCount) stocksSummaryLowCount.innerText = `${lowCount} item`;
-    if (stocksSummaryOutCount) stocksSummaryOutCount.innerText = `${outCount} item`;
+    setText("stocks-summary-physical-pcs", `${totalPhysical} pcs`);
+    setText("stocks-summary-reserved-sub", `${totalReservedPcs} pcs sedang direservasi pesanan pending`);
+    if (stocksSummaryLowCount) stocksSummaryLowCount.innerText = `${lowCount + outCount} SKU`;
+    if (stocksSummaryOutCount) stocksSummaryOutCount.innerText = `${outCount} habis · batas minimum 5 pcs`;
 
     if (stockAlertBanner && stockAlertText) {
         if (lowCount > 0 || outCount > 0) {
             stockAlertBanner.hidden = false;
-            stockAlertText.innerText = `Perhatian: Ada ${outCount} SKU habis dan ${lowCount} SKU dengan stok terbatas (≤5 pcs).`;
+            stockAlertText.innerText = `Perhatian: Ada ${outCount} SKU habis dan ${lowCount} SKU dengan stok terbatas (<= 5 pcs).`;
         } else {
             stockAlertBanner.hidden = true;
         }
     }
 
-    if (!items || items.length === 0) {
-        if (stocksEmpty) stocksEmpty.hidden = false;
-        stocksTbody.innerHTML = "";
-        return;
-    }
+    document.querySelectorAll("#stocks-filter-pills [data-stock-filter]").forEach((btn) => {
+        const f = btn.dataset.stockFilter;
+        btn.classList.toggle("active", f === currentStockFilter);
+        if (f === "all") btn.innerText = `Semua (${(items || []).length})`;
+        if (f === "low") btn.innerText = `Stok rendah (${lowCount})`;
+        if (f === "out") btn.innerText = `Habis (${outCount})`;
+    });
 
-    if (stocksEmpty) stocksEmpty.hidden = true;
-
-    if (inlineStockSelect) {
+    if (inlineStockSelect && items && items.length > 0) {
         const prevVal = inlineStockSelect.value;
         inlineStockSelect.innerHTML = items.map((it) =>
             `<option value="${it.id}" data-stock="${it.stock}">${escapeHtml(it.displayName)} (${it.stock} pcs)</option>`
@@ -2167,22 +2565,38 @@ function renderStocks(items) {
         syncInlineStockForm();
     }
 
-    let html = "";
+    const filteredItems = (items || []).filter((it) => {
+        if (currentStockFilter === "low") return it.stock > 0 && it.stock <= 5;
+        if (currentStockFilter === "out") return it.stock <= 0;
+        return true;
+    });
 
-    items.forEach((item) => {
-        const stock = item.stock;
+    if (filteredItems.length === 0) {
+        if (stocksEmpty) stocksEmpty.hidden = false;
+        stocksTbody.innerHTML = "";
+        renderDashboardStockList();
+        return;
+    }
+
+    if (stocksEmpty) stocksEmpty.hidden = true;
+
+    stocksTbody.innerHTML = filteredItems.map((item) => {
+        const avail = Math.max(0, item.stock || 0);
+        const resv = getReservedForStock(item, reservedMap);
+        const physical = avail + resv;
+        const price = getSkuPrice(item);
 
         let statusKey = "available";
         let statusLabel = "Tersedia";
         let rowClass = "";
 
-        if (stock <= 0) {
+        if (avail <= 0) {
             statusKey = "out";
             statusLabel = "Habis";
             rowClass = "row-out";
-        } else if (stock <= 5) {
+        } else if (avail <= 5) {
             statusKey = "low";
-            statusLabel = "Stok Terbatas";
+            statusLabel = "Stok rendah";
             rowClass = "row-low";
         }
 
@@ -2190,95 +2604,146 @@ function renderStocks(items) {
 
         let productName = escapeHtml(item.displayName || item.productId);
         let addonText = "";
-
         if (item.addonName) {
-            productName = escapeHtml(item.displayName.split(" (+ ")[0]);
+            productName = escapeHtml((item.displayName || "").split(" (+ ")[0]);
             addonText = `<span class="stocks-product-addon">+ ${escapeHtml(item.addonName)}</span>`;
         }
 
-        html += `
+        return `
             <tr class="${rowClass}">
                 <td>
                     <span class="stocks-product-name">${productName}</span>
                     ${addonText}
                 </td>
+                <td class="align-right">${formatRupiah(price)}</td>
+                <td class="align-right"><strong>${physical} pcs</strong></td>
+                <td class="align-right">${resv} pcs</td>
+                <td class="align-right"><span class="stocks-count ${countClass}">${avail} pcs</span></td>
+                <td><span class="stocks-badge ${statusKey}">${statusLabel}</span></td>
                 <td class="align-right">
-                    <span class="stocks-count ${countClass}">${stock}</span>
-                </td>
-                <td class="align-center">
-                    <span class="stocks-badge ${statusKey}">${statusLabel}</span>
-                </td>
-                <td class="align-right">
-                    <button type="button" class="btn-stock-edit" data-id="${item.id}" data-name="${escapeHtml(item.displayName)}" data-stock="${stock}">
-                        ✏️ Ubah Stok
+                    <button type="button" class="btn-stock-edit" data-id="${item.id}" data-name="${escapeHtml(item.displayName)}" data-stock="${avail}">
+                        Sesuaikan
                     </button>
                 </td>
             </tr>
         `;
-    });
+    }).join("");
 
-    stocksTbody.innerHTML = html;
+    renderDashboardStockList();
 }
+
+document.querySelectorAll("#stocks-filter-pills [data-stock-filter]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+        currentStockFilter = btn.dataset.stockFilter || "all";
+        renderStocks(allStocks);
+    });
+});
 
 function renderStockHistory(historyItems) {
     if (!stockHistoryTbody) return;
     if (!historyItems || historyItems.length === 0) {
-        stockHistoryTbody.innerHTML = `<tr><td colspan="5" class="empty-state-sm">Belum ada riwayat perubahan stok.</td></tr>`;
+        stockHistoryTbody.innerHTML = `<tr><td colspan="6" class="empty-state-sm">Belum ada riwayat perubahan stok.</td></tr>`;
         return;
     }
 
     const reasonMap = {
         order: "Pesanan baru",
-        order_restored: "Order Restored / Expired",
+        order_restored: "Stok kembali (Expired)",
         order_deleted: "Pesanan dihapus",
         bulk_order_deleted: "Hapus massal",
-        restock: "Restock",
-        admin_adjust: "Penyesuaian Admin"
+        restock: "Restock produksi",
+        admin_adjust: "Koreksi admin"
     };
 
     stockHistoryTbody.innerHTML = historyItems.map((h) => {
         const sign = h.changeAmount > 0 ? `+${h.changeAmount}` : h.changeAmount;
         const colorClass = h.changeAmount > 0 ? "text-green" : "";
         const skuLabel = h.addonName ? `${h.productId} (+ ${h.addonName})` : h.productId;
+        const refText = [h.orderId ? `#${h.orderId}` : "", h.note || ""].filter(Boolean).join(" · ") || "-";
         return `
             <tr>
                 <td>${formatDate(h.createdAt)}</td>
                 <td><strong>${escapeHtml(skuLabel)}</strong></td>
-                <td>${escapeHtml(reasonMap[h.reason] || h.reason)} ${h.orderId ? `(${escapeHtml(h.orderId)})` : ""} ${h.note ? `· ${escapeHtml(h.note)}` : ""}</td>
-                <td class="align-right"><strong class="${colorClass}">${sign}</strong></td>
+                <td>${escapeHtml(reasonMap[h.reason] || h.reason)}</td>
+                <td class="align-right"><strong class="${colorClass}">${sign} pcs</strong></td>
                 <td class="align-right">${h.stockAfter} pcs</td>
+                <td>${escapeHtml(refText)}</td>
             </tr>
         `;
     }).join("");
+}
+
+function computeTargetStock(currentAvail) {
+    const val = Math.max(0, parseInt(inlineStockInput?.value || "0", 10) || 0);
+    if (stockAdjustMode === "add") return currentAvail + val;
+    if (stockAdjustMode === "sub") return Math.max(0, currentAvail - val);
+    return val;
+}
+
+function updateStockAfterPreview() {
+    if (!inlineStockSelect) return;
+    const selectedItem = allStocks.find((it) => String(it.id) === String(inlineStockSelect.value));
+    const cur = selectedItem ? Math.max(0, selectedItem.stock || 0) : 0;
+    const next = computeTargetStock(cur);
+    setText("inline-stock-after-preview", `${cur} pcs -> ${next} pcs`);
 }
 
 function syncInlineStockForm() {
     if (!inlineStockSelect) return;
     const selectedItem = allStocks.find((it) => String(it.id) === String(inlineStockSelect.value));
     if (!selectedItem) return;
-    if (inlineStockCurrent) inlineStockCurrent.innerText = `${selectedItem.stock} pcs`;
-    if (inlineStockInput) inlineStockInput.value = selectedItem.stock;
+    const reservedMap = getStockReservedMap();
+    const avail = Math.max(0, selectedItem.stock || 0);
+    const resv = getReservedForStock(selectedItem, reservedMap);
+    setText("inline-stock-physical", `${avail + resv} pcs`);
+    setText("inline-stock-reserved", `${resv} pcs`);
+    if (inlineStockCurrent) inlineStockCurrent.innerText = `${avail} pcs`;
+    if (inlineStockInput) {
+        inlineStockInput.value = stockAdjustMode === "set" ? avail : 10;
+    }
+    updateStockAfterPreview();
 }
 
+document.querySelectorAll("#inline-stock-mode-tabs [data-adjust-mode]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+        stockAdjustMode = btn.dataset.adjustMode || "add";
+        document.querySelectorAll("#inline-stock-mode-tabs [data-adjust-mode]").forEach((b) => b.classList.toggle("active", b === btn));
+        setText("inline-stock-input-label", stockAdjustMode === "set" ? "Nilai stok tersedia baru (pcs)" : "Jumlah perubahan (pcs)");
+        if (inlineStockReason) {
+            inlineStockReason.value = stockAdjustMode === "add" ? "restock" : "admin_adjust";
+        }
+        syncInlineStockForm();
+    });
+});
+
 if (inlineStockSelect) inlineStockSelect.addEventListener("change", syncInlineStockForm);
+if (inlineStockInput) inlineStockInput.addEventListener("input", updateStockAfterPreview);
 if (inlineStepMinus) {
     inlineStepMinus.addEventListener("click", () => {
         const v = parseInt(inlineStockInput.value || "0", 10);
         if (v > 0) inlineStockInput.value = v - 1;
+        updateStockAfterPreview();
     });
 }
 if (inlineStepPlus) {
     inlineStepPlus.addEventListener("click", () => {
         const v = parseInt(inlineStockInput.value || "0", 10);
         inlineStockInput.value = v + 1;
+        updateStockAfterPreview();
     });
 }
+bindClick("inline-stock-reset-btn", () => {
+    if (inlineStockNote) inlineStockNote.value = "";
+    syncInlineStockForm();
+});
 
 if (inlineStockForm) {
     inlineStockForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         const stockId = inlineStockSelect.value;
-        const newStock = parseInt(inlineStockInput.value, 10);
+        const selectedItem = allStocks.find((it) => String(it.id) === String(stockId));
+        if (!selectedItem) return;
+        const newStock = computeTargetStock(Math.max(0, selectedItem.stock || 0));
         const reason = inlineStockReason.value;
         const note = inlineStockNote.value.trim();
 
@@ -2308,7 +2773,7 @@ if (inlineStockForm) {
 
             inlineStockNote.value = "";
             if (inlineStockMsg) {
-                inlineStockMsg.innerText = "✓ Stok berhasil diupdate!";
+                inlineStockMsg.innerText = "Stok berhasil diperbarui.";
                 inlineStockMsg.className = "settings-status success mt-8";
                 setTimeout(() => { inlineStockMsg.innerText = ""; }, 3000);
             }
@@ -2318,7 +2783,7 @@ if (inlineStockForm) {
             console.error("Inline stock update error:", err);
         } finally {
             inlineStockSubmit.disabled = false;
-            inlineStockSubmit.innerText = "✓ Simpan perubahan stok";
+            inlineStockSubmit.innerText = "Simpan penyesuaian";
         }
     });
 }
@@ -2349,14 +2814,11 @@ if (stocksTbody) {
         const btn = e.target.closest(".btn-stock-edit");
         if (!btn) return;
         const id = btn.getAttribute("data-id");
-        const name = btn.getAttribute("data-name");
-        const stock = parseInt(btn.getAttribute("data-stock") || "0", 10);
-
         if (inlineStockSelect) {
             inlineStockSelect.value = id;
             syncInlineStockForm();
+            inlineStockInput?.focus();
         }
-        openStockModal(id, name, stock);
     });
 }
 
@@ -2537,12 +2999,30 @@ function renderFinanceSummary(s) {
         "reviewed": "Periode sedang direview",
         "closed": "Periode sudah ditutup"
     };
-    finPeriodStatus.innerText = statusMap[s.periodStatus] || "—";
+    finPeriodStatus.innerText = statusMap[s.periodStatus] || "-";
 
     const spent = (s.hppSpent || 0) + (s.cashflowSpent || 0);
     if (finTotalSpent) finTotalSpent.innerText = formatRupiah(spent);
     if (finNetRemaining) finNetRemaining.innerText = formatRupiah(s.profitFinal);
     if (financeHistoryTotalFooter) financeHistoryTotalFooter.innerText = formatRupiah(spent);
+
+    const marginPct = s.revenue > 0 ? Math.round((s.profitFinal / s.revenue) * 100) : 0;
+    setText("fin-margin-sub", `Margin bersih ${marginPct}% dari omzet`);
+
+    const monthPrefix = currentFinanceMonth || getCurrentMonthString();
+    const monthOrders = allOrders.filter((o) => getLocalDateString(o.createdAt).startsWith(monthPrefix));
+    const pendingOrders = monthOrders.filter((o) => (o.status || "pending") === "pending");
+    const pendingSum = pendingOrders.reduce((acc, o) => acc + (o.total || 0), 0);
+    setText("fin-pending-funds", formatRupiah(pendingSum));
+    setText("fin-pending-funds-sub", `Dari ${pendingOrders.length} pesanan belum disetujui`);
+
+    const successMonthOrders = monthOrders.filter((o) => o.status === "success");
+    const qrisSum = successMonthOrders.filter((o) => (o.paymentMethod || "cash") === "qris").reduce((acc, o) => acc + (o.total || 0), 0);
+    const codSum = successMonthOrders.filter((o) => (o.paymentMethod || "cash") !== "qris").reduce((acc, o) => acc + (o.total || 0), 0);
+    setText("fin-recon-qris", formatRupiah(qrisSum));
+    setText("fin-recon-cod", formatRupiah(codSum));
+    setText("fin-recon-out", `- ${formatRupiah(spent)}`);
+    setText("fin-recon-net", formatRupiah((qrisSum + codSum) - spent));
 
     finHppPct.innerText = s.hppPct + "%";
     finHppAllocated.innerText = formatRupiah(s.hppAllocated);
@@ -2558,7 +3038,7 @@ function renderFinanceSummary(s) {
 
     finProfitPct.innerText = s.profitPct + "%";
     finProfitAllocated.innerText = formatRupiah(s.profitAllocated);
-    finProfitDetail.innerText = `−${formatRupiah(spent)}`;
+    finProfitDetail.innerText = `-${formatRupiah(spent)}`;
     finProfitFinal.innerText = formatRupiah(s.profitFinal);
 }
 
@@ -2577,18 +3057,111 @@ function updateProgressBar(el, spent, allocated, labelEl) {
     if (labelEl) labelEl.innerText = `${rawPct}% terpakai`;
 }
 
-if (financeHistoryFilter) {
-    financeHistoryFilter.addEventListener("change", () => {
-        const v = financeHistoryFilter.value;
-        if (financeHistoryHppSection) financeHistoryHppSection.hidden = (v === "cashflow");
-        if (financeHistoryCfSection) financeHistoryCfSection.hidden = (v === "hpp");
+function renderUnifiedFinanceTable() {
+    const unifiedTbody = document.getElementById("finance-unified-tbody");
+    if (!unifiedTbody) return;
+
+    const filterVal = financeHistoryFilter?.value || "all";
+    const monthPrefix = currentFinanceMonth || getCurrentMonthString();
+    const rows = [];
+
+    if (filterVal === "all" || filterVal === "in") {
+        allOrders.filter((o) => o.status === "success" && getLocalDateString(o.createdAt).startsWith(monthPrefix)).forEach((o) => {
+            rows.push({
+                date: getLocalDateString(o.createdAt),
+                sortTime: parseISOString(o.createdAt)?.getTime() || 0,
+                desc: `Pesanan ${o.orderId} — ${o.customerName || "Pelanggan"}`,
+                sub: getOrderItemsSummary(o),
+                category: (o.paymentMethod || "cash") === "qris" ? "Penjualan QRIS" : "Penjualan COD",
+                type: "in",
+                typeBadge: `<span class="badge-pill badge-green">Masuk</span>`,
+                amount: o.total || 0,
+                actionHtml: `<button type="button" class="btn-detail fin-order-detail-btn" data-order-id="${escapeHtml(o.orderId)}">Detail</button>`
+            });
+        });
+    }
+
+    if (filterVal === "all" || filterVal === "hpp") {
+        financeHppItems.forEach((item) => {
+            const qtyText = item.quantity ? ` (${item.quantity}${item.unit ? " " + item.unit : ""})` : "";
+            rows.push({
+                date: item.purchaseDate,
+                sortTime: new Date((item.purchaseDate || "1970-01-01") + "T12:00:00Z").getTime(),
+                desc: `${item.itemName}${qtyText}`,
+                sub: item.note || "",
+                category: "Bahan Baku (HPP)",
+                type: "out",
+                typeBadge: `<span class="badge-pill badge-gold">Keluar · HPP</span>`,
+                amount: item.amount || 0,
+                actionHtml: `<button type="button" class="btn-delete-small" data-hpp-id="${item.id}">Hapus</button>`
+            });
+        });
+    }
+
+    if (filterVal === "all" || filterVal === "cashflow") {
+        financeCfItems.forEach((item) => {
+            rows.push({
+                date: item.transactionDate,
+                sortTime: new Date((item.transactionDate || "1970-01-01") + "T12:00:00Z").getTime(),
+                desc: item.description || "-",
+                sub: item.note || "",
+                category: item.categoryName || "Operasional",
+                type: "out",
+                typeBadge: `<span class="badge-pill badge-neutral">Keluar · Operasional</span>`,
+                amount: item.amount || 0,
+                actionHtml: `<button type="button" class="btn-delete-small" data-cf-id="${item.id}">Hapus</button>`
+            });
+        });
+    }
+
+    rows.sort((a, b) => b.sortTime - a.sortTime);
+
+    if (rows.length === 0) {
+        unifiedTbody.innerHTML = `<tr><td colspan="6" class="empty-state-sm">Belum ada transaksi tercatat pada periode ini.</td></tr>`;
+        return;
+    }
+
+    unifiedTbody.innerHTML = rows.map((r) => `
+        <tr>
+            <td>${formatDateShort(r.date)}</td>
+            <td>
+                <strong>${escapeHtml(r.desc)}</strong>
+                ${r.sub ? `<small style="display:block;color:var(--text-muted);">${escapeHtml(r.sub)}</small>` : ""}
+            </td>
+            <td>${escapeHtml(r.category)}</td>
+            <td>${r.typeBadge}</td>
+            <td class="align-right"><strong class="${r.type === "in" ? "text-green" : "text-danger"}">${r.type === "in" ? "+" : "-"}${formatRupiah(r.amount)}</strong></td>
+            <td class="align-right">${r.actionHtml}</td>
+        </tr>
+    `).join("");
+
+    unifiedTbody.querySelectorAll("[data-hpp-id]").forEach((btn) => {
+        btn.addEventListener("click", () => deleteHppPurchase(Number(btn.dataset.hppId)));
+    });
+    unifiedTbody.querySelectorAll("[data-cf-id]").forEach((btn) => {
+        btn.addEventListener("click", () => deleteCashflowTransaction(Number(btn.dataset.cfId)));
+    });
+    unifiedTbody.querySelectorAll(".fin-order-detail-btn").forEach((btn) => {
+        btn.addEventListener("click", () => openOrderDetailPage(btn.dataset.orderId));
     });
 }
 
-async function loadHppHistory() {
-    if (!hppHistoryTbody) return;
+if (financeHistoryFilter) {
+    financeHistoryFilter.addEventListener("change", () => {
+        renderUnifiedFinanceTable();
+    });
+}
 
-    hppHistoryMonth.innerText = currentFinanceMonth;
+bindClick("finance-scroll-form-btn", () => {
+    document.getElementById("finance-form-card")?.scrollIntoView({ behavior: "smooth" });
+});
+bindClick("fin-edit-allocation-link", () => {
+    switchTab("settings");
+    setTimeout(() => document.getElementById("sec-budget-allocation")?.scrollIntoView({ behavior: "smooth" }), 80);
+});
+
+async function loadHppHistory() {
+    if (hppHistoryMonth) hppHistoryMonth.innerText = currentFinanceMonth;
 
     try {
         const response = await fetch(
@@ -2599,45 +3172,8 @@ async function loadHppHistory() {
         const result = await response.json();
         if (!response.ok || !result.success) return;
 
-        const items = result.items || [];
-
-        if (items.length === 0) {
-            hppHistoryTbody.innerHTML = "";
-            hppHistoryEmpty.hidden = false;
-            return;
-        }
-
-        hppHistoryEmpty.hidden = true;
-        let html = "";
-        items.forEach((item) => {
-            const qtyText = item.quantity
-                ? `${item.quantity}${item.unit ? " " + item.unit : ""}`
-                : "-";
-
-            html += `
-                <tr>
-                    <td>${formatDateShort(item.purchaseDate)}</td>
-                    <td>
-                        <strong>${escapeHtml(item.itemName)}</strong>
-                        ${item.note ? `<small style="display:block;color:var(--text-muted);">${escapeHtml(item.note)}</small>` : ""}
-                    </td>
-                    <td>${escapeHtml(qtyText)}</td>
-                    <td><span class="badge-pill badge-green">HPP</span></td>
-                    <td class="align-right cell-amount">${formatRupiah(item.amount)}</td>
-                    <td class="align-right">
-                        <button class="btn-delete-small" data-hpp-id="${item.id}">Hapus</button>
-                    </td>
-                </tr>
-            `;
-        });
-
-        hppHistoryTbody.innerHTML = html;
-
-        hppHistoryTbody.querySelectorAll(".btn-delete-small").forEach((btn) => {
-            btn.addEventListener("click", () => {
-                deleteHppPurchase(Number(btn.dataset.hppId));
-            });
-        });
+        financeHppItems = result.items || [];
+        renderUnifiedFinanceTable();
 
     } catch (error) {
         console.error("Load HPP history error:", error);
@@ -2645,9 +3181,7 @@ async function loadHppHistory() {
 }
 
 async function loadCashflowHistory() {
-    if (!cfHistoryTbody) return;
-
-    cfHistoryMonth.innerText = currentFinanceMonth;
+    if (cfHistoryMonth) cfHistoryMonth.innerText = currentFinanceMonth;
 
     try {
         const response = await fetch(
@@ -2658,41 +3192,8 @@ async function loadCashflowHistory() {
         const result = await response.json();
         if (!response.ok || !result.success) return;
 
-        const items = result.items || [];
-
-        if (items.length === 0) {
-            cfHistoryTbody.innerHTML = "";
-            cfHistoryEmpty.hidden = false;
-            return;
-        }
-
-        cfHistoryEmpty.hidden = true;
-        let html = "";
-        items.forEach((item) => {
-            html += `
-                <tr>
-                    <td>${formatDateShort(item.transactionDate)}</td>
-                    <td>${escapeHtml(item.categoryName || "-")}</td>
-                    <td>
-                        <strong>${escapeHtml(item.description)}</strong>
-                        ${item.note ? `<small style="display:block;color:var(--text-muted);">${escapeHtml(item.note)}</small>` : ""}
-                    </td>
-                    <td><span class="badge-pill badge-gold">Cashflow</span></td>
-                    <td class="align-right cell-amount">${formatRupiah(item.amount)}</td>
-                    <td class="align-right">
-                        <button class="btn-delete-small" data-cf-id="${item.id}">Hapus</button>
-                    </td>
-                </tr>
-            `;
-        });
-
-        cfHistoryTbody.innerHTML = html;
-
-        cfHistoryTbody.querySelectorAll(".btn-delete-small").forEach((btn) => {
-            btn.addEventListener("click", () => {
-                deleteCashflowTransaction(Number(btn.dataset.cfId));
-            });
-        });
+        financeCfItems = result.items || [];
+        renderUnifiedFinanceTable();
 
     } catch (error) {
         console.error("Load cashflow history error:", error);
@@ -2754,7 +3255,7 @@ if (hppForm) {
                 loadHppHistory()
             ]);
 
-            hppSubmit.innerText = "✓ Tersimpan";
+            hppSubmit.innerText = "Tersimpan";
             setTimeout(() => {
                 hppSubmit.innerText = originalText;
             }, 1500);
@@ -2824,7 +3325,7 @@ if (cashflowForm) {
                 loadCashflowHistory()
             ]);
 
-            cfSubmit.innerText = "✓ Tersimpan";
+            cfSubmit.innerText = "Tersimpan";
             setTimeout(() => {
                 cfSubmit.innerText = originalText;
             }, 1500);
@@ -3334,32 +3835,88 @@ let waKnowledgeSectionsCache = [];
 let waKnowledgeLoadedOnce = false;
 let waBotHealthCache = null;
 
+const waSubtabVerifyBtn = document.getElementById("wa-subtab-verify-btn");
+const waSubtabHealthBtn = document.getElementById("wa-subtab-health-btn");
+const waPanelVerify = document.getElementById("wa-subview-verification");
+const waPanelHealth = document.getElementById("wa-subview-health");
+
 function switchWaSubtab(subtab) {
-    const activeTab = subtab === "gateway" || subtab === "knowledge" ? subtab : "inbox";
-    if (waSubtabInboxBtn) waSubtabInboxBtn.classList.toggle("active", activeTab === "inbox");
-    if (waSubtabGatewayBtn) waSubtabGatewayBtn.classList.toggle("active", activeTab === "gateway");
-    if (waSubtabKnowledgeBtn) waSubtabKnowledgeBtn.classList.toggle("active", activeTab === "knowledge");
+    const valid = ["inbox", "verification", "knowledge", "health", "gateway"];
+    const activeTab = valid.includes(subtab) ? subtab : "inbox";
+
+    document.querySelectorAll(".wa-subtab[data-wa-subtab]").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.waSubtab === activeTab);
+    });
 
     if (waPanelInbox) waPanelInbox.hidden = activeTab !== "inbox";
-    if (waPanelGateway) waPanelGateway.hidden = activeTab !== "gateway";
+    if (waPanelVerify) waPanelVerify.hidden = activeTab !== "verification";
     if (waPanelKnowledge) waPanelKnowledge.hidden = activeTab !== "knowledge";
+    if (waPanelHealth) waPanelHealth.hidden = activeTab !== "health";
+    if (waPanelGateway) waPanelGateway.hidden = activeTab !== "gateway";
 
-    if (activeTab === "knowledge") {
-        if (!waKnowledgeLoadedOnce) {
-            loadBotKnowledge();
-        }
+    if (activeTab === "verification") {
+        renderWaVerifyQueue();
+    } else if (activeTab === "knowledge") {
+        if (!waKnowledgeLoadedOnce) loadBotKnowledge();
+    } else if (activeTab === "health") {
         loadBotHealth();
     }
 }
 
-if (waSubtabInboxBtn) {
-    waSubtabInboxBtn.addEventListener("click", () => switchWaSubtab("inbox"));
-}
-if (waSubtabGatewayBtn) {
-    waSubtabGatewayBtn.addEventListener("click", () => switchWaSubtab("gateway"));
-}
-if (waSubtabKnowledgeBtn) {
-    waSubtabKnowledgeBtn.addEventListener("click", () => switchWaSubtab("knowledge"));
+document.querySelectorAll(".wa-subtab[data-wa-subtab]").forEach((btn) => {
+    btn.addEventListener("click", () => switchWaSubtab(btn.dataset.waSubtab));
+});
+bindClick("wa-open-gateway-top-btn", () => switchWaSubtab("gateway"));
+
+function renderWaVerifyQueue() {
+    const grid = document.getElementById("wa-verify-queue-grid");
+    if (!grid) return;
+    const queue = allOrders.filter(isAwaitingVerification);
+    setText("wa-verify-queue-count", `${queue.length} menunggu`);
+
+    if (queue.length === 0) {
+        grid.innerHTML = `<p class="empty-state-sm">Tidak ada pesanan yang sedang menunggu verifikasi bukti pembayaran.</p>`;
+        return;
+    }
+
+    grid.innerHTML = queue.map((order) => {
+        const payLabel = (order.paymentMethod || "cash") === "qris" ? "QRIS" : "COD (DP 50%)";
+        return `
+            <div class="surface-card verify-queue-card">
+                <div class="card-header-row">
+                    <div>
+                        <div class="page-title-row">
+                            <strong>${escapeHtml(order.orderId)}</strong>
+                            <span class="badge-pill badge-gold">${payLabel}</span>
+                        </div>
+                        <span class="text-muted-sm">${escapeHtml(order.customerName || "-")} · ${escapeHtml(order.whatsapp || "-")}</span>
+                    </div>
+                    <strong class="cell-total-amount">${formatRupiah(order.total || 0)}</strong>
+                </div>
+                <div class="meta-kv-row mt-8"><span>Item</span><strong>${escapeHtml(getOrderItemsSummary(order))}</strong></div>
+                <div class="meta-kv-row"><span>Lokasi</span><strong>${escapeHtml(getLocationLabel(order.location))}</strong></div>
+                ${buildAdminReceiptAnalysisBoxHtml(order, true)}
+                <div class="form-actions-row mt-12">
+                    <button type="button" class="btn-primary btn-full vq-approve-btn" data-order-id="${escapeHtml(order.orderId)}">Terima pembayaran</button>
+                    <button type="button" class="btn-outline btn-danger-outline vq-reject-btn" data-order-id="${escapeHtml(order.orderId)}">Minta cek ulang</button>
+                    <button type="button" class="btn-outline vq-detail-btn" data-order-id="${escapeHtml(order.orderId)}">Detail</button>
+                </div>
+            </div>
+        `;
+    }).join("");
+
+    grid.querySelectorAll(".vq-approve-btn").forEach((btn) => {
+        btn.addEventListener("click", () => verifyOrderProof(btn.dataset.orderId, "approve", btn));
+    });
+    grid.querySelectorAll(".vq-reject-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const reason = prompt("Alasan penolakan struk (dikirim ke WA pelanggan):", "Nominal belum sesuai atau foto struk kurang jelas");
+            if (reason) verifyOrderProof(btn.dataset.orderId, "reject", btn, reason);
+        });
+    });
+    grid.querySelectorAll(".vq-detail-btn").forEach((btn) => {
+        btn.addEventListener("click", () => openOrderDetailPage(btn.dataset.orderId));
+    });
 }
 
 function renderBotHealthBanner(botHealth, isBotOn = true) {
@@ -3381,10 +3938,10 @@ function renderBotHealthBanner(botHealth, isBotOn = true) {
             waBotStatusPill.innerText = "Bot AI Nonaktif (Manual)";
             waBotStatusPill.className = "badge-pill badge-gold";
         } else if (healthStatus === "error") {
-            waBotStatusPill.innerText = `⚠️ ${bh.statusLabel || "API Key / SDK Belum Aktif"}`;
+            waBotStatusPill.innerText = bh.statusLabel || "API Key / SDK Belum Aktif";
             waBotStatusPill.className = "badge-pill badge-danger";
         } else if (healthStatus === "degraded") {
-            waBotStatusPill.innerText = `⚠️ ${bh.statusLabel || `Terdegradasi (Fallback · ${activeModel})`}`;
+            waBotStatusPill.innerText = bh.statusLabel || `Terdegradasi (Fallback · ${activeModel})`;
             waBotStatusPill.className = "badge-pill badge-gold";
         } else if (healthStatus === "failover") {
             waBotStatusPill.innerText = `AI Aktif · Failover (${activeModel})`;
@@ -3418,14 +3975,14 @@ function renderBotHealthBanner(botHealth, isBotOn = true) {
             : activeModel;
     }
     if (waHealthModelsPair) {
-        waHealthModelsPair.innerText = `${primaryModel} → ${fallbackModel}`;
+        waHealthModelsPair.innerText = `${primaryModel} -> ${fallbackModel}`;
     }
     if (waHealthThinkingTimeout) {
         waHealthThinkingTimeout.innerText = `thinking: ${bh.thinkingLevel || "low"} · batas ${bh.timeoutSeconds || 15} dtk`;
     }
     if (waHealthApikeyStatus) {
         const ok = bh.apiKeyConfigured !== false && bh.sdkInstalled !== false;
-        waHealthApikeyStatus.innerText = ok ? "✓ API Key & SDK google-genai Aktif" : "❌ API Key / SDK Belum Siap";
+        waHealthApikeyStatus.innerText = ok ? "API Key & SDK google-genai Aktif" : "API Key / SDK Belum Siap";
         waHealthApikeyStatus.className = ok ? "text-green" : "";
     }
 
@@ -3461,16 +4018,16 @@ function renderBotHealthBanner(botHealth, isBotOn = true) {
             waAiLogsTbody.innerHTML = logs.map((lg) => {
                 const isVision = lg.logType === "vision";
                 const typeBadge = isVision
-                    ? `<span class="badge-pill badge-gold">👁 Vision Struk</span>`
-                    : `<span class="badge-pill badge-green">💬 Chat WA</span>`;
+                    ? `<span class="badge-pill badge-gold">Vision Struk</span>`
+                    : `<span class="badge-pill badge-green">Chat WA</span>`;
                 const targetParts = [];
                 if (lg.orderId) targetParts.push(`<strong>#${escapeHtml(lg.orderId)}</strong>`);
                 if (lg.phone) targetParts.push(`<span>${escapeHtml(lg.phone)}</span>`);
-                const targetHtml = targetParts.length > 0 ? targetParts.join("<br>") : "—";
+                const targetHtml = targetParts.length > 0 ? targetParts.join("<br>") : "-";
 
                 const statusBadge = lg.usedFallback
-                    ? `<span class="badge-pill badge-gold" title="${escapeHtml(lg.errorMessage || "Fallback digunakan")}">⚠️ Fallback</span>`
-                    : `<span class="badge-pill badge-green">✓ AI Murni</span>`;
+                    ? `<span class="badge-pill badge-gold" title="${escapeHtml(lg.errorMessage || "Fallback digunakan")}">Fallback</span>`
+                    : `<span class="badge-pill badge-green">AI Murni</span>`;
 
                 const errHint = lg.errorMessage
                     ? `<div style="font-size:11px;color:var(--danger);margin-top:3px;">${escapeHtml(String(lg.errorMessage).slice(0, 90))}</div>`
@@ -3483,7 +4040,7 @@ function renderBotHealthBanner(botHealth, isBotOn = true) {
                         <td>${targetHtml}</td>
                         <td>
                             <strong>${escapeHtml(lg.model || "-")}</strong>
-                            <div class="text-muted-sm">${escapeHtml(lg.intent || "-")}${lg.needsHuman ? " · 👤 Handover" : ""}${lg.inScope === false ? " · 🚫 Out-of-Scope" : ""}</div>
+                            <div class="text-muted-sm">${escapeHtml(lg.intent || "-")}${lg.needsHuman ? " · Handover" : ""}${lg.inScope === false ? " · Out-of-Scope" : ""}</div>
                             ${errHint}
                         </td>
                         <td class="align-right"><strong>${lg.latencyMs || 0} ms</strong></td>
@@ -3574,7 +4131,7 @@ function renderBotKnowledgeSections(sections) {
                     <div class="wa-knowledge-section-meta">
                         ${modBadge}
                         <button type="button" class="btn-outline-sm btn-reset-knowledge-sec" data-section-key="${escapeHtml(sec.key)}" title="Kembalikan bagian ini ke teks bawaan">
-                            ↺ Reset Bagian
+                            Reset bagian
                         </button>
                     </div>
                 </div>
@@ -3624,14 +4181,14 @@ async function saveBotKnowledge() {
         }
         waKnowledgeSectionsCache = Array.isArray(data.sections) ? data.sections : [];
         renderBotKnowledgeSections(waKnowledgeSectionsCache);
-        showBotKnowledgeStatus("✓ Knowledge Base AI Bot berhasil disimpan & langsung aktif!", "success");
+        showBotKnowledgeStatus("Basis pengetahuan AI Bot berhasil disimpan dan langsung aktif.", "success");
     } catch (err) {
         console.error("Save bot knowledge error:", err);
         showBotKnowledgeStatus("Gagal terhubung ke server.", "error");
     } finally {
         if (waKnowledgeSaveBtn) {
             waKnowledgeSaveBtn.disabled = false;
-            waKnowledgeSaveBtn.innerText = "💾 Simpan Semua Knowledge";
+            waKnowledgeSaveBtn.innerText = "Simpan semua perubahan";
         }
     }
 }
@@ -3653,7 +4210,7 @@ async function resetBotKnowledgeSection(sectionKey) {
         if (res.ok && data.success) {
             waKnowledgeSectionsCache = Array.isArray(data.sections) ? data.sections : [];
             renderBotKnowledgeSections(waKnowledgeSectionsCache);
-            showBotKnowledgeStatus("✓ Bagian berhasil dikembalikan ke default!", "success");
+            showBotKnowledgeStatus("Bagian berhasil dikembalikan ke default.", "success");
         }
     } catch (err) {
         console.error("Reset knowledge section error:", err);
@@ -3677,7 +4234,7 @@ async function resetAllBotKnowledge() {
         if (res.ok && data.success) {
             waKnowledgeSectionsCache = Array.isArray(data.sections) ? data.sections : [];
             renderBotKnowledgeSections(waKnowledgeSectionsCache);
-            showBotKnowledgeStatus("✓ Seluruh Knowledge Base berhasil di-reset ke default!", "success");
+            showBotKnowledgeStatus("Seluruh basis pengetahuan berhasil di-reset ke default.", "success");
         }
     } catch (err) {
         console.error("Reset all bot knowledge error:", err);
@@ -3711,6 +4268,7 @@ async function loadWaWorkspace(options = {}) {
 
         waConversationsCache = Array.isArray(data.conversations) ? data.conversations : [];
         const metrics = data.metrics || {};
+        waMetricsCache = metrics;
 
         if (waMetricTotal) waMetricTotal.innerText = String(metrics.totalConversations || 0);
         if (waMetricVerify) waMetricVerify.innerText = String(metrics.awaitingVerificationCount || 0);
@@ -3719,6 +4277,10 @@ async function loadWaWorkspace(options = {}) {
 
         const isBotOn = metrics.botActive !== false;
         renderBotHealthBanner(data.botHealth, isBotOn);
+
+        const senderNum = data.settings?.senderNumber || "6285117122454";
+        setText("sidebar-wa-conn-title", isBotOn ? "WhatsApp terhubung" : "WhatsApp mode manual");
+        setText("sidebar-wa-conn-sub", `+${senderNum} · ${isBotOn ? "AI Aktif" : "Manual"}`);
 
         const actionNeededCount =
             Number(metrics.awaitingVerificationCount || 0) + Number(metrics.needsHumanCount || 0);
@@ -3733,13 +4295,15 @@ async function loadWaWorkspace(options = {}) {
 
         populateWaGatewayForm(data.settings);
         renderWaConversationList();
+        renderWaVerifyQueue();
+        renderDashboard();
 
         if (!waSelectedConvId && waConversationsCache.length > 0) {
             waSelectedConvId = waConversationsCache[0].convId;
         }
 
         if (waSelectedConvId && !options.silent) {
-            await selectWaConversation(waSelectedConvId, { silent: true });
+            await selectWaConversation(waSelectedConvId);
         }
     } catch (err) {
         console.error("Load WA workspace error:", err);
@@ -3773,6 +4337,8 @@ function getWaFilteredConversations() {
             if (vs !== "awaiting_proof" && vs !== "dp_awaiting_verification" && vs !== "unconfirmed") return false;
         } else if (waActiveFilter === "needs_human") {
             if (!c.needsHuman && c.botMode !== "manual") return false;
+        } else if (waActiveFilter === "ai_only") {
+            if (c.botMode === "manual") return false;
         } else if (waActiveFilter === "verified") {
             if (c.verificationStatus !== "verified" && (!c.order || c.order.status !== "success")) return false;
         }
@@ -3806,8 +4372,8 @@ function renderWaConversationList() {
     waConvList.innerHTML = list.map((c) => {
         const isActive = String(c.convId) === String(waSelectedConvId);
         const modeBadge = c.botMode === "manual"
-            ? `<span class="badge-pill badge-gold">👤 Manual</span>`
-            : `<span class="badge-pill badge-green">🤖 AI</span>`;
+            ? `<span class="badge-pill badge-gold">Manual</span>`
+            : `<span class="badge-pill badge-green">AI</span>`;
 
         const orderBadge = c.orderId
             ? `<span class="badge-pill badge-gold">${escapeHtml(c.orderId)}</span>`
@@ -3815,9 +4381,9 @@ function renderWaConversationList() {
 
         let verifBadge = "";
         if (c.order && c.order.status === "success") {
-            verifBadge = `<span class="status-badge status-success">✓ Lunas</span>`;
+            verifBadge = `<span class="status-badge status-success">Lunas</span>`;
         } else if (c.order && (c.order.paymentProofUrl || c.order.customerConfirmed)) {
-            verifBadge = `<span class="status-badge status-pending">⏳ Cek Struk</span>`;
+            verifBadge = `<span class="status-badge status-pending">Cek struk</span>`;
         }
 
         return `
@@ -3860,13 +4426,12 @@ async function selectWaConversation(convId) {
         const messages = data.messages || [];
         waActiveConvObject = conv;
 
-        /* Update Chat Header */
         if (waActiveAvatar) {
             const initials = (conv.customerName || "VC").trim().slice(0, 2).toUpperCase();
             waActiveAvatar.innerText = initials;
         }
         if (waActiveCustomerName) waActiveCustomerName.innerText = conv.customerName || "Pelanggan";
-        if (waActiveCustomerSub) waActiveCustomerSub.innerText = conv.phone || "—";
+        if (waActiveCustomerSub) waActiveCustomerSub.innerText = conv.phone || "-";
 
         if (waActiveOrderPill) {
             if (conv.orderId) {
@@ -3877,9 +4442,18 @@ async function selectWaConversation(convId) {
             }
         }
 
+        const isManual = conv.botMode === "manual";
+        if (waActiveModePill) {
+            waActiveModePill.hidden = false;
+            waActiveModePill.innerText = isManual ? "Manual" : "AI";
+            waActiveModePill.className = `badge-pill ${isManual ? "badge-gold" : "badge-green"}`;
+        }
         if (waToggleModeBtn) {
-            const isManual = conv.botMode === "manual";
-            waToggleModeBtn.innerText = isManual ? "👤 Mode Manual Admin" : "🤖 Mode AI Aktif";
+            waToggleModeBtn.innerText = isManual ? "Mode Manual Admin" : "Mode AI Aktif";
+        }
+        const handoverStrip = document.getElementById("wa-handover-strip");
+        if (handoverStrip) {
+            handoverStrip.hidden = !isManual && !conv.needsHuman;
         }
 
         if (waOpenExternalLink) {
@@ -3903,7 +4477,7 @@ function renderWaMessages(messages) {
 
     waMessagesViewport.innerHTML = messages.map((m) => {
         const senderRole = m.sender === "customer" ? "customer" : m.sender === "admin" ? "admin" : "bot";
-        const senderLabel = senderRole === "customer" ? "Pelanggan" : senderRole === "admin" ? "Admin Velacookies" : "🤖 Bot AI Velacookies";
+        const senderLabel = senderRole === "customer" ? "Pelanggan" : senderRole === "admin" ? "Admin Velacookies" : "Bot AI Velacookies";
         const mediaHtml = m.mediaUrl
             ? `<img src="${escapeHtml(m.mediaUrl)}" alt="Bukti Transfer" class="wa-bubble-media">`
             : "";
@@ -3915,9 +4489,9 @@ function renderWaMessages(messages) {
             if (meta.intent) chips.push(escapeHtml(meta.intent));
             if (meta.model) chips.push(escapeHtml(meta.model));
             if (meta.latencyMs !== undefined && meta.latencyMs !== null) chips.push(`${meta.latencyMs}ms`);
-            if (meta.usedFallback) chips.push("⚠️ Fallback");
-            if (meta.needsHuman) chips.push("👤 Needs Human");
-            if (meta.inScope === false) chips.push("🚫 Out of Scope");
+            if (meta.usedFallback) chips.push("Fallback");
+            if (meta.needsHuman) chips.push("Needs Human");
+            if (meta.inScope === false) chips.push("Out of Scope");
             if (chips.length > 0) {
                 aiMetaChipHtml = `<div style="margin-top:6px;padding-top:4px;border-top:1px dashed rgba(0,0,0,0.08);font-size:10.5px;color:var(--text-muted);">${chips.join(" · ")}</div>`;
             }
@@ -3959,7 +4533,7 @@ function buildAdminReceiptAnalysisBoxHtml(order, compact = false) {
 
     const concernsHtml = concerns.length > 0 ? `
         <div style="margin-top:8px;padding:8px 10px;border-radius:8px;background:rgba(192,57,43,0.08);border:1px solid rgba(192,57,43,0.3);font-size:11.5px;color:#a93226;line-height:1.45;">
-            <strong style="display:block;margin-bottom:3px;">⚠️ Catatan Pemeriksaan AI:</strong>
+            <strong style="display:block;margin-bottom:3px;">Catatan Pemeriksaan AI:</strong>
             <ul style="margin:0;padding-left:16px;">
                 ${concerns.map((c) => `<li>${escapeHtml(c)}</li>`).join("")}
             </ul>
@@ -3969,16 +4543,16 @@ function buildAdminReceiptAnalysisBoxHtml(order, compact = false) {
     return `
         <div class="wa-ai-analysis-box" style="${compact ? "margin-top:10px;margin-bottom:12px;" : ""}">
             <div class="page-title-row" style="justify-content:space-between;margin-bottom:6px;gap:6px;">
-                <strong style="font-size:12.5px;">🤖 Hasil Pemeriksaan Struk AI</strong>
+                <strong style="font-size:12.5px;">Hasil Pemeriksaan Struk AI</strong>
                 ${ai ? `<span class="badge-pill ${ai.isSufficient ? "badge-green" : "badge-gold"}">${escapeHtml(ai.matchLabel || "Dicek AI")}</span>` : `<span class="badge-pill badge-gold">Bukti Terunggah</span>`}
             </div>
             ${ai ? `
-                <div class="meta-kv-row"><span>Terdeteksi Struk</span><strong>${isReceipt ? "✓ Ya (Struk Pembayaran)" : "❌ Bukan Struk"}</strong></div>
+                <div class="meta-kv-row"><span>Terdeteksi Struk</span><strong>${isReceipt ? "Ya (Struk Pembayaran)" : "Bukan Struk"}</strong></div>
                 <div class="meta-kv-row"><span>Nominal Terbaca</span><strong>${formatRupiah(ai.detectedAmount || 0)}</strong></div>
                 <div class="meta-kv-row"><span>Tagihan / Syarat</span><strong>${formatRupiah(ai.expectedAmount || 0)}</strong></div>
                 <div class="meta-kv-row"><span>Penerima / Merchant</span><strong>${escapeHtml(ai.recipientName || "-")}</strong></div>
                 <div class="meta-kv-row"><span>Pengirim / Bank</span><strong>${escapeHtml(senderBank)}</strong></div>
-                <div class="meta-kv-row"><span>No. Referensi</span><strong>${escapeHtml(ai.referenceId || "-")}${ai.duplicateOrderId ? ` (⚠️ Duplikat #${escapeHtml(ai.duplicateOrderId)})` : ""}</strong></div>
+                <div class="meta-kv-row"><span>No. Referensi</span><strong>${escapeHtml(ai.referenceId || "-")}${ai.duplicateOrderId ? ` (Duplikat #${escapeHtml(ai.duplicateOrderId)})` : ""}</strong></div>
                 ${ai.receiptDateText && ai.receiptDateText !== "-" ? `<div class="meta-kv-row"><span>Waktu di Struk</span><strong>${escapeHtml(ai.receiptDateText)}</strong></div>` : ""}
                 <div class="meta-kv-row"><span>Skor Keyakinan</span><strong>${ai.confidenceScore !== undefined && ai.confidenceScore !== null ? ai.confidenceScore : 95}%</strong></div>
                 ${concernsHtml}
@@ -4027,7 +4601,6 @@ function renderWaOrderContext(conv, order) {
     }
 
     const rules = order.paymentRules || {};
-    const ai = order.aiReceiptAnalysis;
     const statusClass = getStatusClass(order.status || "pending");
     const statusLabel = getStatusLabel(order.status || "pending");
 
@@ -4063,13 +4636,13 @@ function renderWaOrderContext(conv, order) {
         <div class="modal-actions mt-12">
             ${order.status !== "success" ? `
                 <button type="button" class="btn-primary btn-full" id="wa-ctx-approve-btn" data-order-id="${escapeHtml(order.orderId)}">
-                    ✓ Setujui Pembayaran &amp; Kirim WA Lunas
+                    Setujui Pembayaran &amp; Kirim WA Lunas
                 </button>
             ` : `
-                <div class="badge-pill badge-green" style="text-align:center;padding:8px;">✓ Pembayaran Sudah Disetujui (Lunas)</div>
+                <div class="badge-pill badge-green" style="text-align:center;padding:8px;">Pembayaran Sudah Disetujui (Lunas)</div>
             `}
             <button type="button" class="btn-outline btn-danger-outline btn-full" id="wa-ctx-reject-btn" data-order-id="${escapeHtml(order.orderId)}">
-                × Tolak Bukti / Minta Kirim Ulang
+                Tolak Bukti / Minta Kirim Ulang
             </button>
         </div>
     `;
@@ -4163,44 +4736,62 @@ if (waReplyForm) {
     });
 }
 
-/* Toggle Bot AI vs Manual Admin Mode */
-if (waToggleModeBtn) {
-    waToggleModeBtn.addEventListener("click", async () => {
-        if (!waSelectedConvId || !waActiveConvObject) return;
-        const nextMode = waActiveConvObject.botMode === "manual" ? "ai" : "manual";
-
-        try {
-            const res = await fetch(`${API_BASE}/api/admin/wa/conversations/${encodeURIComponent(waSelectedConvId)}/mode`, {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${getToken()}`
-                },
-                body: JSON.stringify({ botMode: nextMode })
-            });
-            if (res.ok) {
-                await loadWaWorkspace();
-            }
-        } catch (err) {
-            console.error("Toggle WA mode error:", err);
+document.querySelectorAll(".btn-quick-pill[data-quick-reply]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+        if (waReplyInput) {
+            waReplyInput.value = btn.dataset.quickReply || "";
+            waReplyInput.focus();
         }
     });
+});
+
+async function setWaConversationMode(nextMode) {
+    if (!waSelectedConvId) return;
+    try {
+        const res = await fetch(`${API_BASE}/api/admin/wa/conversations/${encodeURIComponent(waSelectedConvId)}/mode`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${getToken()}`
+            },
+            body: JSON.stringify({ botMode: nextMode })
+        });
+        if (res.ok) await loadWaWorkspace();
+    } catch (err) {
+        console.error("Toggle WA mode error:", err);
+    }
 }
+
+if (waToggleModeBtn) {
+    waToggleModeBtn.addEventListener("click", () => {
+        if (!waActiveConvObject) return;
+        setWaConversationMode(waActiveConvObject.botMode === "manual" ? "ai" : "manual");
+    });
+}
+bindClick("wa-return-to-bot-btn", () => setWaConversationMode("ai"));
+
+function setWaInboxFilter(filterVal) {
+    waActiveFilter = filterVal || "all";
+    if (waConvFilterSelect) waConvFilterSelect.value = waActiveFilter;
+    document.querySelectorAll("#wa-inbox-filter-pills [data-wa-pill]").forEach((p) => {
+        p.classList.toggle("active", p.dataset.waPill === waActiveFilter);
+    });
+    renderWaConversationList();
+}
+
+document.querySelectorAll("#wa-inbox-filter-pills [data-wa-pill]").forEach((pill) => {
+    pill.addEventListener("click", () => setWaInboxFilter(pill.dataset.waPill));
+});
 
 /* Filter & Search Listeners for WA Inbox */
 if (waConvFilterSelect) {
-    waConvFilterSelect.addEventListener("change", () => {
-        waActiveFilter = waConvFilterSelect.value;
-        renderWaConversationList();
-    });
+    waConvFilterSelect.addEventListener("change", () => setWaInboxFilter(waConvFilterSelect.value));
 }
 
 document.querySelectorAll("[data-wa-filter]").forEach((card) => {
     card.addEventListener("click", () => {
-        waActiveFilter = card.dataset.waFilter || "all";
-        if (waConvFilterSelect) waConvFilterSelect.value = waActiveFilter;
+        setWaInboxFilter(card.dataset.waFilter || "all");
         switchWaSubtab("inbox");
-        renderWaConversationList();
     });
 });
 
@@ -4243,7 +4834,7 @@ if (waGatewayForm) {
             const data = await res.json();
             if (res.ok && data.success) {
                 if (waGatewaySaveFeedback) {
-                    waGatewaySaveFeedback.innerText = "✓ Konfigurasi tersimpan!";
+                    waGatewaySaveFeedback.innerText = "Konfigurasi tersimpan.";
                     waGatewaySaveFeedback.className = "settings-status success";
                     setTimeout(() => { waGatewaySaveFeedback.innerText = ""; }, 3000);
                 }
@@ -4358,14 +4949,14 @@ if (waTestForm) {
             alert("Gagal terhubung ke server.");
         } finally {
             waTestSubmitBtn.disabled = false;
-            waTestSubmitBtn.innerText = "🚀 Kirim Simulasi ke Bot";
+            waTestSubmitBtn.innerText = "Kirim Simulasi ke Bot";
         }
     });
 }
 
 
 /* =========================
-   SETTINGS (PAYMENT & PO — 100% RESTORED)
+   SETTINGS & BUDGET ALLOCATION
    ========================= */
 
 async function loadSettings() {
@@ -4395,28 +4986,25 @@ async function loadSettings() {
 function renderSettings(settings) {
     if (!settings) return;
 
-    if (settingsQrisOwner) {
-        settingsQrisOwner.value = settings.qrisOwnerName || "";
-    }
-
-    if (settingsQrisImage) {
-        settingsQrisImage.value = settings.qrisImageUrl || "";
-    }
-
+    if (settingsQrisOwner) settingsQrisOwner.value = settings.qrisOwnerName || "";
+    let qrisImg = (settings.qrisImageUrl || "images/qris.jpeg").trim();
+    if (qrisImg.startsWith("/images/")) qrisImg = qrisImg.slice(1);
+    if (settingsQrisImage) settingsQrisImage.value = qrisImg;
     if (settingsQrisPreview) {
-        settingsQrisPreview.src = settings.qrisImageUrl || "/images/qris.jpeg";
+        settingsQrisPreview.src = qrisImg;
+        settingsQrisPreview.onerror = function() {
+            if (!this.dataset.fallbackTried) {
+                this.dataset.fallbackTried = "1";
+                this.src = "images/qris.jpeg";
+            }
+        };
     }
-
-    if (settingsWa) {
-        settingsWa.value = settings.adminWaNumber || "";
-    }
+    if (settingsWa) settingsWa.value = settings.adminWaNumber || "";
 
     if (settingsUpdated) {
-        if (settings.updatedAt) {
-            settingsUpdated.innerText = `Terakhir diperbarui: ${formatDate(settings.updatedAt)}`;
-        } else {
-            settingsUpdated.innerText = "";
-        }
+        settingsUpdated.innerText = settings.updatedAt
+            ? `Terakhir diperbarui: ${formatDate(settings.updatedAt)}`
+            : "";
     }
 
     if (settingsStatus) {
@@ -4491,7 +5079,7 @@ async function saveSettings(e) {
             return;
         }
 
-        showSettingsStatus("✓ Pengaturan tersimpan", "success");
+        showSettingsStatus("Pengaturan tersimpan", "success");
 
         if (settingsUpdated && result.updatedAt) {
             settingsUpdated.innerText = `Terakhir diperbarui: ${formatDate(result.updatedAt)}`;
@@ -4513,9 +5101,127 @@ if (settingsForm) {
 if (settingsQrisImage) {
     settingsQrisImage.addEventListener("input", () => {
         if (settingsQrisPreview) {
-            settingsQrisPreview.src = settingsQrisImage.value.trim() || "/images/qris.jpeg";
+            let val = (settingsQrisImage.value.trim() || "images/qris.jpeg");
+            if (val.startsWith("/images/")) val = val.slice(1);
+            settingsQrisPreview.src = val;
         }
     });
+}
+
+/* Budget Allocation Settings (/api/admin/finance/settings) */
+const budgetSettingsForm = document.getElementById("budget-settings-form");
+const budgetHppInput = document.getElementById("budget-hpp-pct");
+const budgetCfInput = document.getElementById("budget-cf-pct");
+const budgetProfitInput = document.getElementById("budget-profit-pct");
+const budgetTotalBadge = document.getElementById("budget-total-pct-badge");
+const budgetStatusEl = document.getElementById("budget-settings-status");
+const budgetSubmitBtn = document.getElementById("budget-settings-submit");
+
+function updateBudgetTotalBadge() {
+    if (!budgetTotalBadge) return;
+    const sum = (parseInt(budgetHppInput?.value || "0", 10) || 0)
+        + (parseInt(budgetCfInput?.value || "0", 10) || 0)
+        + (parseInt(budgetProfitInput?.value || "0", 10) || 0);
+    budgetTotalBadge.innerText = `Total: ${sum}%`;
+    budgetTotalBadge.className = `badge-pill ${sum === 100 ? "badge-green" : "badge-danger"}`;
+}
+
+[budgetHppInput, budgetCfInput, budgetProfitInput].forEach((inp) => {
+    if (inp) inp.addEventListener("input", updateBudgetTotalBadge);
+});
+
+async function loadBudgetSettings() {
+    if (!budgetSettingsForm) return;
+    try {
+        const res = await fetch(`${API_BASE}/api/admin/finance/settings`, {
+            headers: { "Authorization": `Bearer ${getToken()}` }
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success || !data.settings) return;
+        if (budgetHppInput) budgetHppInput.value = data.settings.hppPct;
+        if (budgetCfInput) budgetCfInput.value = data.settings.cashflowPct;
+        if (budgetProfitInput) budgetProfitInput.value = data.settings.profitPct;
+        updateBudgetTotalBadge();
+    } catch (err) {
+        console.error("Load budget settings error:", err);
+    }
+}
+
+if (budgetSettingsForm) {
+    budgetSettingsForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const hppPct = parseInt(budgetHppInput?.value || "0", 10);
+        const cashflowPct = parseInt(budgetCfInput?.value || "0", 10);
+        const profitPct = parseInt(budgetProfitInput?.value || "0", 10);
+
+        if (hppPct + cashflowPct + profitPct !== 100) {
+            if (budgetStatusEl) {
+                budgetStatusEl.innerText = "Total persentase wajib tepat 100%.";
+                budgetStatusEl.className = "settings-status error";
+            }
+            return;
+        }
+
+        if (budgetSubmitBtn) budgetSubmitBtn.disabled = true;
+        try {
+            const res = await fetch(`${API_BASE}/api/admin/finance/settings`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${getToken()}`
+                },
+                body: JSON.stringify({ hppPct, cashflowPct, profitPct })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                if (budgetStatusEl) {
+                    budgetStatusEl.innerText = data.message || "Gagal menyimpan rasio anggaran.";
+                    budgetStatusEl.className = "settings-status error";
+                }
+                return;
+            }
+            if (budgetStatusEl) {
+                budgetStatusEl.innerText = "Rasio anggaran berhasil disimpan.";
+                budgetStatusEl.className = "settings-status success";
+                setTimeout(() => { budgetStatusEl.innerText = ""; }, 3000);
+            }
+        } catch (err) {
+            console.error("Save budget settings error:", err);
+        } finally {
+            if (budgetSubmitBtn) budgetSubmitBtn.disabled = false;
+        }
+    });
+}
+
+document.querySelectorAll(".settings-nav-item[data-settings-section]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".settings-nav-item[data-settings-section]").forEach((b) => b.classList.toggle("active", b === btn));
+        const target = document.getElementById(btn.dataset.settingsSection);
+        if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+});
+
+bindClick("settings-go-wa-gateway-btn", () => { switchTab("whatsapp"); switchWaSubtab("gateway"); });
+bindClick("settings-go-wa-knowledge-btn", () => { switchTab("whatsapp"); switchWaSubtab("knowledge"); });
+bindClick("settings-go-po-btn", () => switchTab("preorder"));
+bindClick("settings-logout-btn", doLogout);
+
+
+/* =========================
+   PRE-ORDER (DEDICATED BATCH PAGE)
+   ========================= */
+
+const poBatchNameInput = document.getElementById("po-batch-name");
+const poOpenDateInput = document.getElementById("po-open-date");
+const poMaxQuotaInput = document.getElementById("po-max-quota");
+const poParticipantSearch = document.getElementById("po-participant-search");
+const poParticipantFilter = document.getElementById("po-participant-filter");
+
+function toDatetimeLocalValue(isoStr) {
+    const d = parseISOString(isoStr);
+    const p = d ? getWIBParts(d) : null;
+    if (!p) return "";
+    return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
 }
 
 async function loadPOSettings() {
@@ -4533,90 +5239,239 @@ async function loadPOSettings() {
         const result = await response.json();
         if (!response.ok || !result.success) return;
 
+        poStatusCache = result;
         currentPOData = result.po;
-        const isOpen = result.isOpen === true;
-
-        if (headerPoBadge && headerPoText) {
-            headerPoBadge.classList.toggle("closed", !isOpen);
-            headerPoText.innerText = isOpen ? "Pre-order dibuka" : "Pre-order ditutup";
-        }
-
-        if (sidebarPoDates) {
-            sidebarPoDates.innerText = (isOpen && currentPOData?.tanggalTutup)
-                ? `Tutup: ${formatDate(currentPOData.tanggalTutup)}`
-                : "Tidak ada batch aktif";
-        }
-
-        if (poCurrentBadge) {
-            poCurrentBadge.className = isOpen ? "po-badge badge-open" : "po-badge badge-closed";
-            poCurrentBadge.innerText = isOpen ? "PO DIBUKA" : "PO DITUTUP";
-        }
-
-        if (poInfoStatus) {
-            poInfoStatus.innerHTML = isOpen
-                ? "<span style='color: var(--green-text); font-weight: 700;'>🟢 Pre-Order Sedang Aktif</span>"
-                : "<span style='color: var(--danger); font-weight: 700;'>🔴 Pre-Order Sedang Ditutup</span>";
-        }
-
-        if (poInfoClose) {
-            poInfoClose.innerText = (isOpen && currentPOData?.tanggalTutup)
-                ? formatDate(currentPOData.tanggalTutup)
-                : "-";
-        }
-
-        if (poInfoProduction) {
-            poInfoProduction.innerText = (isOpen && currentPOData?.tanggalProduksi)
-                ? formatDate(currentPOData.tanggalProduksi)
-                : "-";
-        }
-
-        if (btnClosePo) {
-            btnClosePo.style.display = isOpen ? "inline-flex" : "none";
-        }
-
-        if (poFormTitle && poSubmitBtn) {
-            if (isOpen) {
-                poFormTitle.innerText = "Perbarui Jadwal Pre-Order Aktif";
-                poSubmitBtn.innerText = "💾 Simpan Perubahan Jadwal";
-
-                if (poCloseDate && currentPOData?.tanggalTutup) {
-                    const d = parseISOString(currentPOData.tanggalTutup);
-                    const parts = getWIBParts(d);
-                    if (parts) {
-                        poCloseDate.value = `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
-                    }
-                }
-
-                if (poProductionDate && currentPOData?.tanggalProduksi) {
-                    const d = parseISOString(currentPOData.tanggalProduksi);
-                    const parts = getWIBParts(d);
-                    if (parts) {
-                        poProductionDate.value = `${parts.year}-${parts.month}-${parts.day}`;
-                    }
-                }
-            } else {
-                poFormTitle.innerText = "Buka Periode Pre-Order Baru";
-                poSubmitBtn.innerText = "🚀 Buka Pre-Order Sekarang";
-
-                const now = new Date();
-                const defaultClose = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
-                const defaultProd = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-
-                const cParts = getWIBParts(defaultClose);
-                const pParts = getWIBParts(defaultProd);
-
-                if (poCloseDate && cParts) {
-                    poCloseDate.value = `${cParts.year}-${cParts.month}-${cParts.day}T23:59`;
-                }
-                if (poProductionDate && pParts) {
-                    poProductionDate.value = `${pParts.year}-${pParts.month}-${pParts.day}`;
-                }
-            }
-        }
+        renderPOPage();
+        renderDashboardPOCard();
 
     } catch (err) {
         console.error("Load PO settings error:", err);
     }
+}
+
+function renderPOPage() {
+    const result = poStatusCache || {};
+    const po = currentPOData;
+    const isOpen = result.isOpen === true;
+    const history = Array.isArray(result.history) ? result.history : [];
+
+    if (headerPoBadge && headerPoText) {
+        headerPoBadge.classList.toggle("closed", !isOpen);
+        headerPoText.innerText = isOpen ? "Pre-order dibuka" : "Pre-order ditutup";
+    }
+    const sidebarPoBadge = document.getElementById("sidebar-po-badge");
+    if (sidebarPoBadge) {
+        sidebarPoBadge.innerText = isOpen ? "Buka" : "Tutup";
+    }
+
+    if (poCurrentBadge) {
+        poCurrentBadge.className = `badge-pill ${isOpen ? "badge-green" : "badge-neutral"}`;
+        poCurrentBadge.innerText = isOpen ? "PO DIBUKA" : "PO DITUTUP";
+    }
+
+    setText("po-hero-id-label", po ? `Periode #${po.id}` : "Belum ada periode");
+    if (poInfoStatus) {
+        poInfoStatus.innerText = po ? (po.batchName || `Batch PO #${po.id}`) : "Belum Ada Batch Pre-Order";
+    }
+    setText("po-hero-subtitle", isOpen
+        ? "Batch pre-order sedang aktif menerima pesanan dari pelanggan di halaman toko."
+        : "Pre-order sedang ditutup. Buka periode baru di formulir pengaturan batch untuk menerima pesanan.");
+
+    const batchOrders = po ? getPOBatchOrders(po.id) : [];
+    const allocatedPcs = batchOrders.reduce((s, o) => s + getOrderTotalCookies(o), 0);
+    const maxQuota = po ? Number(po.maxQuota || 100) : 100;
+    const quotaPct = maxQuota > 0 ? Math.min(Math.round((allocatedPcs / maxQuota) * 100), 100) : 0;
+    const remainingPcs = Math.max(0, maxQuota - allocatedPcs);
+
+    setText("po-hero-allocated-pcs", String(allocatedPcs));
+    setText("po-hero-max-quota", `/ ${maxQuota} pcs`);
+    const heroBar = document.getElementById("po-hero-progress-bar");
+    if (heroBar) heroBar.style.width = `${quotaPct}%`;
+    setText("po-hero-orders-count", `${batchOrders.length} pesanan masuk`);
+    setText("po-hero-remaining-pcs", `Tersisa ${remainingPcs} pcs`);
+
+    setText("po-info-open", po?.tanggalBuka ? formatDate(po.tanggalBuka) : "-");
+    if (poInfoClose) poInfoClose.innerText = po?.tanggalTutup ? formatDate(po.tanggalTutup) : "-";
+    if (poInfoProduction) poInfoProduction.innerText = po?.tanggalProduksi ? formatDateShort(getLocalDateString(po.tanggalProduksi)) : "-";
+
+    const estRev = batchOrders.reduce((s, o) => s + (o.total || 0), 0);
+    const paidRev = batchOrders.filter((o) => o.status === "success").reduce((s, o) => s + (o.total || 0), 0);
+    setText("po-hero-est-revenue", formatRupiah(estRev));
+    setText("po-hero-paid-revenue", `${formatRupiah(paidRev)} sudah lunas`);
+
+    if (btnClosePo) {
+        btnClosePo.style.display = isOpen ? "inline-flex" : "none";
+    }
+
+    if (poFormTitle && poSubmitBtn) {
+        if (isOpen && po) {
+            poFormTitle.innerText = "Perbarui jadwal & kuota batch aktif";
+            poSubmitBtn.innerText = "Simpan perubahan jadwal";
+            if (poBatchNameInput) poBatchNameInput.value = po.batchName || "";
+            if (poOpenDateInput) poOpenDateInput.value = toDatetimeLocalValue(po.tanggalBuka);
+            if (poCloseDate) poCloseDate.value = toDatetimeLocalValue(po.tanggalTutup);
+            if (poProductionDate && po.tanggalProduksi) {
+                poProductionDate.value = getLocalDateString(po.tanggalProduksi);
+            }
+            if (poMaxQuotaInput) poMaxQuotaInput.value = po.maxQuota || 100;
+        } else {
+            poFormTitle.innerText = "Buka periode pre-order baru";
+            poSubmitBtn.innerText = "Buka Pre-Order Sekarang";
+            const nextNum = (po?.id || 0) + 1;
+            if (poBatchNameInput && !poBatchNameInput.value) {
+                poBatchNameInput.value = `Batch PO #${String(nextNum).padStart(2, "0")}`;
+            }
+            const now = new Date();
+            const defaultClose = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
+            const defaultProd = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+            const cParts = getWIBParts(defaultClose);
+            const pParts = getWIBParts(defaultProd);
+            if (poOpenDateInput) poOpenDateInput.value = "";
+            if (poCloseDate && cParts) poCloseDate.value = `${cParts.year}-${cParts.month}-${cParts.day}T23:59`;
+            if (poProductionDate && pParts) poProductionDate.value = `${pParts.year}-${pParts.month}-${pParts.day}`;
+            if (poMaxQuotaInput) poMaxQuotaInput.value = po?.maxQuota || 100;
+        }
+    }
+
+    renderPOVariantAllocation(batchOrders, allocatedPcs);
+    renderPOLocationCards(batchOrders);
+    renderPOParticipants(batchOrders);
+    renderPOHistory(history);
+}
+
+function renderPOVariantAllocation(batchOrders, totalPcs) {
+    const tbody = document.getElementById("po-variant-allocation-tbody");
+    setText("po-variant-total-badge", `Total ${totalPcs} pcs`);
+    if (!tbody) return;
+
+    const map = {};
+    batchOrders.forEach((o) => {
+        const seenInOrder = new Set();
+        (o.items || []).forEach((it) => {
+            const key = `${it.productId || it.name}||${it.addonName || ""}`;
+            const label = it.addonName ? `${it.name} (+ ${it.addonName})` : it.name;
+            if (!map[key]) map[key] = { label, orders: 0, pcs: 0, rev: 0 };
+            if (!seenInOrder.has(key)) {
+                map[key].orders += 1;
+                seenInOrder.add(key);
+            }
+            map[key].pcs += it.quantity || 0;
+            map[key].rev += it.subtotal || ((it.price || 0) * (it.quantity || 0));
+        });
+    });
+
+    const list = Object.values(map).sort((a, b) => b.pcs - a.pcs);
+    if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-state-sm">Belum ada item teralokasi pada batch ini.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = list.map((v) => {
+        const pct = totalPcs > 0 ? Math.round((v.pcs / totalPcs) * 100) : 0;
+        return `
+            <tr>
+                <td><strong>${escapeHtml(v.label)}</strong></td>
+                <td class="align-right">${v.orders} pesanan</td>
+                <td class="align-right"><strong>${v.pcs} pcs</strong></td>
+                <td>${pct}% dari batch</td>
+                <td class="align-right">${formatRupiah(v.rev)}</td>
+            </tr>
+        `;
+    }).join("");
+}
+
+function renderPOLocationCards(batchOrders) {
+    const groups = [
+        ["sman1", "po-loc-sman1-orders", "po-loc-sman1-pcs"],
+        ["sman5", "po-loc-sman5-orders", "po-loc-sman5-pcs"],
+        ["others", "po-loc-others-orders", "po-loc-others-pcs"]
+    ];
+    groups.forEach(([key, ordId, pcsId]) => {
+        const list = batchOrders.filter((o) => key === "others" ? !["sman1", "sman5"].includes(o.location) : o.location === key);
+        const m = getMetrics(list);
+        setText(ordId, `${m.orders} pesanan`);
+        setText(pcsId, `${m.items} pcs · ${formatRupiah(m.revenue)}`);
+
+        const badgeEl = document.getElementById(ordId);
+        if (badgeEl) {
+            if (m.orders > 0) {
+                badgeEl.classList.remove("badge-neutral");
+                badgeEl.classList.add("badge-green");
+            } else {
+                badgeEl.classList.remove("badge-green");
+                badgeEl.classList.add("badge-neutral");
+            }
+        }
+    });
+}
+
+function renderPOParticipants(batchOrders) {
+    const tbody = document.getElementById("po-participants-tbody");
+    setText("po-participants-count-badge", `${batchOrders.length} pesanan`);
+    if (!tbody) return;
+
+    const q = (poParticipantSearch?.value || "").trim().toLowerCase();
+    const f = poParticipantFilter?.value || "all";
+
+    const filtered = batchOrders.filter((o) => {
+        if (f !== "all" && (o.status || "pending") !== f) return false;
+        if (q) {
+            return (o.orderId || "").toLowerCase().includes(q)
+                || (o.customerName || "").toLowerCase().includes(q)
+                || (o.whatsapp || "").toLowerCase().includes(q);
+        }
+        return true;
+    });
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="empty-state-sm">Belum ada peserta batch yang cocok.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = filtered.map((o) => `
+        <tr>
+            <td><span class="cell-order-id">${escapeHtml(o.orderId)}</span></td>
+            <td><strong>${escapeHtml(o.customerName || "-")}</strong></td>
+            <td><span class="cell-items-text">${escapeHtml(getOrderItemsSummary(o))}</span></td>
+            <td class="align-right">${getOrderTotalCookies(o)} pcs</td>
+            <td><span class="location-badge ${getLocationClass(o.location)}">${escapeHtml(getLocationLabel(o.location))}</span></td>
+            <td>${(o.paymentMethod || "cash") === "qris" ? "QRIS" : "COD"}</td>
+            <td class="align-right"><strong>${formatRupiah(o.total || 0)}</strong></td>
+            <td>${getOrderStatusBadgeHtml(o)}</td>
+            <td class="align-right"><button type="button" class="btn-detail po-part-detail-btn" data-order-id="${escapeHtml(o.orderId)}">Detail &rarr;</button></td>
+        </tr>
+    `).join("");
+
+    tbody.querySelectorAll(".po-part-detail-btn").forEach((btn) => {
+        btn.addEventListener("click", () => openOrderDetailPage(btn.dataset.orderId));
+    });
+}
+
+if (poParticipantSearch) poParticipantSearch.addEventListener("input", () => renderPOParticipants(currentPOData ? getPOBatchOrders(currentPOData.id) : []));
+if (poParticipantFilter) poParticipantFilter.addEventListener("change", () => renderPOParticipants(currentPOData ? getPOBatchOrders(currentPOData.id) : []));
+
+function renderPOHistory(history) {
+    const tbody = document.getElementById("po-history-tbody");
+    if (!tbody) return;
+    if (!history || history.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="empty-state-sm">Belum ada riwayat periode pre-order.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = history.map((h) => {
+        const isOpen = h.status === "open";
+        return `
+            <tr>
+                <td><strong>#${h.id}</strong></td>
+                <td>${escapeHtml(h.batchName || `Batch PO #${h.id}`)}</td>
+                <td>${formatDate(h.tanggalBuka)} - ${formatDate(h.tanggalTutup)}</td>
+                <td>${h.tanggalProduksi ? formatDateShort(getLocalDateString(h.tanggalProduksi)) : "-"}</td>
+                <td class="align-right">${h.orderCount || 0} pesanan</td>
+                <td class="align-right"><strong>${h.allocatedPcs || 0} / ${h.maxQuota || 100} pcs</strong></td>
+                <td><span class="badge-pill ${isOpen ? "badge-green" : "badge-neutral"}">${isOpen ? "Aktif" : "Ditutup"}</span></td>
+            </tr>
+        `;
+    }).join("");
 }
 
 function showPOStatusMsg(msg, type) {
@@ -4636,6 +5491,9 @@ async function handlePOSubmit(e) {
 
     const closeVal = poCloseDate ? poCloseDate.value : "";
     const prodVal = poProductionDate ? poProductionDate.value : "";
+    const openVal = poOpenDateInput ? poOpenDateInput.value : "";
+    const batchName = poBatchNameInput ? poBatchNameInput.value.trim() : "";
+    const maxQuota = parseInt(poMaxQuotaInput?.value || "100", 10) || 100;
 
     if (!closeVal) {
         showPOStatusMsg("Batas waktu tutup PO wajib diisi.", "error");
@@ -4648,20 +5506,16 @@ async function handlePOSubmit(e) {
 
     const closeIso = new Date(closeVal).toISOString();
     const prodIso = new Date(prodVal + "T00:00:00").toISOString();
+    const openIso = openVal ? new Date(openVal).toISOString() : undefined;
 
     const origBtnText = poSubmitBtn.innerText;
     poSubmitBtn.disabled = true;
     poSubmitBtn.innerText = "Menyimpan...";
 
     try {
-        const isOpen = currentPOData && currentPOData.status === "open";
-        let url = `${API_BASE}/api/admin/po/open`;
-        let method = "POST";
-
-        if (isOpen && currentPOData.id) {
-            url = `${API_BASE}/api/admin/po/${currentPOData.id}`;
-            method = "PUT";
-        }
+        const isOpen = poStatusCache && poStatusCache.isOpen === true && currentPOData && currentPOData.id;
+        const url = isOpen ? `${API_BASE}/api/admin/po/${currentPOData.id}` : `${API_BASE}/api/admin/po/open`;
+        const method = isOpen ? "PUT" : "POST";
 
         const response = await fetch(url, {
             method,
@@ -4670,8 +5524,11 @@ async function handlePOSubmit(e) {
                 "Authorization": `Bearer ${getToken()}`
             },
             body: JSON.stringify({
+                batchName: batchName || undefined,
+                tanggalBuka: openIso,
                 tanggalTutup: closeIso,
-                tanggalProduksi: prodIso
+                tanggalProduksi: prodIso,
+                maxQuota
             })
         });
 
@@ -4682,7 +5539,7 @@ async function handlePOSubmit(e) {
             return;
         }
 
-        showPOStatusMsg("✓ " + (result.message || "Jadwal PO berhasil disimpan!"), "success");
+        showPOStatusMsg(result.message || "Jadwal PO berhasil disimpan.", "success");
         await loadPOSettings();
 
     } catch (err) {
@@ -4728,7 +5585,7 @@ async function handleClosePO() {
     } finally {
         if (btnClosePo) {
             btnClosePo.disabled = false;
-            btnClosePo.innerText = "🛑 Tutup PO Sekarang";
+            btnClosePo.innerText = "Tutup batch sekarang";
         }
     }
 }
@@ -4740,9 +5597,13 @@ if (poForm) {
 if (btnClosePo) {
     btnClosePo.addEventListener("click", handleClosePO);
 }
+bindClick("po-header-open-btn", () => {
+    document.getElementById("po-settings-card")?.scrollIntoView({ behavior: "smooth" });
+    poBatchNameInput?.focus();
+});
 
 if (headerPoBadge) {
-    headerPoBadge.addEventListener("click", () => switchTab("settings"));
+    headerPoBadge.addEventListener("click", () => switchTab("preorder"));
 }
 
 /* =========================
@@ -4771,9 +5632,7 @@ if (headerPoBadge) {
         }
 
         showDashboardView();
-        loadOrders();
-        loadPOSettings();
-        loadWaWorkspace({ silent: true });
+        bootWorkspace();
 
     } catch (error) {
         console.error("Init error:", error);
