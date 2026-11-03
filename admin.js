@@ -3924,9 +3924,9 @@ function renderBotHealthBanner(botHealth, isBotOn = true) {
         waBotHealthCache = botHealth;
     }
     const bh = botHealth || waBotHealthCache || {};
-    const activeModel = bh.activeModel || bh.primaryModel || "gemini-3.8-flash";
-    const primaryModel = bh.primaryModel || "gemini-3.8-flash";
-    const fallbackModel = bh.fallbackModel || "gemini-3-flash-preview";
+    const activeModel = bh.activeModel || bh.primaryModel || "gemini-2.0-flash";
+    const primaryModel = bh.primaryModel || "gemini-2.0-flash";
+    const fallbackModel = bh.fallbackModel || "gemini-1.5-flash-8b";
     const healthStatus = bh.status || "healthy";
 
     if (waSettingBotActiveTitle) {
