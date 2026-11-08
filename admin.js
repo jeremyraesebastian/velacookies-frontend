@@ -120,10 +120,10 @@ const bulkPreviewNote = document.getElementById("bulk-preview-note");
 const bulkDeleteSubmitBtn = document.getElementById("bulk-delete-submit-btn");
 
 const finishOrderModal = document.getElementById("finish-order-modal");
-const finishOrderCloseBtn = document.getElementById("finish-order-close");
+const finishOrderCloseBtn = document.getElementById("finish-order-modal-close") || document.getElementById("finish-order-close");
 const finishOrderCancelBtn = document.getElementById("finish-order-cancel-btn");
-const finishOrderSubmitBtn = document.getElementById("finish-order-submit-btn");
-const finishOrderSummaryBox = document.getElementById("finish-order-summary-box");
+const finishOrderSubmitBtn = document.getElementById("finish-order-confirm-btn") || document.getElementById("finish-order-submit-btn");
+const finishOrderSummaryBox = document.getElementById("finish-order-summary") || document.getElementById("finish-order-summary-box");
 
 /* Settings DOM */
 const settingsForm = document.getElementById("settings-form");
@@ -1736,20 +1736,25 @@ function openFinishOrderModal(order) {
     }
 
     pendingFinishOrderTarget = order;
-    if (finishOrderSummaryBox) {
+    const summaryEl = finishOrderSummaryBox || document.getElementById("finish-order-summary") || document.getElementById("finish-order-summary-box");
+    if (summaryEl) {
         const pcsCount = getOrderTotalCookies(order);
         const itemsSummary = escapeHtml(getOrderItemsSummary(order));
-        finishOrderSummaryBox.innerHTML = `
+        const locLabel = escapeHtml(getLocationLabel(order.location));
+        const locDetail = order.locationDetail ? ` (${escapeHtml(order.locationDetail)})` : "";
+        const payLabel = (order.paymentMethod || "cash") === "qris" ? "QRIS" : "COD / Tunai";
+        summaryEl.innerHTML = `
             <div class="meta-kv-row"><span>ID Pesanan</span><strong>${escapeHtml(order.orderId || "-")}</strong></div>
-            <div class="meta-kv-row"><span>Pelanggan</span><strong>${escapeHtml(order.customerName || "-")} (${escapeHtml(order.whatsapp || "-")})</strong></div>
+            <div class="meta-kv-row"><span>Nama Pelanggan</span><strong>${escapeHtml(order.customerName || "-")} (${escapeHtml(order.whatsapp || "-")})</strong></div>
             <div class="meta-kv-row"><span>Item (${pcsCount} pcs)</span><strong>${itemsSummary}</strong></div>
+            <div class="meta-kv-row"><span>Lokasi &amp; Metode</span><strong>${locLabel}${locDetail} · ${payLabel}</strong></div>
             <div class="meta-kv-row"><span>Total Tagihan</span><strong>${formatRupiah(order.total || 0)}</strong></div>
         `;
     }
 
     if (finishOrderSubmitBtn) {
         finishOrderSubmitBtn.disabled = false;
-        finishOrderSubmitBtn.innerText = "🔒 Ya, Yakin Finish & Kunci Permanen";
+        finishOrderSubmitBtn.innerText = "🔒 Ya, Finish & Kunci Pesanan";
     }
 
     finishOrderModal.classList.add("active");
@@ -1767,6 +1772,11 @@ if (finishOrderModal) {
         if (e.target === finishOrderModal) closeFinishOrderModal();
     });
 }
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && finishOrderModal && finishOrderModal.classList.contains("active")) {
+        closeFinishOrderModal();
+    }
+});
 if (finishOrderSubmitBtn) {
     finishOrderSubmitBtn.addEventListener("click", async () => {
         if (!pendingFinishOrderTarget) return;
