@@ -60,6 +60,7 @@ const ordersCardTotalSub = document.getElementById("orders-card-total-sub");
 const ordersCardPending = document.getElementById("orders-card-pending");
 const ordersCardPendingSub = document.getElementById("orders-card-pending-sub");
 const ordersCardSuccess = document.getElementById("orders-card-success");
+const ordersCardFinished = document.getElementById("orders-card-finished");
 const ordersCardReview = document.getElementById("orders-card-review");
 const ordersCardReviewSub = document.getElementById("orders-card-review-sub");
 const ordersListSubtitle = document.getElementById("orders-list-subtitle");
@@ -117,6 +118,12 @@ const bulkEndDate = document.getElementById("bulk-end-date");
 const bulkPreviewCount = document.getElementById("bulk-preview-count");
 const bulkPreviewNote = document.getElementById("bulk-preview-note");
 const bulkDeleteSubmitBtn = document.getElementById("bulk-delete-submit-btn");
+
+const finishOrderModal = document.getElementById("finish-order-modal");
+const finishOrderCloseBtn = document.getElementById("finish-order-close");
+const finishOrderCancelBtn = document.getElementById("finish-order-cancel-btn");
+const finishOrderSubmitBtn = document.getElementById("finish-order-submit-btn");
+const finishOrderSummaryBox = document.getElementById("finish-order-summary-box");
 
 /* Settings DOM */
 const settingsForm = document.getElementById("settings-form");
@@ -485,10 +492,16 @@ function getLocationClass(location) {
     return map[location] || "";
 }
 
+function isPaidOrder(order) {
+    const s = (order && order.status) || "pending";
+    return s === "success" || s === "finished";
+}
+
 function getStatusLabel(status) {
     const map = {
         "pending": "Pending",
         "success": "Success",
+        "finished": "🔒 Finish",
         "expired": "Expired",
         "failed": "Failed"
     };
@@ -499,6 +512,7 @@ function getStatusClass(status) {
     const map = {
         "pending": "status-pending",
         "success": "status-success",
+        "finished": "status-finished",
         "expired": "status-expired",
         "failed": "status-failed"
     };
@@ -754,16 +768,18 @@ async function loadOrders() {
 }
 
 function renderSummary() {
-    const successOrders = allOrders.filter((o) => (o.status || "pending") === "success");
+    const paidOrders = allOrders.filter(isPaidOrder);
+    const successOnlyOrders = allOrders.filter((o) => (o.status || "pending") === "success");
+    const finishedOrders = allOrders.filter((o) => o.status === "finished");
     const pendingOrders = allOrders.filter((o) => (o.status || "pending") === "pending");
     const expiredOrders = allOrders.filter((o) => o.status === "expired");
     const failedOrders = allOrders.filter((o) => o.status === "failed");
 
-    const metricsSuccess = getMetrics(successOrders);
+    const metricsSuccess = getMetrics(paidOrders);
     const metricsAll = getMetrics(allOrders);
 
     const todayWIB = getTodayDateString();
-    const todayOrders = successOrders.filter((o) => getLocalDateString(o.createdAt) === todayWIB).length;
+    const todayOrders = paidOrders.filter((o) => getLocalDateString(o.createdAt) === todayWIB).length;
 
     if (summaryTotalOrders) summaryTotalOrders.innerText = metricsSuccess.orders;
     if (summaryTotalRevenue) summaryTotalRevenue.innerText = formatRupiah(metricsSuccess.revenue);
@@ -793,7 +809,8 @@ function renderSummary() {
             : "Periksa konfirmasi pelanggan";
     }
 
-    if (ordersCardSuccess) ordersCardSuccess.innerText = successOrders.length;
+    if (ordersCardSuccess) ordersCardSuccess.innerText = successOnlyOrders.length;
+    if (ordersCardFinished) ordersCardFinished.innerText = finishedOrders.length;
     const verifyCountEl = document.getElementById("orders-card-verify");
     if (verifyCountEl) verifyCountEl.innerText = pendingOrders.filter(isAwaitingVerification).length;
     if (ordersCardReview) ordersCardReview.innerText = expiredOrders.length + failedOrders.length;
@@ -853,7 +870,7 @@ function getLowStockItems() {
 function renderDashboard() {
     const todayWIB = getTodayDateString();
     const yesterday = getDateStringOffset(todayWIB, -1);
-    const successOrders = allOrders.filter((o) => o.status === "success");
+    const successOrders = allOrders.filter(isPaidOrder);
     const pendingOrders = allOrders.filter((o) => (o.status || "pending") === "pending");
     const verifyOrders = pendingOrders.filter(isAwaitingVerification);
     const todayMetrics = getMetrics(successOrders.filter((o) => getLocalDateString(o.createdAt) === todayWIB));
@@ -905,7 +922,7 @@ function renderDashboardChart() {
     const days = [];
     for (let i = 6; i >= 0; i--) {
         const dateStr = getDateStringOffset(today, -i);
-        const m = getMetrics(allOrders.filter((o) => o.status === "success" && getLocalDateString(o.createdAt) === dateStr));
+        const m = getMetrics(allOrders.filter((o) => isPaidOrder(o) && getLocalDateString(o.createdAt) === dateStr));
         days.push({ date: dateStr, ...m });
     }
     const maxRev = Math.max(...days.map((d) => d.revenue), 1);
@@ -941,7 +958,7 @@ function renderDashboardChart() {
 
 function getPOBatchOrders(poId) {
     if (!poId) return [];
-    return allOrders.filter((o) => String(o.poPeriodId) === String(poId) && ["pending", "success"].includes(o.status || "pending"));
+    return allOrders.filter((o) => String(o.poPeriodId) === String(poId) && ["pending", "success", "finished"].includes(o.status || "pending"));
 }
 
 function renderDashboardPOCard() {
@@ -1027,7 +1044,7 @@ bindClick("dash-export-btn", () => {
 function renderCustomerInsights() {
     if (!insightTotalCustomers) return;
 
-    const successOrders = allOrders.filter((o) => (o.status || "pending") === "success");
+    const successOrders = allOrders.filter(isPaidOrder);
     const customerMap = {};
 
     successOrders.forEach((order) => {
@@ -1183,6 +1200,7 @@ function getOrderItemsSummary(order) {
 
 function getPaymentStatusSub(order) {
     const statusVal = order.status || "pending";
+    if (statusVal === "finished") return { text: "Lunas · Finish", cls: "" };
     if (statusVal === "success") return { text: "Lunas", cls: "" };
     if (statusVal === "pending" && order.paymentProofUrl) return { text: "Bukti terunggah", cls: "claimed" };
     if (statusVal === "pending" && order.customerConfirmed) return { text: "Klaim sudah bayar", cls: "claimed" };
@@ -1343,10 +1361,18 @@ function buildOrderTimelineHtml(order) {
     if (order.customerConfirmed || order.paymentProofUrl) {
         steps.push({ label: order.paymentProofUrl ? "Bukti pembayaran diunggah" : "Pelanggan klaim sudah bayar", time: order.customerConfirmedAt, done: true });
     }
-    if (order.status === "success") steps.push({ label: "Pembayaran diverifikasi (Lunas)", time: order.paidAt, done: true });
-    else if (order.status === "expired") steps.push({ label: "Pesanan kedaluwarsa", time: order.expiredAt, done: true });
-    else if (order.status === "failed") steps.push({ label: "Pesanan gagal / dibatalkan", time: null, done: true });
-    else steps.push({ label: "Menunggu verifikasi admin", time: null, done: false });
+    if (order.status === "finished") {
+        steps.push({ label: "Pembayaran diverifikasi (Lunas)", time: order.paidAt, done: true });
+        steps.push({ label: "Pesanan selesai & terkunci (Finish)", time: order.finishedAt || order.paidAt, done: true });
+    } else if (order.status === "success") {
+        steps.push({ label: "Pembayaran diverifikasi (Lunas)", time: order.paidAt, done: true });
+    } else if (order.status === "expired") {
+        steps.push({ label: "Pesanan kedaluwarsa", time: order.expiredAt, done: true });
+    } else if (order.status === "failed") {
+        steps.push({ label: "Pesanan gagal / dibatalkan", time: null, done: true });
+    } else {
+        steps.push({ label: "Menunggu verifikasi admin", time: null, done: false });
+    }
 
     return steps.map((s) => `
         <div class="timeline-row ${s.done ? "is-done" : "is-pending"}">
@@ -1382,20 +1408,27 @@ function renderOrderDetailPage(order) {
     `).join("");
 
     const actionButtons = [];
-    if (statusVal !== "success") {
-        actionButtons.push(`<button type="button" class="btn-primary detail-action-btn" data-action="approve">Terima pembayaran</button>`);
+    if (statusVal === "finished") {
+        actionButtons.push(`<span class="locked-order-pill">🔒 Pesanan Finish (Terkunci Permanen)</span>`);
+        actionButtons.push(`<a class="btn-outline" href="https://wa.me/${normalizeWA(order.whatsapp)}" target="_blank" rel="noopener">Hubungi WA</a>`);
+    } else {
+        if (statusVal === "success") {
+            actionButtons.push(`<button type="button" class="btn-finish detail-action-btn" data-action="finish">🔒 Tandai Finish</button>`);
+        } else {
+            actionButtons.push(`<button type="button" class="btn-primary detail-action-btn" data-action="approve">Terima pembayaran</button>`);
+        }
+        if (statusVal === "pending" && (order.paymentProofUrl || order.customerConfirmed)) {
+            actionButtons.push(`<button type="button" class="btn-outline btn-danger-outline detail-action-btn" data-action="reject">Tolak bukti</button>`);
+        }
+        if (statusVal === "pending") {
+            actionButtons.push(`<button type="button" class="btn-outline detail-action-btn" data-action="expired">Tandai kedaluwarsa</button>`);
+        }
+        if (statusVal !== "pending") {
+            actionButtons.push(`<button type="button" class="btn-outline detail-action-btn" data-action="pending">Kembalikan ke pending</button>`);
+        }
+        actionButtons.push(`<a class="btn-outline" href="https://wa.me/${normalizeWA(order.whatsapp)}" target="_blank" rel="noopener">Hubungi WA</a>`);
+        actionButtons.push(`<button type="button" class="btn-outline btn-danger-outline detail-action-btn" data-action="delete">Hapus</button>`);
     }
-    if (statusVal === "pending" && (order.paymentProofUrl || order.customerConfirmed)) {
-        actionButtons.push(`<button type="button" class="btn-outline btn-danger-outline detail-action-btn" data-action="reject">Tolak bukti</button>`);
-    }
-    if (statusVal === "pending") {
-        actionButtons.push(`<button type="button" class="btn-outline detail-action-btn" data-action="expired">Tandai kedaluwarsa</button>`);
-    }
-    if (statusVal !== "pending") {
-        actionButtons.push(`<button type="button" class="btn-outline detail-action-btn" data-action="pending">Kembalikan ke pending</button>`);
-    }
-    actionButtons.push(`<a class="btn-outline" href="https://wa.me/${normalizeWA(order.whatsapp)}" target="_blank" rel="noopener">Hubungi WA</a>`);
-    actionButtons.push(`<button type="button" class="btn-outline btn-danger-outline detail-action-btn" data-action="delete">Hapus</button>`);
 
     orderDetailContainer.innerHTML = `
         <div class="page-header">
@@ -1471,6 +1504,10 @@ function renderOrderDetailPage(order) {
     orderDetailContainer.querySelectorAll(".detail-action-btn").forEach((btn) => {
         btn.addEventListener("click", async () => {
             const action = btn.dataset.action;
+            if (action === "finish") {
+                openFinishOrderModal(order);
+                return;
+            }
             if (action === "approve") {
                 if (order.paymentProofUrl || order.customerConfirmed) {
                     await verifyOrderProof(order.orderId, "approve", btn);
@@ -1633,21 +1670,25 @@ function openOrderModal(order) {
         ${buildAdminReceiptAnalysisBoxHtml(order, true)}
 
         <div class="modal-actions">
-            <p class="mini-label" style="margin-bottom:4px;">Ubah Status</p>
+            ${statusVal === "finished" ? `
+                <div class="locked-order-pill" style="justify-content:center;width:100%;">🔒 Pesanan Finish (Terkunci Permanen)</div>
+            ` : `
+                <p class="mini-label" style="margin-bottom:4px;">Ubah Status</p>
 
-            ${statusVal !== "success"
-                ? `<button class="action-btn success" data-action="success" data-order-id="${order.orderId}">Tandai Sukses</button>`
-                : ""}
+                ${statusVal === "success"
+                    ? `<button class="action-btn btn-finish" data-action="finish" data-order-id="${order.orderId}">🔒 Tandai Finish</button>`
+                    : `<button class="action-btn success" data-action="success" data-order-id="${order.orderId}">Tandai Sukses</button>`}
 
-            ${statusVal !== "pending"
-                ? `<button class="action-btn pending" data-action="pending" data-order-id="${order.orderId}">Tandai Pending</button>`
-                : ""}
+                ${statusVal !== "pending"
+                    ? `<button class="action-btn pending" data-action="pending" data-order-id="${order.orderId}">Tandai Pending</button>`
+                    : ""}
 
-            ${statusVal !== "expired"
-                ? `<button class="action-btn expired" data-action="expired" data-order-id="${order.orderId}">Tandai Expired</button>`
-                : ""}
+                ${statusVal !== "expired"
+                    ? `<button class="action-btn expired" data-action="expired" data-order-id="${order.orderId}">Tandai Expired</button>`
+                    : ""}
 
-            <button class="action-btn delete" data-action="delete" data-order-id="${order.orderId}">Hapus Pesanan</button>
+                <button class="action-btn delete" data-action="delete" data-order-id="${order.orderId}">Hapus Pesanan</button>
+            `}
         </div>
     `;
 
@@ -1659,7 +1700,9 @@ function openOrderModal(order) {
             const orderId = btn.dataset.orderId;
             if (!action || !orderId) return;
 
-            if (action === "delete") {
+            if (action === "finish") {
+                openFinishOrderModal(order);
+            } else if (action === "delete") {
                 deleteOrder(orderId, btn);
             } else {
                 updateOrderStatus(orderId, action, btn);
@@ -1676,6 +1719,66 @@ if (orderModalClose) orderModalClose.addEventListener("click", closeOrderModal);
 if (orderModal) {
     orderModal.addEventListener("click", (e) => {
         if (e.target === orderModal) closeOrderModal();
+    });
+}
+
+/* =========================
+   FINISH ORDER CONFIRMATION MODAL
+   ========================= */
+
+let pendingFinishOrderTarget = null;
+
+function openFinishOrderModal(order) {
+    if (!order || !finishOrderModal) return;
+    if ((order.status || "pending") !== "success") {
+        alert("Hanya pesanan yang sudah berstatus Success (Lunas) yang dapat ditandai Finish.");
+        return;
+    }
+
+    pendingFinishOrderTarget = order;
+    if (finishOrderSummaryBox) {
+        const pcsCount = getOrderTotalCookies(order);
+        const itemsSummary = escapeHtml(getOrderItemsSummary(order));
+        finishOrderSummaryBox.innerHTML = `
+            <div class="meta-kv-row"><span>ID Pesanan</span><strong>${escapeHtml(order.orderId || "-")}</strong></div>
+            <div class="meta-kv-row"><span>Pelanggan</span><strong>${escapeHtml(order.customerName || "-")} (${escapeHtml(order.whatsapp || "-")})</strong></div>
+            <div class="meta-kv-row"><span>Item (${pcsCount} pcs)</span><strong>${itemsSummary}</strong></div>
+            <div class="meta-kv-row"><span>Total Tagihan</span><strong>${formatRupiah(order.total || 0)}</strong></div>
+        `;
+    }
+
+    if (finishOrderSubmitBtn) {
+        finishOrderSubmitBtn.disabled = false;
+        finishOrderSubmitBtn.innerText = "🔒 Ya, Yakin Finish & Kunci Permanen";
+    }
+
+    finishOrderModal.classList.add("active");
+}
+
+function closeFinishOrderModal() {
+    pendingFinishOrderTarget = null;
+    if (finishOrderModal) finishOrderModal.classList.remove("active");
+}
+
+if (finishOrderCloseBtn) finishOrderCloseBtn.addEventListener("click", closeFinishOrderModal);
+if (finishOrderCancelBtn) finishOrderCancelBtn.addEventListener("click", closeFinishOrderModal);
+if (finishOrderModal) {
+    finishOrderModal.addEventListener("click", (e) => {
+        if (e.target === finishOrderModal) closeFinishOrderModal();
+    });
+}
+if (finishOrderSubmitBtn) {
+    finishOrderSubmitBtn.addEventListener("click", async () => {
+        if (!pendingFinishOrderTarget) return;
+        const targetOrderId = pendingFinishOrderTarget.orderId;
+        const ok = await updateOrderStatus(targetOrderId, "finished", finishOrderSubmitBtn);
+        if (ok) {
+            closeFinishOrderModal();
+            const fresh = allOrders.find((o) => o.orderId === targetOrderId);
+            if (fresh && selectedInlineOrderId === targetOrderId) {
+                renderOrderDetailPage(fresh);
+            }
+        }
     });
 }
 
@@ -1715,8 +1818,11 @@ async function updateOrderStatus(orderId, newStatus, btnEl) {
         const order = allOrders.find((o) => o.orderId === orderId);
         if (order) {
             order.status = newStatus;
-            if (newStatus === "success" && !order.paidAt) {
+            if ((newStatus === "success" || newStatus === "finished") && !order.paidAt) {
                 order.paidAt = new Date().toISOString();
+            }
+            if (newStatus === "finished" && !order.finishedAt) {
+                order.finishedAt = new Date().toISOString();
             }
             if (newStatus === "expired" && !order.expiredAt) {
                 order.expiredAt = new Date().toISOString();
@@ -1730,7 +1836,7 @@ async function updateOrderStatus(orderId, newStatus, btnEl) {
         renderDailyReport();
         renderDashboard();
         if (poStatusCache) renderPOPage();
-        if (newStatus !== "success") loadStocks();
+        if (newStatus !== "success" && newStatus !== "finished") loadStocks();
 
         btnEl.disabled = false;
         btnEl.innerText = "Berhasil";
@@ -1752,6 +1858,10 @@ async function deleteOrder(orderId, btnEl) {
     if (!orderId) return;
 
     const order = allOrders.find((o) => o.orderId === orderId);
+    if (order && order.status === "finished") {
+        alert(`Pesanan ${orderId} sudah berstatus FINISH (terkunci permanen) dan tidak dapat dihapus.`);
+        return false;
+    }
     const isPending = order && (order.status || "pending") === "pending";
 
     let confirmMsg = `Yakin ingin menghapus pesanan ${orderId}?`;
@@ -1842,6 +1952,7 @@ function getMatchingBulkOrders() {
     const end = bulkEndDate?.value || "";
 
     return allOrders.filter((order) => {
+        if (order.status === "finished") return false;
         if (status !== "all") {
             const s = order.status || "pending";
             if (s !== status) return false;
@@ -2035,14 +2146,14 @@ function renderDailyReport() {
     const dayOrders = allOrders.filter(
         (order) =>
             getLocalDateString(order.createdAt) === selectedDate &&
-            (order.status || "pending") === "success"
+            isPaidOrder(order)
     );
 
     const previousDate = getDateStringOffset(selectedDate, -1);
     const previousOrders = allOrders.filter(
         (order) =>
             getLocalDateString(order.createdAt) === previousDate &&
-            (order.status || "pending") === "success"
+            isPaidOrder(order)
     );
 
     const currentMetrics = getMetrics(dayOrders);
@@ -2238,7 +2349,7 @@ function render7DayChart() {
         const orders = allOrders.filter(
             (order) =>
                 getLocalDateString(order.createdAt) === dateStr &&
-                (order.status || "pending") === "success"
+                isPaidOrder(order)
         );
         const revenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
         days.push({ date: dateStr, count: orders.length, revenue });
@@ -4340,7 +4451,7 @@ function getWaFilteredConversations() {
         } else if (waActiveFilter === "ai_only") {
             if (c.botMode === "manual") return false;
         } else if (waActiveFilter === "verified") {
-            if (c.verificationStatus !== "verified" && (!c.order || c.order.status !== "success")) return false;
+            if (c.verificationStatus !== "verified" && (!c.order || !isPaidOrder(c.order))) return false;
         }
 
         if (waSearchQuery) {
@@ -4380,7 +4491,9 @@ function renderWaConversationList() {
             : "";
 
         let verifBadge = "";
-        if (c.order && c.order.status === "success") {
+        if (c.order && c.order.status === "finished") {
+            verifBadge = `<span class="status-badge status-finished">🔒 Finish</span>`;
+        } else if (c.order && c.order.status === "success") {
             verifBadge = `<span class="status-badge status-success">Lunas</span>`;
         } else if (c.order && (c.order.paymentProofUrl || c.order.customerConfirmed)) {
             verifBadge = `<span class="status-badge status-pending">Cek struk</span>`;
@@ -4634,16 +4747,20 @@ function renderWaOrderContext(conv, order) {
         ${aiBoxHtml}
 
         <div class="modal-actions mt-12">
-            ${order.status !== "success" ? `
-                <button type="button" class="btn-primary btn-full" id="wa-ctx-approve-btn" data-order-id="${escapeHtml(order.orderId)}">
-                    Setujui Pembayaran &amp; Kirim WA Lunas
-                </button>
+            ${order.status === "finished" ? `
+                <div class="locked-order-pill" style="justify-content:center;width:100%;">🔒 Pesanan Finish (Terkunci Permanen)</div>
             ` : `
-                <div class="badge-pill badge-green" style="text-align:center;padding:8px;">Pembayaran Sudah Disetujui (Lunas)</div>
+                ${order.status !== "success" ? `
+                    <button type="button" class="btn-primary btn-full" id="wa-ctx-approve-btn" data-order-id="${escapeHtml(order.orderId)}">
+                        Setujui Pembayaran &amp; Kirim WA Lunas
+                    </button>
+                ` : `
+                    <div class="badge-pill badge-green" style="text-align:center;padding:8px;">Pembayaran Sudah Disetujui (Lunas)</div>
+                `}
+                <button type="button" class="btn-outline btn-danger-outline btn-full" id="wa-ctx-reject-btn" data-order-id="${escapeHtml(order.orderId)}">
+                    Tolak Bukti / Minta Kirim Ulang
+                </button>
             `}
-            <button type="button" class="btn-outline btn-danger-outline btn-full" id="wa-ctx-reject-btn" data-order-id="${escapeHtml(order.orderId)}">
-                Tolak Bukti / Minta Kirim Ulang
-            </button>
         </div>
     `;
 
@@ -5295,7 +5412,7 @@ function renderPOPage() {
     if (poInfoProduction) poInfoProduction.innerText = po?.tanggalProduksi ? formatDateShort(getLocalDateString(po.tanggalProduksi)) : "-";
 
     const estRev = batchOrders.reduce((s, o) => s + (o.total || 0), 0);
-    const paidRev = batchOrders.filter((o) => o.status === "success").reduce((s, o) => s + (o.total || 0), 0);
+    const paidRev = batchOrders.filter(isPaidOrder).reduce((s, o) => s + (o.total || 0), 0);
     setText("po-hero-est-revenue", formatRupiah(estRev));
     setText("po-hero-paid-revenue", `${formatRupiah(paidRev)} sudah lunas`);
 

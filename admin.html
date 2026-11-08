@@ -426,6 +426,10 @@
                             <span>Terbayar / Lunas</span>
                             <strong class="tab-count count-success" id="orders-card-success">0</strong>
                         </button>
+                        <button type="button" class="status-tab-pill" data-quick-status="finished">
+                            <span>Finish / Selesai</span>
+                            <strong class="tab-count count-finished" id="orders-card-finished">0</strong>
+                        </button>
                         <button type="button" class="status-tab-pill" data-quick-status="review">
                             <span>Kedaluwarsa / Batal</span>
                             <strong class="tab-count" id="orders-card-review">0</strong>
@@ -469,6 +473,7 @@
                                 <option value="pending">Pending</option>
                                 <option value="awaiting_verification">Perlu Verifikasi</option>
                                 <option value="success">Success</option>
+                                <option value="finished">Finish / Selesai</option>
                                 <option value="expired">Expired</option>
                                 <option value="failed">Failed</option>
                                 <option value="review">Kedaluwarsa / Batal</option>
@@ -2029,7 +2034,7 @@
                         <option value="failed">Hanya Gagal / Failed</option>
                         <option value="pending">Hanya Menunggu / Pending</option>
                         <option value="success">Hanya Terbayar / Success</option>
-                        <option value="all">Semua Status</option>
+                        <option value="all">Semua Status (Kecuali Finish)</option>
                     </select>
                 </div>
 
@@ -2175,6 +2180,37 @@
                     <button type="submit" class="btn-primary" id="wa-test-submit-btn">Kirim Simulasi ke Bot</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- =====================================================
+         FINISH ORDER CONFIRMATION MODAL (PERMANENT LOCK)
+         ===================================================== -->
+    <div class="admin-modal-overlay" id="finish-order-modal">
+        <div class="admin-modal bulk-modal-card">
+            <button class="admin-modal-close" id="finish-order-modal-close" aria-label="Tutup">&times;</button>
+            <div class="bulk-modal-header">
+                <h3>🔒 Konfirmasi Finish Pesanan</h3>
+                <p>Pastikan pesanan sudah benar-benar selesai dan diterima oleh pelanggan sebelum mengunci status.</p>
+            </div>
+
+            <div class="bulk-modal-body">
+                <div class="finish-order-summary-box" id="finish-order-summary">
+                    <div class="meta-kv-row"><span>ID Pesanan</span><strong id="finish-modal-order-id">—</strong></div>
+                    <div class="meta-kv-row"><span>Nama Pelanggan</span><strong id="finish-modal-customer-name">—</strong></div>
+                    <div class="meta-kv-row"><span>Total Tagihan</span><strong id="finish-modal-total">—</strong></div>
+                </div>
+
+                <div class="finish-warning-box mt-14">
+                    <strong>Yakin untuk menyelesaikan (Finish) pesanan ini?</strong>
+                    <p>Setelah ditandai <strong>Finish</strong>, status pesanan ini bersifat <strong>permanen (fix)</strong> dan <strong>tidak akan bisa diubah atau dihapus lagi</strong>.</p>
+                </div>
+
+                <div class="bulk-actions mt-16">
+                    <button type="button" class="btn-outline" id="finish-order-cancel-btn">Batal</button>
+                    <button type="button" class="btn-finish" id="finish-order-confirm-btn">Ya, Finish &amp; Kunci Pesanan</button>
+                </div>
+            </div>
         </div>
     </div>
 

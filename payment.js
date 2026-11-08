@@ -254,6 +254,7 @@ function renderOrder(order) {
             className: ""
         },
         "success": { label: "Pembayaran Sukses", className: "success" },
+        "finished": { label: "Pesanan Selesai (Finish)", className: "success" },
         "expired": { label: "Pesanan Expired", className: "expired" },
         "failed": { label: "Pembayaran Gagal", className: "expired" }
     };
@@ -369,6 +370,7 @@ function renderExpiry(order) {
     if (order.status !== "pending") {
         expiryInfoEl.classList.add("expired");
         expiryCountdownEl.innerText =
+            order.status === "finished" ? "Pesanan Selesai (Finish)" :
             order.status === "success" ? "Pembayaran Sukses" :
             order.status === "expired" ? "Pesanan Expired" :
             "Pesanan Tidak Aktif";
@@ -670,9 +672,9 @@ function updateActionsForStatus(order) {
             gateHintEl.className = "payment-gate-hint is-ready";
             gateHintEl.innerText = "✅ Bukti pembayaran sudah tersimpan! Klik tombol di bawah untuk mengirim chat konfirmasi ke WhatsApp Admin.";
         }
-    } else if (order.status === "success") {
+    } else if (order.status === "success" || order.status === "finished") {
         confirmBtn.disabled = true;
-        confirmBtn.innerText = "✓ Pembayaran Berhasil";
+        confirmBtn.innerText = order.status === "finished" ? "✓ Pesanan Selesai (Finish)" : "✓ Pembayaran Berhasil";
         if (gateHintEl) gateHintEl.hidden = true;
 
         if (confirmCheckbox) {
