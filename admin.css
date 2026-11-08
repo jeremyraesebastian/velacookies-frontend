@@ -1347,6 +1347,53 @@
     display: inline;
 }
 
+/* =========================================================
+   INVESTOR READ-ONLY MODE (TRANSPARENT VIEW ONLY)
+   ========================================================= */
+.investor-readonly-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #FEF3C7;
+    border: 1px solid #F59E0B;
+    color: #92400E;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+body.is-investor-readonly #bulk-delete-open-btn,
+body.is-investor-readonly #po-header-open-btn,
+body.is-investor-readonly #btn-close-po,
+body.is-investor-readonly #po-submit-btn,
+body.is-investor-readonly #inline-stock-submit,
+body.is-investor-readonly #inline-stock-reset-btn,
+body.is-investor-readonly #finance-scroll-form-btn,
+body.is-investor-readonly #fin-edit-allocation-link,
+body.is-investor-readonly #hpp-submit,
+body.is-investor-readonly #cf-submit,
+body.is-investor-readonly #wa-open-test-modal-btn,
+body.is-investor-readonly #wa-toggle-mode-btn,
+body.is-investor-readonly #wa-return-to-bot-btn,
+body.is-investor-readonly #wa-reply-form,
+body.is-investor-readonly .wa-quick-replies,
+body.is-investor-readonly .wa-quick-reply-row,
+body.is-investor-readonly #wa-knowledge-save-btn,
+body.is-investor-readonly #wa-knowledge-reset-all-btn,
+body.is-investor-readonly .wa-kb-reset-btn,
+body.is-investor-readonly #wa-gateway-save-btn,
+body.is-investor-readonly #wa-settings-save-btn,
+body.is-investor-readonly #settings-submit,
+body.is-investor-readonly #budget-settings-submit,
+body.is-investor-readonly #sec-investor-account,
+body.is-investor-readonly #settings-nav-investor,
+body.is-investor-readonly .btn-delete-hpp,
+body.is-investor-readonly .btn-delete-cf {
+    display: none !important;
+}
+
 .status-badge.status-expired {
     background: var(--bg-subtle);
     color: var(--text-secondary);

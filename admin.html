@@ -118,7 +118,7 @@
                     <div class="sidebar-user-avatar" id="sidebar-user-avatar">AD</div>
                     <div class="sidebar-user-meta">
                         <strong id="sidebar-user-name">Admin</strong>
-                        <small>Administrator</small>
+                        <small id="sidebar-user-role">Administrator</small>
                     </div>
                     <button type="button" class="btn-sidebar-logout" id="logout-btn" title="Keluar dari sesi Admin">Keluar</button>
                 </div>
@@ -140,6 +140,8 @@
                 </div>
 
                 <div class="topbar-right">
+                    <span class="investor-readonly-badge" id="investor-readonly-badge" hidden>👁️ Mode Investor · Hanya Lihat</span>
+
                     <div class="topbar-search-wrap">
                         <svg class="search-svg" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="9" r="5.5"/><path d="M13.2 13.2L17 17"/></svg>
                         <input type="search" id="global-search-input" class="topbar-search-input" placeholder="Cari pesanan, pelanggan, produk...">
@@ -1864,8 +1866,12 @@
                                 <strong>Chatbot &amp; Koneksi WhatsApp</strong>
                                 <span>Pintasan pengaturan provider WA &amp; basis pengetahuan AI</span>
                             </button>
+                            <button type="button" class="settings-nav-item" id="settings-nav-investor" data-settings-section="sec-investor-account">
+                                <strong>Akses Akun Investor</strong>
+                                <span>Kelola username &amp; password mode baca saja</span>
+                            </button>
                             <button type="button" class="settings-nav-item" data-settings-section="sec-account-security">
-                                <strong>Akun &amp; Sesi Administrator</strong>
+                                <strong>Akun &amp; Sesi Aktif</strong>
                                 <span>Status sesi aktif dan keamanan akses</span>
                             </button>
                         </aside>
@@ -1968,21 +1974,63 @@
                                 </div>
                             </div>
 
-                            <!-- SECTION 4: AKUN & SESI ADMINISTRATOR -->
+                            <!-- SECTION 3B: KELOLA AKUN INVESTOR (HANYA TAMPIL UNTUK ADMIN UTAMA) -->
+                            <div class="surface-card mt-20" id="sec-investor-account">
+                                <div class="card-header-row">
+                                    <div>
+                                        <h2 class="card-title">Kelola Akun Investor (Akses Baca Saja / Read-Only)</h2>
+                                        <p class="card-subtitle">Akun Investor dapat melihat seluruh laporan, pesanan, stok, dan keuangan secara transparan tanpa bisa mengubah atau menghapus data apa pun.</p>
+                                    </div>
+                                    <span class="badge-pill badge-green" id="investor-acc-status-badge">Aktif</span>
+                                </div>
+
+                                <form id="investor-account-form" class="mt-14">
+                                    <div class="form-row-2">
+                                        <div class="form-group">
+                                            <label class="form-label" for="investor-acc-username">Username Login Investor *</label>
+                                            <input type="text" id="investor-acc-username" class="form-input" placeholder="velainvestor" value="velainvestor" required>
+                                            <span class="form-help">Default awal: <code>velainvestor</code>.</span>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="form-label" for="investor-acc-password">Password Baru Investor</label>
+                                            <input type="password" id="investor-acc-password" class="form-input" placeholder="Kosongkan jika tidak ingin ganti password" autocomplete="new-password">
+                                            <span class="form-help">Default awal: <code>VelaInvestor.F.A.J</code> (minimal 6 karakter bila diubah).</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group mt-4">
+                                        <label class="wa-checkbox-row" for="investor-acc-active">
+                                            <input type="checkbox" id="investor-acc-active" checked>
+                                            <div>
+                                                <strong>Izinkan Login Akun Investor</strong>
+                                                <span>Jika dinonaktifkan, akun Investor tidak dapat masuk ke Admin Panel.</span>
+                                            </div>
+                                        </label>
+                                    </div>
+
+                                    <div class="settings-actions mt-12">
+                                        <button type="submit" class="btn-primary" id="investor-acc-submit">Simpan akun Investor</button>
+                                        <span class="settings-status" id="investor-acc-status"></span>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- SECTION 4: AKUN & SESI ADMINISTRATOR / PENGGUNA -->
                             <div class="surface-card mt-20" id="sec-account-security">
                                 <div class="card-header-row">
                                     <div>
-                                        <h2 class="card-title">Sesi Administrator</h2>
-                                        <p class="card-subtitle">Informasi autentikasi ruang kerja admin saat ini.</p>
+                                        <h2 class="card-title" id="settings-session-card-title">Sesi Ruang Kerja</h2>
+                                        <p class="card-subtitle">Informasi autentikasi dan hak akses ruang kerja saat ini.</p>
                                     </div>
-                                    <span class="badge-pill badge-green">Sesi Aktif</span>
+                                    <span class="badge-pill badge-green" id="settings-session-role-badge">Sesi Aktif</span>
                                 </div>
 
                                 <div class="admin-account-box mt-12">
-                                    <div class="profile-avatar-lg">AD</div>
+                                    <div class="profile-avatar-lg" id="settings-account-avatar">AD</div>
                                     <div class="admin-account-info">
-                                        <strong>Administrator Utama Velacookies</strong>
-                                        <span>Token terenkripsi berlaku selama 8 jam sejak login terakhir.</span>
+                                        <strong id="settings-account-title">Administrator Utama Velacookies</strong>
+                                        <span id="settings-account-desc">Akses penuh (100% kontrol). Token terenkripsi berlaku selama 8 jam sejak login terakhir.</span>
                                     </div>
                                     <button type="button" class="btn-outline btn-danger-outline" id="settings-logout-btn">Keluar dari sesi</button>
                                 </div>

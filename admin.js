@@ -364,6 +364,70 @@ let waSearchQuery = "";
 let waCurrentSettings = null;
 let waActiveConvObject = null;
 
+/* Multi-Role Auth State (admin | investor) */
+let currentAdminRole = "admin";
+let currentAdminUsername = "Admin";
+
+function isInvestorRole() {
+    return currentAdminRole === "investor";
+}
+
+function applyRolePermissionsUI() {
+    const isInvestor = isInvestorRole();
+    document.body.classList.toggle("is-investor-readonly", isInvestor);
+
+    const readonlyBadge = document.getElementById("investor-readonly-badge");
+    if (readonlyBadge) readonlyBadge.hidden = !isInvestor;
+
+    const sidebarAvatar = document.getElementById("sidebar-user-avatar");
+    const sidebarName = document.getElementById("sidebar-user-name");
+    const sidebarRole = document.getElementById("sidebar-user-role");
+    if (sidebarAvatar) sidebarAvatar.innerText = isInvestor ? "IV" : "AD";
+    if (sidebarName) sidebarName.innerText = currentAdminUsername || (isInvestor ? "Investor" : "Admin");
+    if (sidebarRole) sidebarRole.innerText = isInvestor ? "Investor · Hanya Lihat" : "Administrator";
+
+    const secInvestorCard = document.getElementById("sec-investor-account");
+    const navInvestorBtn = document.getElementById("settings-nav-investor");
+    if (secInvestorCard) secInvestorCard.hidden = isInvestor;
+    if (navInvestorBtn) navInvestorBtn.hidden = isInvestor;
+
+    const sessionRoleBadge = document.getElementById("settings-session-role-badge");
+    const sessionAvatar = document.getElementById("settings-account-avatar");
+    const sessionTitle = document.getElementById("settings-account-title");
+    const sessionDesc = document.getElementById("settings-account-desc");
+    if (sessionRoleBadge) {
+        sessionRoleBadge.innerText = isInvestor ? "Mode Baca Saja (Read-Only)" : "Akses Penuh (Admin)";
+        sessionRoleBadge.className = `badge-pill ${isInvestor ? "badge-gold" : "badge-green"}`;
+    }
+    if (sessionAvatar) sessionAvatar.innerText = isInvestor ? "IV" : "AD";
+    if (sessionTitle) {
+        sessionTitle.innerText = isInvestor
+            ? `Akun Investor (${currentAdminUsername || "velainvestor"})`
+            : `Administrator Utama (${currentAdminUsername || "velaadmin"})`;
+    }
+    if (sessionDesc) {
+        sessionDesc.innerText = isInvestor
+            ? "Akses transparan (Read-Only): dapat melihat seluruh data, detail pesanan, dan ekspor laporan tanpa mengubah data."
+            : "Akses penuh (100% kontrol). Token terenkripsi berlaku selama 8 jam sejak login terakhir.";
+    }
+
+    // Nonaktifkan input form yang bersifat mengubah data saat login sebagai Investor,
+    // namun JANGAN pernah menonaktifkan input pencarian, filter, tanggal laporan, atau paginasi.
+    const writeFormSelectors = [
+        "#inline-stock-form input, #inline-stock-form select, #inline-stock-form textarea, #inline-stock-form button",
+        "#po-form input, #po-form select, #po-form textarea, #po-form button",
+        "#hpp-form input, #hpp-form select, #hpp-form textarea, #hpp-form button",
+        "#cashflow-form input, #cashflow-form select, #cashflow-form textarea, #cashflow-form button",
+        "#settings-form input, #settings-form select, #settings-form textarea, #settings-form button",
+        "#budget-settings-form input, #budget-settings-form select, #budget-settings-form button",
+        "#wa-gateway-form input, #wa-gateway-form select, #wa-gateway-form textarea, #wa-gateway-form button",
+        "#wa-setting-approve-tpl, #wa-setting-reject-tpl"
+    ];
+    document.querySelectorAll(writeFormSelectors.join(", ")).forEach((el) => {
+        el.disabled = isInvestor;
+    });
+}
+
 
 /* =========================
    HELPERS — TIMEZONE (WIB)
@@ -646,6 +710,9 @@ function switchTab(targetTab) {
     if (targetTab === "settings") {
         loadSettings();
         loadBudgetSettings();
+        if (!isInvestorRole()) {
+            loadInvestorAccountSettings();
+        }
     }
 }
 
@@ -686,6 +753,9 @@ if (loginForm) {
             }
 
             setToken(result.token);
+            currentAdminRole = result.role || "admin";
+            currentAdminUsername = result.username || username || "Admin";
+            applyRolePermissionsUI();
             showDashboardView();
             bootWorkspace();
 
@@ -701,6 +771,9 @@ if (loginForm) {
 
 function doLogout() {
     clearToken();
+    currentAdminRole = "admin";
+    currentAdminUsername = "Admin";
+    applyRolePermissionsUI();
     allOrders = [];
     currentFinanceSummary = null;
     showLoginView();
@@ -709,6 +782,7 @@ function doLogout() {
 if (logoutBtn) logoutBtn.addEventListener("click", doLogout);
 
 function bootWorkspace() {
+    applyRolePermissionsUI();
     switchTab("dashboard");
     loadOrders();
     loadStocks();
@@ -1408,7 +1482,9 @@ function renderOrderDetailPage(order) {
     `).join("");
 
     const actionButtons = [];
-    if (statusVal === "finished") {
+    if (isInvestorRole()) {
+        actionButtons.push(`<span class="locked-order-pill">👁️ Mode Investor (Hanya Lihat Data)</span>`);
+    } else if (statusVal === "finished") {
         actionButtons.push(`<span class="locked-order-pill">🔒 Pesanan Finish (Terkunci Permanen)</span>`);
         actionButtons.push(`<a class="btn-outline" href="https://wa.me/${normalizeWA(order.whatsapp)}" target="_blank" rel="noopener">Hubungi WA</a>`);
     } else {
@@ -1670,7 +1746,9 @@ function openOrderModal(order) {
         ${buildAdminReceiptAnalysisBoxHtml(order, true)}
 
         <div class="modal-actions">
-            ${statusVal === "finished" ? `
+            ${isInvestorRole() ? `
+                <div class="locked-order-pill" style="justify-content:center;width:100%;">👁️ Mode Investor (Hanya Lihat Data)</div>
+            ` : statusVal === "finished" ? `
                 <div class="locked-order-pill" style="justify-content:center;width:100%;">🔒 Pesanan Finish (Terkunci Permanen)</div>
             ` : `
                 <p class="mini-label" style="margin-bottom:4px;">Ubah Status</p>
@@ -2742,9 +2820,11 @@ function renderStocks(items) {
                 <td class="align-right"><span class="stocks-count ${countClass}">${avail} pcs</span></td>
                 <td><span class="stocks-badge ${statusKey}">${statusLabel}</span></td>
                 <td class="align-right">
-                    <button type="button" class="btn-stock-edit" data-id="${item.id}" data-name="${escapeHtml(item.displayName)}" data-stock="${avail}">
-                        Sesuaikan
-                    </button>
+                    ${isInvestorRole() ? `<span class="text-muted-sm">Hanya lihat</span>` : `
+                        <button type="button" class="btn-stock-edit" data-id="${item.id}" data-name="${escapeHtml(item.displayName)}" data-stock="${avail}">
+                            Sesuaikan
+                        </button>
+                    `}
                 </td>
             </tr>
         `;
@@ -3187,7 +3267,7 @@ function renderUnifiedFinanceTable() {
     const rows = [];
 
     if (filterVal === "all" || filterVal === "in") {
-        allOrders.filter((o) => o.status === "success" && getLocalDateString(o.createdAt).startsWith(monthPrefix)).forEach((o) => {
+        allOrders.filter((o) => isPaidOrder(o) && getLocalDateString(o.createdAt).startsWith(monthPrefix)).forEach((o) => {
             rows.push({
                 date: getLocalDateString(o.createdAt),
                 sortTime: parseISOString(o.createdAt)?.getTime() || 0,
@@ -3214,7 +3294,7 @@ function renderUnifiedFinanceTable() {
                 type: "out",
                 typeBadge: `<span class="badge-pill badge-gold">Keluar · HPP</span>`,
                 amount: item.amount || 0,
-                actionHtml: `<button type="button" class="btn-delete-small" data-hpp-id="${item.id}">Hapus</button>`
+                actionHtml: isInvestorRole() ? `<span class="text-muted-sm">-</span>` : `<button type="button" class="btn-delete-small" data-hpp-id="${item.id}">Hapus</button>`
             });
         });
     }
@@ -3230,7 +3310,7 @@ function renderUnifiedFinanceTable() {
                 type: "out",
                 typeBadge: `<span class="badge-pill badge-neutral">Keluar · Operasional</span>`,
                 amount: item.amount || 0,
-                actionHtml: `<button type="button" class="btn-delete-small" data-cf-id="${item.id}">Hapus</button>`
+                actionHtml: isInvestorRole() ? `<span class="text-muted-sm">-</span>` : `<button type="button" class="btn-delete-small" data-cf-id="${item.id}">Hapus</button>`
             });
         });
     }
@@ -4018,8 +4098,10 @@ function renderWaVerifyQueue() {
                 <div class="meta-kv-row"><span>Lokasi</span><strong>${escapeHtml(getLocationLabel(order.location))}</strong></div>
                 ${buildAdminReceiptAnalysisBoxHtml(order, true)}
                 <div class="form-actions-row mt-12">
-                    <button type="button" class="btn-primary btn-full vq-approve-btn" data-order-id="${escapeHtml(order.orderId)}">Terima pembayaran</button>
-                    <button type="button" class="btn-outline btn-danger-outline vq-reject-btn" data-order-id="${escapeHtml(order.orderId)}">Minta cek ulang</button>
+                    ${isInvestorRole() ? "" : `
+                        <button type="button" class="btn-primary btn-full vq-approve-btn" data-order-id="${escapeHtml(order.orderId)}">Terima pembayaran</button>
+                        <button type="button" class="btn-outline btn-danger-outline vq-reject-btn" data-order-id="${escapeHtml(order.orderId)}">Minta cek ulang</button>
+                    `}
                     <button type="button" class="btn-outline vq-detail-btn" data-order-id="${escapeHtml(order.orderId)}">Detail</button>
                 </div>
             </div>
@@ -4251,12 +4333,14 @@ function renderBotKnowledgeSections(sections) {
                     </div>
                     <div class="wa-knowledge-section-meta">
                         ${modBadge}
-                        <button type="button" class="btn-outline-sm btn-reset-knowledge-sec" data-section-key="${escapeHtml(sec.key)}" title="Kembalikan bagian ini ke teks bawaan">
-                            Reset bagian
-                        </button>
+                        ${isInvestorRole() ? "" : `
+                            <button type="button" class="btn-outline-sm btn-reset-knowledge-sec" data-section-key="${escapeHtml(sec.key)}" title="Kembalikan bagian ini ke teks bawaan">
+                                Reset bagian
+                            </button>
+                        `}
                     </div>
                 </div>
-                <textarea class="wa-knowledge-textarea" data-knowledge-input="${escapeHtml(sec.key)}" rows="5">${escapeHtml(sec.content || "")}</textarea>
+                <textarea class="wa-knowledge-textarea" data-knowledge-input="${escapeHtml(sec.key)}" rows="5" ${isInvestorRole() ? "readonly" : ""}>${escapeHtml(sec.content || "")}</textarea>
                 <span class="wa-knowledge-updated-hint">${escapeHtml(updatedText)}</span>
             </div>
         `;
@@ -4694,13 +4778,15 @@ function renderWaOrderContext(conv, order) {
             <div class="wa-context-card">
                 <h3 class="card-title">Belum Terhubung ke Order</h3>
                 <p class="card-subtitle mt-8">Percakapan ini belum memiliki kode pesanan <code>VC-XXXX</code> yang cocok.</p>
-                <div class="form-group mt-14">
-                    <label class="form-label">Tautkan Kode Order Manual</label>
-                    <div style="display:flex;gap:6px;">
-                        <input type="text" id="wa-manual-link-order-input" class="form-input" placeholder="VC-0001" value="${escapeHtml(conv?.linkedOrderId || "")}">
-                        <button type="button" class="btn-outline-sm" id="wa-manual-link-order-btn">Tautkan</button>
+                ${isInvestorRole() ? "" : `
+                    <div class="form-group mt-14">
+                        <label class="form-label">Tautkan Kode Order Manual</label>
+                        <div style="display:flex;gap:6px;">
+                            <input type="text" id="wa-manual-link-order-input" class="form-input" placeholder="VC-0001" value="${escapeHtml(conv?.linkedOrderId || "")}">
+                            <button type="button" class="btn-outline-sm" id="wa-manual-link-order-btn">Tautkan</button>
+                        </div>
                     </div>
-                </div>
+                `}
             </div>
         `;
 
@@ -4757,7 +4843,9 @@ function renderWaOrderContext(conv, order) {
         ${aiBoxHtml}
 
         <div class="modal-actions mt-12">
-            ${order.status === "finished" ? `
+            ${isInvestorRole() ? `
+                <div class="locked-order-pill" style="justify-content:center;width:100%;">👁️ Mode Investor (Hanya Lihat Data)</div>
+            ` : order.status === "finished" ? `
                 <div class="locked-order-pill" style="justify-content:center;width:100%;">🔒 Pesanan Finish (Terkunci Permanen)</div>
             ` : `
                 ${order.status !== "success" ? `
@@ -5333,6 +5421,115 @@ bindClick("settings-go-wa-knowledge-btn", () => { switchTab("whatsapp"); switchW
 bindClick("settings-go-po-btn", () => switchTab("preorder"));
 bindClick("settings-logout-btn", doLogout);
 
+/* Investor Account Settings (/api/admin/role-accounts/investor) */
+const investorAccForm = document.getElementById("investor-account-form");
+const investorAccUsernameInput = document.getElementById("investor-acc-username");
+const investorAccPasswordInput = document.getElementById("investor-acc-password");
+const investorAccActiveCheckbox = document.getElementById("investor-acc-active");
+const investorAccStatusBadge = document.getElementById("investor-acc-status-badge");
+const investorAccSubmitBtn = document.getElementById("investor-acc-submit");
+const investorAccStatusEl = document.getElementById("investor-acc-status");
+
+function updateInvestorAccBadge(isActive) {
+    if (!investorAccStatusBadge) return;
+    investorAccStatusBadge.innerText = isActive ? "Aktif" : "Nonaktif";
+    investorAccStatusBadge.className = `badge-pill ${isActive ? "badge-green" : "badge-neutral"}`;
+}
+
+if (investorAccActiveCheckbox) {
+    investorAccActiveCheckbox.addEventListener("change", () => {
+        updateInvestorAccBadge(Boolean(investorAccActiveCheckbox.checked));
+    });
+}
+
+async function loadInvestorAccountSettings() {
+    if (!investorAccForm || isInvestorRole()) return;
+    try {
+        const res = await fetch(`${API_BASE}/api/admin/role-accounts/investor`, {
+            headers: { "Authorization": `Bearer ${getToken()}` }
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success || !data.account) return;
+        const acc = data.account;
+        if (investorAccUsernameInput) investorAccUsernameInput.value = acc.username || "velainvestor";
+        if (investorAccPasswordInput) investorAccPasswordInput.value = "";
+        if (investorAccActiveCheckbox) investorAccActiveCheckbox.checked = acc.isActive !== false;
+        updateInvestorAccBadge(acc.isActive !== false);
+    } catch (err) {
+        console.error("Load investor account settings error:", err);
+    }
+}
+
+if (investorAccForm) {
+    investorAccForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (isInvestorRole()) return;
+
+        const username = investorAccUsernameInput ? investorAccUsernameInput.value.trim() : "";
+        const newPassword = investorAccPasswordInput ? investorAccPasswordInput.value : "";
+        const isActive = Boolean(investorAccActiveCheckbox?.checked);
+
+        if (!username || username.length < 3) {
+            if (investorAccStatusEl) {
+                investorAccStatusEl.innerText = "Username Investor minimal 3 karakter.";
+                investorAccStatusEl.className = "settings-status error";
+            }
+            return;
+        }
+        if (newPassword && newPassword.length < 6) {
+            if (investorAccStatusEl) {
+                investorAccStatusEl.innerText = "Password baru minimal 6 karakter.";
+                investorAccStatusEl.className = "settings-status error";
+            }
+            return;
+        }
+
+        if (investorAccSubmitBtn) {
+            investorAccSubmitBtn.disabled = true;
+            investorAccSubmitBtn.innerText = "Menyimpan...";
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}/api/admin/role-accounts/investor`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${getToken()}`
+                },
+                body: JSON.stringify({ username, newPassword, isActive })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                if (investorAccStatusEl) {
+                    investorAccStatusEl.innerText = data.message || "Gagal menyimpan akun Investor.";
+                    investorAccStatusEl.className = "settings-status error";
+                }
+                return;
+            }
+            if (investorAccPasswordInput) investorAccPasswordInput.value = "";
+            if (data.account) {
+                updateInvestorAccBadge(data.account.isActive !== false);
+            }
+            if (investorAccStatusEl) {
+                investorAccStatusEl.innerText = data.message || "Akun Investor berhasil disimpan.";
+                investorAccStatusEl.className = "settings-status success";
+                setTimeout(() => { investorAccStatusEl.innerText = ""; }, 3500);
+            }
+        } catch (err) {
+            console.error("Save investor account settings error:", err);
+            if (investorAccStatusEl) {
+                investorAccStatusEl.innerText = "Gagal terhubung ke server.";
+                investorAccStatusEl.className = "settings-status error";
+            }
+        } finally {
+            if (investorAccSubmitBtn) {
+                investorAccSubmitBtn.disabled = false;
+                investorAccSubmitBtn.innerText = "Simpan akun Investor";
+            }
+        }
+    });
+}
+
 
 /* =========================
    PRE-ORDER (DEDICATED BATCH PAGE)
@@ -5757,6 +5954,11 @@ if (headerPoBadge) {
             showLoginView();
             return;
         }
+
+        const meData = await response.json().catch(() => ({}));
+        currentAdminRole = meData.role || "admin";
+        currentAdminUsername = meData.username || (currentAdminRole === "investor" ? "velainvestor" : "Admin");
+        applyRolePermissionsUI();
 
         showDashboardView();
         bootWorkspace();
