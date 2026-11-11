@@ -959,6 +959,17 @@ let selectedGrade = null;
 const checkoutPaymentRadios = document.querySelectorAll('input[name="checkout-payment"]');
 const checkoutPaymentError = document.getElementById("checkout-payment-error");
 
+/* ANTI DOUBLE-ORDER STATE */
+let isSubmittingOrder = false;
+let currentCheckoutIdempotencyKey = null;
+
+function generateIdempotencyKey() {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+        return crypto.randomUUID();
+    }
+    return "vc-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 12);
+}
+
 function openCheckoutModal() {
     if (checkoutSummaryItemsEl) {
         checkoutSummaryItemsEl.innerHTML = buildOrderItemsHTML(cart);
@@ -973,6 +984,13 @@ function openCheckoutModal() {
     resetLocationFields();
     resetPaymentField();
     clearCheckoutErrors();
+
+    isSubmittingOrder = false;
+    currentCheckoutIdempotencyKey = generateIdempotencyKey();
+    if (checkoutSubmitBtn) {
+        checkoutSubmitBtn.disabled = false;
+        checkoutSubmitBtn.innerText = "Kirim Pesanan";
+    }
 
     if (checkoutModal) checkoutModal.classList.add("active");
 }
@@ -1137,6 +1155,8 @@ async function updatePOStatusUI() {
 
 if (checkoutSubmitBtn) {
     checkoutSubmitBtn.addEventListener("click", async () => {
+        if (isSubmittingOrder || checkoutSubmitBtn.disabled) return;
+
         clearCheckoutErrors();
 
         const name = checkoutNameInput.value.trim();
@@ -1210,16 +1230,17 @@ if (checkoutSubmitBtn) {
 
         if (hasError) return;
 
-        /* CEK STATUS PO */
-        const poIsOpen = await checkPOStatus();
-        if (!poIsOpen) {
-            alert("Maaf, PO sedang ditutup.");
-            return;
+        /* KUNCI TOMBOL SECARA INSTAN (0ms) SEBELUM PROSES ASYNC APA PUN */
+        isSubmittingOrder = true;
+        checkoutSubmitBtn.disabled = true;
+        checkoutSubmitBtn.innerText = "Mengirim...";
+
+        if (!currentCheckoutIdempotencyKey) {
+            currentCheckoutIdempotencyKey = generateIdempotencyKey();
         }
 
         /* SIAPKAN ORDER */
         const orderItems = cart.map((item) => ({ ...item }));
-
         const selectedPaymentMethod = getSelectedPaymentMethod();
 
         const orderPayload = {
@@ -1229,45 +1250,50 @@ if (checkoutSubmitBtn) {
             location: selectedLocation,
             locationDetail: finalLocationDetail,
             paymentMethod: selectedPaymentMethod,
-            items: orderItems
+            items: orderItems,
+            idempotencyKey: currentCheckoutIdempotencyKey
         };
 
         /* KIRIM KE FLASK */
         try {
-            checkoutSubmitBtn.disabled = true;
-            checkoutSubmitBtn.innerText = "Mengirim...";
-
             const response = await fetch(`${API_BASE}/api/orders`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Idempotency-Key": currentCheckoutIdempotencyKey
+                },
                 body: JSON.stringify(orderPayload)
             });
 
             const result = await response.json();
 
             if (result.success) {
-                const totalPcs = cart.reduce(
-                    (sum, item) => sum + item.quantity,
+                const confirmedItems = Array.isArray(result.items) && result.items.length > 0
+                    ? result.items
+                    : orderItems;
+                const totalPcs = confirmedItems.reduce(
+                    (sum, item) => sum + (item.quantity || 0),
                     0
                 );
+
+                currentCheckoutIdempotencyKey = null;
+                cart = [];
+                renderCart();
+                updateCartBadge();
+                closeCheckoutModal();
 
                 showConfirmation({
                     orderId: result.orderId,
                     name: name,
                     wa: wa,
                     note: note,
-                    items: result.items,
+                    items: confirmedItems,
                     total: result.total,
                     paymentMethod: selectedPaymentMethod,
                     totalPcs: totalPcs,
                     locationLabel: getLocationLabel(selectedLocation),
                     locationDetail: finalLocationDetail
                 });
-
-                cart = [];
-                renderCart();
-                updateCartBadge();
-                closeCheckoutModal();
 
             } else {
                 alert(result.message || "Gagal membuat pesanan.");
@@ -1278,6 +1304,7 @@ if (checkoutSubmitBtn) {
             alert("Terjadi kesalahan koneksi ke server.");
 
         } finally {
+            isSubmittingOrder = false;
             checkoutSubmitBtn.disabled = false;
             checkoutSubmitBtn.innerText = "Kirim Pesanan";
         }
