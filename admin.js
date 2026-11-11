@@ -2,7 +2,7 @@
    ADMIN PANEL — VELACOOKIES (FULL EDITION + WA AI CHATBOT)
    ========================================================= */
 
-const API_BASE = "https://velacookies-backend.hostless.app";
+const API_BASE = "https://velacookies-production-d6e05223.up.railway.app";
 const TOKEN_KEY = "velacookies_admin_token";
 
 /* =========================

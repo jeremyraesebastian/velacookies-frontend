@@ -17,4 +17,4 @@ jobs:
             --max-time 60 --retry 2 --retry-delay 10 \
             -X POST \
             -H "X-Cron-Secret: $CRON_SECRET" \
-            https://velacookies-backend.hostless.app/api/cron/expire-pending
+            https://velacookies-production-d6e05223.up.railway.app/api/cron/expire-pending
