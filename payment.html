@@ -41,7 +41,13 @@
          ========================= -->
 
     <div class="payment-error" id="payment-error" hidden>
-        <div class="payment-error-icon">⚠️</div>
+        <div class="payment-error-icon" aria-hidden="true">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+        </div>
         <h2 id="payment-error-title">Terjadi Kesalahan</h2>
         <p id="payment-error-message">Pesanan tidak dapat ditemukan.</p>
         <a href="index.html" class="payment-btn payment-btn-primary">
@@ -140,7 +146,13 @@
                 <div class="payment-upload-box" id="payment-upload-box">
                     <div class="payment-upload-header">
                         <div class="payment-upload-title-wrap">
-                            <span class="payment-upload-icon">📸</span>
+                            <span class="payment-upload-icon" aria-hidden="true">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                </svg>
+                            </span>
                             <div>
                                 <strong class="payment-upload-title">Unggah Bukti Pembayaran</strong>
                                 <span class="payment-upload-subtitle">Format JPG, PNG, atau WEBP (otomatis dikompres ≤ 2.5 MB)</span>
@@ -158,7 +170,13 @@
 
                     <div class="payment-upload-dropzone" id="payment-upload-dropzone" role="button" tabindex="0" aria-label="Pilih foto bukti pembayaran">
                         <div class="payment-upload-empty" id="payment-upload-empty">
-                            <div class="payment-upload-cloud">📤</div>
+                            <div class="payment-upload-cloud" aria-hidden="true">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                            </div>
                             <p class="payment-upload-cta">Klik untuk Pilih Foto Struk / Bukti Transfer</p>
                             <p class="payment-upload-hint">atau tarik &amp; lepas screenshot bukti bayar ke sini</p>
                         </div>
@@ -166,12 +184,12 @@
                         <div class="payment-upload-preview-wrap" id="payment-upload-preview-wrap" hidden>
                             <img id="payment-proof-preview-img" class="payment-proof-preview-img" alt="Preview Bukti Pembayaran" hidden>
                             <div class="payment-upload-saved-banner" id="payment-upload-saved-banner" hidden>
-                                <span>📄 Bukti pembayaran sudah tersimpan di sistem kami dan sedang menunggu verifikasi Admin.</span>
+                                <span>Bukti pembayaran sudah tersimpan di sistem kami dan sedang menunggu verifikasi Admin.</span>
                             </div>
                             <div class="payment-upload-filebar">
                                 <span class="payment-upload-filename" id="payment-proof-file-info">Bukti pembayaran terunggah</span>
                                 <button type="button" class="payment-upload-change-btn" id="payment-proof-change-btn">
-                                    🔄 Ganti Foto
+                                    Ganti Foto
                                 </button>
                             </div>
                         </div>
@@ -181,7 +199,13 @@
                 </div>
 
                 <div class="payment-warning-box">
-                    <div class="payment-warning-icon">⚠️</div>
+                    <div class="payment-warning-icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                    </div>
                     <div class="payment-warning-content">
                         <strong>Wajib Unggah Bukti Bayar &amp; Konfirmasi via WhatsApp</strong>
                         <p>
@@ -203,16 +227,16 @@
                 </label>
 
                 <p class="payment-gate-hint" id="payment-gate-hint">
-                    📌 Unggah foto bukti pembayaran di atas &amp; centang kotak persetujuan untuk mengaktifkan tombol konfirmasi.
+                    Unggah foto bukti pembayaran di atas &amp; centang kotak persetujuan untuk mengaktifkan tombol konfirmasi.
                 </p>
 
                 <div class="payment-actions">
                     <button class="payment-btn payment-btn-primary" id="payment-confirm-btn" disabled>
-                        ✓ Saya Sudah Bayar &amp; Chat Admin
+                        Saya Sudah Bayar &amp; Chat Admin
                     </button>
 
                     <button class="payment-btn payment-btn-wa" id="payment-wa-btn">
-                        📱 Chat Admin Dulu (Tanya / Kendala)
+                        Chat Admin Dulu (Tanya / Kendala)
                     </button>
                 </div>
 
@@ -255,7 +279,7 @@
                          ============================================ -->
 
                     <p>
-                        Terima kasih sudah order di Velacookies! 🍪
+                        Terima kasih sudah order di Velacookies!
                     </p>
 
                     <p>
@@ -313,7 +337,11 @@
     <div class="payment-modal-overlay" id="payment-success-modal">
         <div class="payment-modal-box">
 
-            <div class="payment-modal-check">✓</div>
+            <div class="payment-modal-check" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </div>
 
             <h3>Konfirmasi &amp; Bukti Bayar Terkirim!</h3>
 
@@ -327,7 +355,7 @@
 
             <div class="payment-modal-actions">
                 <button class="payment-btn payment-btn-wa" id="payment-modal-wa">
-                    📱 Chat Admin Sekarang
+                    Chat Admin Sekarang
                 </button>
                 <button class="payment-btn payment-btn-ghost" id="payment-modal-close">
                     Tutup
@@ -338,7 +366,7 @@
     </div>
 
 
-    <script src="payment.js?v=20261111"></script>
+    <script src="payment.js?v=20261117"></script>
 
 </body>
 </html>

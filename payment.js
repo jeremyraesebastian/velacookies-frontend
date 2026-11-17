@@ -471,34 +471,34 @@ function renderUploadBoxState(order) {
             uploadBoxEl.className = "payment-upload-box is-warning";
             if (uploadBadgeEl) {
                 uploadBadgeEl.className = "payment-upload-badge warning";
-                uploadBadgeEl.innerText = "⚠️ Bukan Struk";
+                uploadBadgeEl.innerText = "Bukan Struk";
             }
             setUploadStatusBanner(
                 "error",
-                `⚠️ <strong>Gambar yang diunggah terdeteksi bukan struk pembayaran.</strong><br>Silakan klik tombol <strong>"🔄 Ganti Foto"</strong> di atas untuk mengunggah screenshot bukti transfer QRIS yang benar.`
+                `<strong>Gambar yang diunggah terdeteksi bukan struk pembayaran.</strong><br>Silakan klik tombol <strong>"Ganti Foto"</strong> di atas untuk mengunggah screenshot bukti transfer QRIS yang benar.`
             );
         } else if (summary && Array.isArray(summary.concerns) && summary.concerns.length > 0) {
             uploadBoxEl.className = "payment-upload-box is-uploaded";
             if (uploadBadgeEl) {
                 uploadBadgeEl.className = "payment-upload-badge success";
-                uploadBadgeEl.innerText = "✓ Bukti Terunggah";
+                uploadBadgeEl.innerText = "Bukti Terunggah";
             }
             setUploadStatusBanner(
                 "warning",
-                `✅ <strong>Bukti pembayaran sudah diterima sistem &amp; sedang menunggu verifikasi Admin.</strong><br>Catatan pemeriksaan: ${escapeHtml(summary.concerns.join(" · "))}`
+                `<strong>Bukti pembayaran sudah diterima sistem &amp; sedang menunggu verifikasi Admin.</strong><br>Catatan pemeriksaan: ${escapeHtml(summary.concerns.join(" · "))}`
             );
         } else {
             uploadBoxEl.className = "payment-upload-box is-uploaded";
             if (uploadBadgeEl) {
                 uploadBadgeEl.className = "payment-upload-badge success";
-                uploadBadgeEl.innerText = "✓ Bukti Terunggah";
+                uploadBadgeEl.innerText = "Bukti Terunggah";
             }
             const detailText = summary && summary.detectedAmount
                 ? `(${formatRupiah(summary.detectedAmount)} · ${escapeHtml(summary.matchLabel || "Menunggu Verifikasi Admin")}) `
                 : "";
             setUploadStatusBanner(
                 "success",
-                `✅ <strong>Bukti pembayaran berhasil diterima!</strong> ${detailText}Sedang menunggu verifikasi Admin Velacookies.`
+                `<strong>Bukti pembayaran berhasil diterima!</strong> ${detailText}Sedang menunggu verifikasi Admin Velacookies.`
             );
         }
     } else {
@@ -518,7 +518,7 @@ function renderUploadBoxState(order) {
             }
             setUploadStatusBanner(
                 "error",
-                `⚠️ <strong>Bukti pembayaran sebelumnya belum dapat diverifikasi oleh Admin.</strong><br>Silakan unggah ulang foto screenshot bukti transfer QRIS yang jelas pada kotak di atas.`
+                `<strong>Bukti pembayaran sebelumnya belum dapat diverifikasi oleh Admin.</strong><br>Silakan unggah ulang foto screenshot bukti transfer QRIS yang jelas pada kotak di atas.`
             );
         } else {
             setUploadStatusBanner("", "");
@@ -536,7 +536,7 @@ async function handleProofFileSelected(file) {
 
     const mime = (file.type || "").toLowerCase();
     if (!ALLOWED_PROOF_MIMES.includes(mime)) {
-        setUploadStatusBanner("error", "❌ Format file tidak didukung. Pilih gambar berformat <strong>JPG, PNG, atau WEBP</strong> ya.");
+        setUploadStatusBanner("error", "Format file tidak didukung. Pilih gambar berformat <strong>JPG, PNG, atau WEBP</strong> ya.");
         return;
     }
 
@@ -544,12 +544,12 @@ async function handleProofFileSelected(file) {
     updateActionsForStatus(currentOrder);
 
     try {
-        setUploadStatusBanner("loading", "⏳ Mengoptimalkan ukuran gambar...");
+        setUploadStatusBanner("loading", "Mengoptimalkan ukuran gambar...");
         const compressed = await compressImageToDataUrl(file);
 
         if (compressed.byteLength > MAX_PROOF_BYTES) {
             isUploadingProof = false;
-            setUploadStatusBanner("error", "❌ Ukuran gambar terlalu besar (lebih dari 2.5 MB). Silakan pilih screenshot dengan ukuran lebih kecil.");
+            setUploadStatusBanner("error", "Ukuran gambar terlalu besar (lebih dari 2.5 MB). Silakan pilih screenshot dengan ukuran lebih kecil.");
             updateActionsForStatus(currentOrder);
             return;
         }
@@ -568,12 +568,12 @@ async function handleProofFileSelected(file) {
         }
         if (uploadBadgeEl) {
             uploadBadgeEl.className = "payment-upload-badge";
-            uploadBadgeEl.innerText = "⏳ Memeriksa...";
+            uploadBadgeEl.innerText = "Memeriksa...";
         }
 
         setUploadStatusBanner(
             "loading",
-            "⏳ <strong>Sedang mengunggah &amp; memeriksa bukti pembayaran...</strong> Mohon tunggu sebentar ya."
+            "<strong>Sedang mengunggah &amp; memeriksa bukti pembayaran...</strong> Mohon tunggu sebentar ya."
         );
 
         const response = await fetch(`${API_BASE}/api/orders/${currentOrder.orderId}/upload-proof`, {
@@ -606,7 +606,7 @@ async function handleProofFileSelected(file) {
         console.error("Upload proof error:", error);
         setUploadStatusBanner(
             "error",
-            `❌ <strong>Gagal mengunggah bukti pembayaran:</strong> ${escapeHtml(error.message || "Terjadi gangguan jaringan. Silakan coba lagi.")}`
+            `<strong>Gagal mengunggah bukti pembayaran:</strong> ${escapeHtml(error.message || "Terjadi gangguan jaringan. Silakan coba lagi.")}`
         );
         if (uploadBadgeEl && !currentOrder.hasPaymentProof) {
             uploadBadgeEl.className = "payment-upload-badge warning";
@@ -631,11 +631,11 @@ function updateActionsForStatus(order) {
 
         if (isUploadingProof) {
             confirmBtn.disabled = true;
-            confirmBtn.innerText = "⏳ Mengunggah Bukti Bayar...";
+            confirmBtn.innerText = "Mengunggah Bukti Bayar...";
             if (gateHintEl) {
                 gateHintEl.hidden = false;
                 gateHintEl.className = "payment-gate-hint";
-                gateHintEl.innerText = "⏳ Tunggu sebentar, bukti pembayaran sedang diunggah dan diperiksa...";
+                gateHintEl.innerText = "Tunggu sebentar, bukti pembayaran sedang diunggah dan diperiksa...";
             }
             return;
         }
@@ -643,38 +643,38 @@ function updateActionsForStatus(order) {
         if (!hasProof) {
             /* WAJIB upload bukti bayar terlebih dahulu sebelum tombol aktif */
             confirmBtn.disabled = true;
-            confirmBtn.innerText = "✓ Saya Sudah Bayar & Chat Admin";
+            confirmBtn.innerText = "Saya Sudah Bayar & Chat Admin";
             if (gateHintEl) {
                 gateHintEl.hidden = false;
                 gateHintEl.className = "payment-gate-hint";
                 gateHintEl.innerText = isChecked
-                    ? "⚠️ Kamu sudah mencentang kotak, tapi wajib mengunggah foto bukti pembayaran pada kotak di atas terlebih dahulu ya."
-                    : "📌 Unggah foto bukti pembayaran di atas & centang kotak persetujuan untuk mengaktifkan tombol konfirmasi.";
+                    ? "Kamu sudah mencentang kotak, tapi wajib mengunggah foto bukti pembayaran pada kotak di atas terlebih dahulu ya."
+                    : "Unggah foto bukti pembayaran di atas & centang kotak persetujuan untuk mengaktifkan tombol konfirmasi.";
             }
             return;
         }
 
         if (!isChecked) {
             confirmBtn.disabled = true;
-            confirmBtn.innerText = "✓ Saya Sudah Bayar & Chat Admin";
+            confirmBtn.innerText = "Saya Sudah Bayar & Chat Admin";
             if (gateHintEl) {
                 gateHintEl.hidden = false;
                 gateHintEl.className = "payment-gate-hint";
-                gateHintEl.innerText = "☝️ Bukti bayar sudah terunggah! Sekarang centang kotak persetujuan di atas untuk mengaktifkan tombol konfirmasi.";
+                gateHintEl.innerText = "Bukti bayar sudah terunggah! Sekarang centang kotak persetujuan di atas untuk mengaktifkan tombol konfirmasi.";
             }
             return;
         }
 
         confirmBtn.disabled = false;
-        confirmBtn.innerText = "✓ Saya Sudah Bayar & Chat Admin";
+        confirmBtn.innerText = "Saya Sudah Bayar & Chat Admin";
         if (gateHintEl) {
             gateHintEl.hidden = false;
             gateHintEl.className = "payment-gate-hint is-ready";
-            gateHintEl.innerText = "✅ Bukti pembayaran sudah tersimpan! Klik tombol di bawah untuk mengirim chat konfirmasi ke WhatsApp Admin.";
+            gateHintEl.innerText = "Bukti pembayaran sudah tersimpan! Klik tombol di bawah untuk mengirim chat konfirmasi ke WhatsApp Admin.";
         }
     } else if (order.status === "success" || order.status === "finished") {
         confirmBtn.disabled = true;
-        confirmBtn.innerText = order.status === "finished" ? "✓ Pesanan Selesai (Finish)" : "✓ Pembayaran Berhasil";
+        confirmBtn.innerText = order.status === "finished" ? "Pesanan Selesai (Finish)" : "Pembayaran Berhasil";
         if (gateHintEl) gateHintEl.hidden = true;
 
         if (confirmCheckbox) {
@@ -840,7 +840,7 @@ async function handleConfirmPayment() {
         currentOrder.customerConfirmed = true;
         currentOrder.customerConfirmedAt = result.confirmedAt;
 
-        confirmBtn.innerText = "✓ Buka WhatsApp Admin Lagi";
+        confirmBtn.innerText = "Buka WhatsApp Admin Lagi";
         confirmBtn.disabled = false;
 
         /* LANGSUNG buka WA (auto redirect) */

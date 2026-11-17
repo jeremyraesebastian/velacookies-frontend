@@ -807,12 +807,44 @@ async function loadPaymentSettings() {
 function getSelectedPaymentMethod() {
     let selected = "cash";
     checkoutPaymentRadios.forEach((radio) => {
-        if (radio.checked) selected = radio.value;
+        if (!radio.disabled && radio.checked) selected = radio.value;
     });
     return selected;
 }
 
+function syncPaymentOptionsWithLocation(location) {
+    let cashRadio = null;
+    let qrisRadio = null;
+
+    checkoutPaymentRadios.forEach((radio) => {
+        if (radio.value === "cash") cashRadio = radio;
+        if (radio.value === "qris") qrisRadio = radio;
+    });
+
+    const isOthers = location === "others";
+
+    if (cashRadio) {
+        cashRadio.disabled = isOthers;
+        if (isOthers) {
+            cashRadio.checked = false;
+        }
+    }
+
+    if (isOthers && qrisRadio) {
+        qrisRadio.checked = true;
+    }
+
+    if (checkoutPaymentCashOption) {
+        checkoutPaymentCashOption.classList.toggle("is-disabled", isOthers);
+    }
+
+    if (checkoutPaymentCashLockNote) {
+        checkoutPaymentCashLockNote.hidden = !isOthers;
+    }
+}
+
 function resetPaymentField() {
+    syncPaymentOptionsWithLocation(null);
     checkoutPaymentRadios.forEach((radio) => {
         radio.checked = radio.value === "cash";
     });
@@ -957,6 +989,8 @@ let selectedGrade = null;
 
 /* PAYMENT — DOM */
 const checkoutPaymentRadios = document.querySelectorAll('input[name="checkout-payment"]');
+const checkoutPaymentCashOption = document.getElementById("checkout-payment-cash-option");
+const checkoutPaymentCashLockNote = document.getElementById("checkout-payment-cash-lock-note");
 const checkoutPaymentError = document.getElementById("checkout-payment-error");
 
 /* ANTI DOUBLE-ORDER STATE */
@@ -1066,9 +1100,12 @@ checkoutLocationRadios.forEach((radio) => {
             if (checkoutSchoolClassGroup) checkoutSchoolClassGroup.hidden = true;
         }
 
+        syncPaymentOptionsWithLocation(selected);
+
         if (checkoutLocationError) checkoutLocationError.innerText = "";
         if (checkoutLocationDetailError) checkoutLocationDetailError.innerText = "";
         if (checkoutSchoolClassError) checkoutSchoolClassError.innerText = "";
+        if (checkoutPaymentError) checkoutPaymentError.innerText = "";
     });
 });
 
@@ -1225,6 +1262,17 @@ if (checkoutSubmitBtn) {
             }
         }
 
+        /* VALIDASI PEMBAYARAN */
+        const selectedPaymentMethod = getSelectedPaymentMethod();
+        if (selectedLocation === "others" && selectedPaymentMethod !== "qris") {
+            syncPaymentOptionsWithLocation("others");
+            if (checkoutPaymentError) {
+                checkoutPaymentError.innerText =
+                    "Untuk pengiriman luar / alamat lainnya, metode pembayaran hanya tersedia melalui QRIS.";
+            }
+            hasError = true;
+        }
+
         /* VALIDASI CART */
         if (cart.length === 0) hasError = true;
 
@@ -1241,7 +1289,6 @@ if (checkoutSubmitBtn) {
 
         /* SIAPKAN ORDER */
         const orderItems = cart.map((item) => ({ ...item }));
-        const selectedPaymentMethod = getSelectedPaymentMethod();
 
         const orderPayload = {
             customerName: name,

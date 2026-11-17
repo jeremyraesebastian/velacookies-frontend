@@ -6,7 +6,7 @@
 
     <title>Velacookies — Homemade Cookies</title>
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20261117b">
 </head>
 
 <body>
@@ -630,32 +630,6 @@
                     <span class="form-error" id="checkout-wa-error"></span>
                 </div>
 
-                                <div class="form-group">
-                    <label class="form-label">Metode Pembayaran</label>
-
-                    <div class="payment-options">
-
-                        <label class="payment-option">
-                            <input type="radio" name="checkout-payment" value="cash" checked>
-                            <div class="payment-option-content">
-                                <span class="payment-option-title">Cash (COD)</span>
-                                <span class="payment-option-desc">Bayar langsung saat barang diterima. Order akan diarahkan ke WhatsApp admin.</span>
-                            </div>
-                        </label>
-
-                        <label class="payment-option">
-                            <input type="radio" name="checkout-payment" value="qris">
-                            <div class="payment-option-content">
-                                <span class="payment-option-title">QRIS</span>
-                                <span class="payment-option-desc">Scan QR pakai m-banking / GoPay / OVO / DANA. Konfirmasi via WhatsApp.</span>
-                            </div>
-                        </label>
-
-                    </div>
-
-                    <span class="form-error" id="checkout-payment-error"></span>
-                </div>
-
                 <div class="form-group">
                     <label class="form-label">Lokasi Pengiriman</label>
 
@@ -720,6 +694,35 @@
                 </div>
 
                 <div class="form-group">
+                    <label class="form-label">Metode Pembayaran</label>
+
+                    <div class="payment-options">
+
+                        <label class="payment-option" id="checkout-payment-cash-option">
+                            <input type="radio" name="checkout-payment" value="cash" checked>
+                            <div class="payment-option-content">
+                                <div class="payment-option-header">
+                                    <span class="payment-option-title">Cash (COD)</span>
+                                    <span class="payment-option-lock-note" id="checkout-payment-cash-lock-note" hidden>Khusus SMAN 1 &amp; SMAN 5 Karawang</span>
+                                </div>
+                                <span class="payment-option-desc">Bayar langsung saat barang diterima. Order akan diarahkan ke WhatsApp admin.</span>
+                            </div>
+                        </label>
+
+                        <label class="payment-option">
+                            <input type="radio" name="checkout-payment" value="qris">
+                            <div class="payment-option-content">
+                                <span class="payment-option-title">QRIS</span>
+                                <span class="payment-option-desc">Scan QR pakai m-banking / GoPay / OVO / DANA. Konfirmasi via WhatsApp.</span>
+                            </div>
+                        </label>
+
+                    </div>
+
+                    <span class="form-error" id="checkout-payment-error"></span>
+                </div>
+
+                <div class="form-group">
                     <label class="form-label" for="checkout-note">Catatan (opsional)</label>
                     <textarea
                         id="checkout-note"
@@ -751,7 +754,11 @@
 
             <div class="modal-info confirmation-info">
 
-                <div class="confirmation-check">✓</div>
+                <div class="confirmation-check" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </div>
 
                 <h3>Pesanan Berhasil Dibuat!</h3>
 
@@ -769,7 +776,13 @@
                 </div>
 
                 <div class="confirmation-notice" id="confirmation-info-box" hidden>
-                    <span class="confirmation-notice-icon">ℹ️</span>
+                    <span class="confirmation-notice-icon" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                    </span>
                     <p>Pesanan kamu baru akan diproses setelah konfirmasi via WhatsApp admin.</p>
                 </div>
 
@@ -812,7 +825,7 @@
 
 
 
-    <script src="script.js?v=20261111"></script>
+    <script src="script.js?v=20261117b"></script>
 
 </body>
 </html>

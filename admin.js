@@ -565,7 +565,7 @@ function getStatusLabel(status) {
     const map = {
         "pending": "Pending",
         "success": "Success",
-        "finished": "🔒 Finish",
+        "finished": "Finish",
         "expired": "Expired",
         "failed": "Failed"
     };
@@ -1483,13 +1483,13 @@ function renderOrderDetailPage(order) {
 
     const actionButtons = [];
     if (isInvestorRole()) {
-        actionButtons.push(`<span class="locked-order-pill">👁️ Mode Investor (Hanya Lihat Data)</span>`);
+        actionButtons.push(`<span class="locked-order-pill">Mode Investor (Hanya Lihat Data)</span>`);
     } else if (statusVal === "finished") {
-        actionButtons.push(`<span class="locked-order-pill">🔒 Pesanan Finish (Terkunci Permanen)</span>`);
+        actionButtons.push(`<span class="locked-order-pill">Pesanan Finish (Terkunci Permanen)</span>`);
         actionButtons.push(`<a class="btn-outline" href="https://wa.me/${normalizeWA(order.whatsapp)}" target="_blank" rel="noopener">Hubungi WA</a>`);
     } else {
         if (statusVal === "success") {
-            actionButtons.push(`<button type="button" class="btn-finish detail-action-btn" data-action="finish">🔒 Tandai Finish</button>`);
+            actionButtons.push(`<button type="button" class="btn-finish detail-action-btn" data-action="finish">Tandai Finish</button>`);
         } else {
             actionButtons.push(`<button type="button" class="btn-primary detail-action-btn" data-action="approve">Terima pembayaran</button>`);
         }
@@ -1747,14 +1747,14 @@ function openOrderModal(order) {
 
         <div class="modal-actions">
             ${isInvestorRole() ? `
-                <div class="locked-order-pill" style="justify-content:center;width:100%;">👁️ Mode Investor (Hanya Lihat Data)</div>
+                <div class="locked-order-pill" style="justify-content:center;width:100%;">Mode Investor (Hanya Lihat Data)</div>
             ` : statusVal === "finished" ? `
-                <div class="locked-order-pill" style="justify-content:center;width:100%;">🔒 Pesanan Finish (Terkunci Permanen)</div>
+                <div class="locked-order-pill" style="justify-content:center;width:100%;">Pesanan Finish (Terkunci Permanen)</div>
             ` : `
                 <p class="mini-label" style="margin-bottom:4px;">Ubah Status</p>
 
                 ${statusVal === "success"
-                    ? `<button class="action-btn btn-finish" data-action="finish" data-order-id="${order.orderId}">🔒 Tandai Finish</button>`
+                    ? `<button class="action-btn btn-finish" data-action="finish" data-order-id="${order.orderId}">Tandai Finish</button>`
                     : `<button class="action-btn success" data-action="success" data-order-id="${order.orderId}">Tandai Sukses</button>`}
 
                 ${statusVal !== "pending"
@@ -1832,7 +1832,7 @@ function openFinishOrderModal(order) {
 
     if (finishOrderSubmitBtn) {
         finishOrderSubmitBtn.disabled = false;
-        finishOrderSubmitBtn.innerText = "🔒 Ya, Finish & Kunci Pesanan";
+        finishOrderSubmitBtn.innerText = "Ya, Finish & Kunci Pesanan";
     }
 
     finishOrderModal.classList.add("active");
@@ -3217,7 +3217,7 @@ function renderFinanceSummary(s) {
     setText("fin-pending-funds", formatRupiah(pendingSum));
     setText("fin-pending-funds-sub", `Dari ${pendingOrders.length} pesanan belum disetujui`);
 
-    const successMonthOrders = monthOrders.filter((o) => o.status === "success");
+    const successMonthOrders = monthOrders.filter(isPaidOrder);
     const qrisSum = successMonthOrders.filter((o) => (o.paymentMethod || "cash") === "qris").reduce((acc, o) => acc + (o.total || 0), 0);
     const codSum = successMonthOrders.filter((o) => (o.paymentMethod || "cash") !== "qris").reduce((acc, o) => acc + (o.total || 0), 0);
     setText("fin-recon-qris", formatRupiah(qrisSum));
@@ -4586,7 +4586,7 @@ function renderWaConversationList() {
 
         let verifBadge = "";
         if (c.order && c.order.status === "finished") {
-            verifBadge = `<span class="status-badge status-finished">🔒 Finish</span>`;
+            verifBadge = `<span class="status-badge status-finished">Finish</span>`;
         } else if (c.order && c.order.status === "success") {
             verifBadge = `<span class="status-badge status-success">Lunas</span>`;
         } else if (c.order && (c.order.paymentProofUrl || c.order.customerConfirmed)) {
@@ -4844,9 +4844,9 @@ function renderWaOrderContext(conv, order) {
 
         <div class="modal-actions mt-12">
             ${isInvestorRole() ? `
-                <div class="locked-order-pill" style="justify-content:center;width:100%;">👁️ Mode Investor (Hanya Lihat Data)</div>
+                <div class="locked-order-pill" style="justify-content:center;width:100%;">Mode Investor (Hanya Lihat Data)</div>
             ` : order.status === "finished" ? `
-                <div class="locked-order-pill" style="justify-content:center;width:100%;">🔒 Pesanan Finish (Terkunci Permanen)</div>
+                <div class="locked-order-pill" style="justify-content:center;width:100%;">Pesanan Finish (Terkunci Permanen)</div>
             ` : `
                 ${order.status !== "success" ? `
                     <button type="button" class="btn-primary btn-full" id="wa-ctx-approve-btn" data-order-id="${escapeHtml(order.orderId)}">
@@ -5738,7 +5738,11 @@ function renderPOParticipants(batchOrders) {
     const f = poParticipantFilter?.value || "all";
 
     const filtered = batchOrders.filter((o) => {
-        if (f !== "all" && (o.status || "pending") !== f) return false;
+        if (f === "success") {
+            if (!isPaidOrder(o)) return false;
+        } else if (f !== "all" && (o.status || "pending") !== f) {
+            return false;
+        }
         if (q) {
             return (o.orderId || "").toLowerCase().includes(q)
                 || (o.customerName || "").toLowerCase().includes(q)
