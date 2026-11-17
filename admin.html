@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="admin.css?v=20261117c">
+    <link rel="stylesheet" href="admin.css?v=20261117d">
 </head>
 <body class="admin-body">
 
@@ -87,6 +87,10 @@
                     <button type="button" class="admin-tab" data-tab="finance">
                         <svg class="nav-svg" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="4.5" width="15" height="11" rx="1.5"/><path d="M2.5 8.5h15"/><circle cx="13.5" cy="12" r="1"/></svg>
                         <span class="nav-text">Keuangan</span>
+                    </button>
+                    <button type="button" class="admin-tab" data-tab="referrals">
+                        <svg class="nav-svg" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3.5 10.2V4.5a1 1 0 0 1 1-1h5.7a1 1 0 0 1 .7.3l5.3 5.3a1 1 0 0 1 0 1.4l-5.7 5.7a1 1 0 0 1-1.4 0L3.8 10.9a1 1 0 0 1-.3-.7Z"/><circle cx="7.2" cy="7.2" r="1.1" fill="currentColor"/></svg>
+                        <span class="nav-text">Kode Referral</span>
                     </button>
                     <button type="button" class="admin-tab" data-tab="reports">
                         <svg class="nav-svg" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16V10M8 16V6M12 16V11M16 16V4"/></svg>
@@ -968,75 +972,6 @@
                         </div>
                     </div>
 
-                    <!-- KOMISI & KODE REFERRAL PER BATCH PO -->
-                    <div class="surface-card mt-20" id="po-referral-card">
-                        <div class="card-header-row">
-                            <div>
-                                <div class="page-title-row">
-                                    <h2 class="card-title">Komisi &amp; Kode Referral per Batch PO</h2>
-                                    <span class="badge-pill badge-gold" id="po-referral-tier-pill">Tier Pembulatan 1%-5%</span>
-                                </div>
-                                <p class="card-subtitle">Komisi dihitung dari pesanan Lunas &amp; Finish (1-15 pcs = 1%, 16-25 = 2%, 26-35 = 3%, 36-45 = 4%, &ge;46 = 5%) dan di-reset ke 0 setiap Batch PO baru.</p>
-                            </div>
-                            <div class="toolbar-inline">
-                                <label class="text-muted-sm" for="po-referral-batch-select">Batch PO</label>
-                                <select id="po-referral-batch-select" class="filter-select" aria-label="Pilih Batch PO Referral"></select>
-                            </div>
-                        </div>
-
-                        <div class="metrics-grid-4 mt-14">
-                            <div class="metric-card">
-                                <span class="metric-label">Pesanan Referral Lunas</span>
-                                <strong class="metric-value" id="po-ref-paid-orders">0</strong>
-                                <span class="metric-sub" id="po-ref-pending-orders-sub">Status Lunas &amp; Finish batch ini</span>
-                            </div>
-                            <div class="metric-card">
-                                <span class="metric-label">Total Pcs Referral</span>
-                                <strong class="metric-value" id="po-ref-paid-pcs">0 pcs</strong>
-                                <span class="metric-sub">Menentukan persen tier batch</span>
-                            </div>
-                            <div class="metric-card">
-                                <span class="metric-label">Omzet Referral Lunas</span>
-                                <strong class="metric-value" id="po-ref-paid-revenue">Rp 0</strong>
-                                <span class="metric-sub">Dasar perhitungan persentase</span>
-                            </div>
-                            <div class="metric-card metric-card-primary">
-                                <span class="metric-label">Total Komisi Batch Ini</span>
-                                <strong class="metric-value text-green" id="po-ref-total-commission">Rp 0</strong>
-                                <span class="metric-sub">Akumulasi gaji tim pemasar</span>
-                            </div>
-                        </div>
-
-                        <form id="po-referral-add-form" class="po-referral-add-form mt-16">
-                            <div class="po-referral-add-inputs">
-                                <input type="text" id="po-referral-new-code" class="form-input input-sm" placeholder="Kode baru (mis. AURA10)" maxlength="32" autocomplete="off" required>
-                                <input type="text" id="po-referral-new-owner" class="form-input input-sm" placeholder="Nama pemilik / tim (opsional)" maxlength="80" autocomplete="off">
-                                <button type="submit" class="btn-primary-sm" id="po-referral-add-btn">Tambah Kode Referral</button>
-                            </div>
-                            <p class="settings-status mt-8" id="po-referral-msg"></p>
-                        </form>
-
-                        <div class="table-responsive mt-14">
-                            <table class="clean-table">
-                                <thead>
-                                    <tr>
-                                        <th>KODE &amp; PEMILIK</th>
-                                        <th>STATUS</th>
-                                        <th class="align-right">ORDER LUNAS</th>
-                                        <th class="align-right">PCS BATCH INI</th>
-                                        <th>TIER KOMISI</th>
-                                        <th class="align-right">OMZET REFERRAL</th>
-                                        <th class="align-right">KOMISI (GAJI)</th>
-                                        <th class="align-right">AKSI</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="po-referral-tbody">
-                                    <tr><td colspan="8" class="empty-state-sm">Memuat data referral...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
                     <!-- BATCH LAINNYA (HISTORY) -->
                     <div class="surface-card mt-20">
                         <div class="card-header-row">
@@ -1377,6 +1312,89 @@
                             </div>
                         </div>
 
+                    </div>
+
+                </section>
+
+
+                <!-- ============================================
+                     VIEW 5B: KODE REFERRAL (KOMISI TIM PEMASAR)
+                     ============================================ -->
+                <section class="tab-content" data-tab-content="referrals" hidden>
+
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Kode Referral</h1>
+                            <p class="page-subtitle">Pantau komisi tim pemasar dari pesanan Lunas &amp; Finish (pembulatan 1-15 pcs = 1%, 16-25 = 2%, 26-35 = 3%, 36-45 = 4%, &ge;46 = 5%; di-reset tiap Batch PO).</p>
+                        </div>
+                        <div class="page-header-actions">
+                            <select id="po-referral-batch-select" class="filter-select" aria-label="Pilih Batch PO Referral"></select>
+                            <button type="button" class="btn-outline" id="referral-refresh-btn">Muat ulang</button>
+                        </div>
+                    </div>
+
+                    <div class="metrics-grid-4">
+                        <div class="metric-card">
+                            <span class="metric-label">Pesanan Referral Lunas</span>
+                            <strong class="metric-value" id="po-ref-paid-orders">0</strong>
+                            <span class="metric-sub" id="po-ref-pending-orders-sub">Status Lunas &amp; Finish batch ini</span>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-label">Total Pcs Referral</span>
+                            <strong class="metric-value" id="po-ref-paid-pcs">0 pcs</strong>
+                            <span class="metric-sub">Menentukan persen tier batch</span>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-label">Omzet Referral Lunas</span>
+                            <strong class="metric-value" id="po-ref-paid-revenue">Rp 0</strong>
+                            <span class="metric-sub">Dasar perhitungan persentase</span>
+                        </div>
+                        <div class="metric-card metric-card-primary">
+                            <span class="metric-label">Total Komisi Batch Ini</span>
+                            <strong class="metric-value text-green" id="po-ref-total-commission">Rp 0</strong>
+                            <span class="metric-sub">Akumulasi gaji tim pemasar</span>
+                        </div>
+                    </div>
+
+                    <div class="surface-card mt-20" id="po-referral-card">
+                        <div class="card-header-row">
+                            <div>
+                                <div class="page-title-row">
+                                    <h2 class="card-title">Rekap komisi &amp; kelola kode</h2>
+                                    <span class="badge-pill badge-gold" id="po-referral-tier-pill">Tier Pembulatan 1%-5%</span>
+                                </div>
+                                <p class="card-subtitle">Tambah kode baru, aktifkan/nonaktifkan kode, dan lihat rincian gaji per kode pada Batch PO terpilih.</p>
+                            </div>
+                        </div>
+
+                        <form id="po-referral-add-form" class="po-referral-add-form mt-14">
+                            <div class="po-referral-add-inputs">
+                                <input type="text" id="po-referral-new-code" class="form-input input-sm" placeholder="Kode baru (mis. AURA10)" maxlength="32" autocomplete="off" required>
+                                <input type="text" id="po-referral-new-owner" class="form-input input-sm" placeholder="Nama pemilik / tim (opsional)" maxlength="80" autocomplete="off">
+                                <button type="submit" class="btn-primary-sm" id="po-referral-add-btn">Tambah Kode Referral</button>
+                            </div>
+                            <p class="settings-status mt-8" id="po-referral-msg"></p>
+                        </form>
+
+                        <div class="table-responsive mt-14">
+                            <table class="clean-table">
+                                <thead>
+                                    <tr>
+                                        <th>KODE &amp; PEMILIK</th>
+                                        <th>STATUS</th>
+                                        <th class="align-right">ORDER LUNAS</th>
+                                        <th class="align-right">PCS BATCH INI</th>
+                                        <th>TIER KOMISI</th>
+                                        <th class="align-right">OMZET REFERRAL</th>
+                                        <th class="align-right">KOMISI (GAJI)</th>
+                                        <th class="align-right">AKSI</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="po-referral-tbody">
+                                    <tr><td colspan="8" class="empty-state-sm">Memuat data referral...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                 </section>
@@ -2334,6 +2352,6 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
-    <script src="admin.js?v=20261117c"></script>
+    <script src="admin.js?v=20261117d"></script>
 </body>
 </html>

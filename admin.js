@@ -676,6 +676,7 @@ const TAB_LABELS = {
     stocks: "Stok produk",
     preorder: "Pre-order",
     finance: "Keuangan",
+    referrals: "Kode Referral",
     reports: "Laporan harian",
     whatsapp: "WhatsApp",
     settings: "Pengaturan"
@@ -704,6 +705,7 @@ function switchTab(targetTab) {
 
     if (targetTab === "dashboard") renderDashboard();
     if (targetTab === "finance") loadFinance();
+    if (targetTab === "referrals") loadPOReferrals(userPickedReferralBatch ? selectedReferralPoId : null);
     if (targetTab === "stocks") loadStocks();
     if (targetTab === "preorder") loadPOSettings();
     if (targetTab === "reports") renderDailyReport();
@@ -1238,7 +1240,7 @@ if (clearDateBtn) {
     });
 }
 if (refreshBtn) refreshBtn.addEventListener("click", () => { loadOrders(); if (poStatusCache) loadPOReferrals(selectedReferralPoId); });
-if (overviewRefreshBtn) overviewRefreshBtn.addEventListener("click", () => { loadOrders(); loadStocks(); loadPOSettings(); loadWaWorkspace({ silent: true }); });
+if (overviewRefreshBtn) overviewRefreshBtn.addEventListener("click", () => { loadOrders(); loadStocks(); loadPOSettings(); loadPOReferrals(userPickedReferralBatch ? selectedReferralPoId : null); loadWaWorkspace({ silent: true }); });
 
 const paymentFilterEl = document.getElementById("payment-filter");
 if (paymentFilterEl) paymentFilterEl.addEventListener("change", () => { currentOrderPage = 1; applyFilters(); });
@@ -5893,6 +5895,10 @@ async function handlePOSubmit(e) {
         }
 
         showPOStatusMsg(result.message || "Jadwal PO berhasil disimpan.", "success");
+        if (!isOpen) {
+            userPickedReferralBatch = false;
+            selectedReferralPoId = null;
+        }
         await loadPOSettings();
 
     } catch (err) {
@@ -5968,6 +5974,7 @@ let selectedReferralPoId = null;
 let userPickedReferralBatch = false;
 
 const poReferralBatchSelect = document.getElementById("po-referral-batch-select");
+const referralRefreshBtn = document.getElementById("referral-refresh-btn");
 const poReferralAddForm = document.getElementById("po-referral-add-form");
 const poReferralNewCodeInput = document.getElementById("po-referral-new-code");
 const poReferralNewOwnerInput = document.getElementById("po-referral-new-owner");
@@ -5975,7 +5982,7 @@ const poReferralAddBtn = document.getElementById("po-referral-add-btn");
 const poReferralMsgEl = document.getElementById("po-referral-msg");
 
 function calculateReferralCommissionPct(totalPcs) {
-    const pcs = Number(totalPcs || 0);
+    const pcs = Math.floor(Number(totalPcs || 0));
     if (!Number.isFinite(pcs) || pcs <= 0) return 0;
     return Math.min(5, Math.max(1, Math.floor((pcs + 4) / 10)));
 }
@@ -6263,6 +6270,12 @@ if (poReferralBatchSelect) {
         selectedReferralPoId = Number.isFinite(val) ? val : null;
         userPickedReferralBatch = true;
         loadPOReferrals(selectedReferralPoId);
+    });
+}
+
+if (referralRefreshBtn) {
+    referralRefreshBtn.addEventListener("click", () => {
+        loadPOReferrals(userPickedReferralBatch ? selectedReferralPoId : null);
     });
 }
 
