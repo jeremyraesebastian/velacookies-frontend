@@ -1387,6 +1387,8 @@ body.is-investor-readonly #wa-gateway-save-btn,
 body.is-investor-readonly #wa-settings-save-btn,
 body.is-investor-readonly #settings-submit,
 body.is-investor-readonly #budget-settings-submit,
+body.is-investor-readonly #po-referral-add-form,
+body.is-investor-readonly .po-ref-action-btn,
 body.is-investor-readonly #sec-investor-account,
 body.is-investor-readonly #settings-nav-investor,
 body.is-investor-readonly .btn-delete-hpp,
@@ -3923,4 +3925,37 @@ body.is-investor-readonly .btn-delete-cf {
     .po-hero-stats-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* KOMISI & KODE REFERRAL PER BATCH PO */
+.po-referral-add-form {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: var(--bg-main);
+    border: 1px solid var(--surface-border);
+}
+
+.po-referral-add-inputs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.po-referral-add-inputs .input-sm {
+    flex: 1 1 180px;
+    width: auto;
+}
+
+.po-referral-actions-cell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.ref-pill-inline {
+    margin-left: 4px;
+    font-size: 10.5px;
+    padding: 2px 8px;
 }

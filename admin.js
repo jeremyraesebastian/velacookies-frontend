@@ -416,6 +416,7 @@ function applyRolePermissionsUI() {
     const writeFormSelectors = [
         "#inline-stock-form input, #inline-stock-form select, #inline-stock-form textarea, #inline-stock-form button",
         "#po-form input, #po-form select, #po-form textarea, #po-form button",
+        "#po-referral-add-form input, #po-referral-add-form button",
         "#hpp-form input, #hpp-form select, #hpp-form textarea, #hpp-form button",
         "#cashflow-form input, #cashflow-form select, #cashflow-form textarea, #cashflow-form button",
         "#settings-form input, #settings-form select, #settings-form textarea, #settings-form button",
@@ -776,6 +777,9 @@ function doLogout() {
     applyRolePermissionsUI();
     allOrders = [];
     currentFinanceSummary = null;
+    referralReportCache = null;
+    selectedReferralPoId = null;
+    userPickedReferralBatch = false;
     showLoginView();
 }
 
@@ -1209,8 +1213,9 @@ function applyFilters() {
             const name = (order.customerName || "").toLowerCase();
             const wa = (order.whatsapp || "").toLowerCase();
             const orderId = (order.orderId || "").toLowerCase();
+            const refCode = (order.referralCode || "").toLowerCase();
             const items = (order.items || []).map((it) => `${it.name} ${it.addonName || ""}`).join(" ").toLowerCase();
-            return name.includes(query) || wa.includes(query) || orderId.includes(query) || items.includes(query);
+            return name.includes(query) || wa.includes(query) || orderId.includes(query) || refCode.includes(query) || items.includes(query);
         });
     }
 
@@ -1232,7 +1237,7 @@ if (clearDateBtn) {
         applyFilters();
     });
 }
-if (refreshBtn) refreshBtn.addEventListener("click", () => loadOrders());
+if (refreshBtn) refreshBtn.addEventListener("click", () => { loadOrders(); if (poStatusCache) loadPOReferrals(selectedReferralPoId); });
 if (overviewRefreshBtn) overviewRefreshBtn.addEventListener("click", () => { loadOrders(); loadStocks(); loadPOSettings(); loadWaWorkspace({ silent: true }); });
 
 const paymentFilterEl = document.getElementById("payment-filter");
@@ -1323,6 +1328,7 @@ function buildOrderRowHtml(order, isOverviewTable = false) {
                 <div class="cell-customer">
                     <span class="customer-name">${escapeHtml(order.customerName || "-")}</span>
                     <span class="customer-badge ${custType}">${custType === "baru" ? "Baru" : "Lama"}</span>
+                    ${order.referralCode ? `<span class="badge-pill badge-gold ref-pill-inline">Ref: ${escapeHtml(order.referralCode)}</span>` : ""}
                 </div>
                 <span class="location-subtext">${escapeHtml(order.whatsapp || "-")}</span>
             </td>
@@ -1567,6 +1573,7 @@ function renderOrderDetailPage(order) {
                     <div class="meta-kv-row"><span>Lokasi</span><strong>${escapeHtml(getLocationLabel(order.location))}</strong></div>
                     <div class="meta-kv-row"><span>${order.location === "others" ? "Alamat" : "Kelas / detail"}</span><strong>${escapeHtml(order.locationDetail || "-")}</strong></div>
                     <div class="meta-kv-row"><span>Catatan</span><strong>${escapeHtml(order.note || "-")}</strong></div>
+                    <div class="meta-kv-row"><span>Kode referral</span><strong>${order.referralCode ? `<span class="badge-pill badge-gold">${escapeHtml(order.referralCode)}</span>` : "-"}</strong></div>
                 </div>
 
                 <div class="surface-card mt-20">
@@ -1732,6 +1739,15 @@ function openOrderModal(order) {
             <span class="label">Catatan</span>
             <span class="value">${escapeHtml(order.note || "-")}</span>
         </div>
+
+        ${
+            order.referralCode
+                ? `<div class="detail-row">
+                       <span class="label">Kode Referral</span>
+                       <span class="value"><span class="badge-pill badge-gold">${escapeHtml(order.referralCode)}</span></span>
+                   </div>`
+                : ""
+        }
 
         <div class="detail-items">
             <h4>Produk</h4>
@@ -1924,6 +1940,7 @@ async function updateOrderStatus(orderId, newStatus, btnEl) {
         renderDailyReport();
         renderDashboard();
         if (poStatusCache) renderPOPage();
+        loadPOReferrals(selectedReferralPoId);
         if (newStatus !== "success" && newStatus !== "finished") loadStocks();
 
         btnEl.disabled = false;
@@ -2000,6 +2017,7 @@ async function deleteOrder(orderId, btnEl) {
         renderDailyReport();
         renderDashboard();
         if (poStatusCache) renderPOPage();
+        loadPOReferrals(selectedReferralPoId);
 
         if (isPending) {
             loadStocks();
@@ -2139,6 +2157,7 @@ async function executeBulkDelete() {
 
         await loadOrders();
         loadStocks();
+        loadPOReferrals(selectedReferralPoId);
 
     } catch (error) {
         console.error("Bulk delete error:", error);
@@ -4908,6 +4927,7 @@ async function verifyOrderProof(orderId, decision, btnEl, reason = "") {
 
         await loadOrders();
         await loadWaWorkspace();
+        loadPOReferrals(selectedReferralPoId);
     } catch (err) {
         console.error("Verify order proof error:", err);
         if (btnEl) {
@@ -5567,6 +5587,7 @@ async function loadPOSettings() {
         currentPOData = result.po;
         renderPOPage();
         renderDashboardPOCard();
+        await loadPOReferrals(userPickedReferralBatch ? selectedReferralPoId : null);
 
     } catch (err) {
         console.error("Load PO settings error:", err);
@@ -5746,7 +5767,8 @@ function renderPOParticipants(batchOrders) {
         if (q) {
             return (o.orderId || "").toLowerCase().includes(q)
                 || (o.customerName || "").toLowerCase().includes(q)
-                || (o.whatsapp || "").toLowerCase().includes(q);
+                || (o.whatsapp || "").toLowerCase().includes(q)
+                || (o.referralCode || "").toLowerCase().includes(q);
         }
         return true;
     });
@@ -5759,7 +5781,10 @@ function renderPOParticipants(batchOrders) {
     tbody.innerHTML = filtered.map((o) => `
         <tr>
             <td><span class="cell-order-id">${escapeHtml(o.orderId)}</span></td>
-            <td><strong>${escapeHtml(o.customerName || "-")}</strong></td>
+            <td>
+                <strong>${escapeHtml(o.customerName || "-")}</strong>
+                ${o.referralCode ? `<div class="mt-4"><span class="badge-pill badge-gold">Ref: ${escapeHtml(o.referralCode)}</span></div>` : ""}
+            </td>
             <td><span class="cell-items-text">${escapeHtml(getOrderItemsSummary(o))}</span></td>
             <td class="align-right">${getOrderTotalCookies(o)} pcs</td>
             <td><span class="location-badge ${getLocationClass(o.location)}">${escapeHtml(getLocationLabel(o.location))}</span></td>
@@ -5932,6 +5957,317 @@ bindClick("po-header-open-btn", () => {
 
 if (headerPoBadge) {
     headerPoBadge.addEventListener("click", () => switchTab("preorder"));
+}
+
+/* =========================
+   KOMISI & KODE REFERRAL PER BATCH PO
+   ========================= */
+
+let referralReportCache = null;
+let selectedReferralPoId = null;
+let userPickedReferralBatch = false;
+
+const poReferralBatchSelect = document.getElementById("po-referral-batch-select");
+const poReferralAddForm = document.getElementById("po-referral-add-form");
+const poReferralNewCodeInput = document.getElementById("po-referral-new-code");
+const poReferralNewOwnerInput = document.getElementById("po-referral-new-owner");
+const poReferralAddBtn = document.getElementById("po-referral-add-btn");
+const poReferralMsgEl = document.getElementById("po-referral-msg");
+
+function calculateReferralCommissionPct(totalPcs) {
+    const pcs = Number(totalPcs || 0);
+    if (!Number.isFinite(pcs) || pcs <= 0) return 0;
+    return Math.min(5, Math.max(1, Math.floor((pcs + 4) / 10)));
+}
+
+function showPOReferralMsg(msg, type) {
+    if (!poReferralMsgEl) return;
+    poReferralMsgEl.innerText = msg || "";
+    poReferralMsgEl.className = type ? `settings-status mt-8 ${type}` : "settings-status mt-8";
+    if (type === "success") {
+        setTimeout(() => {
+            if (poReferralMsgEl.innerText === msg) {
+                poReferralMsgEl.innerText = "";
+                poReferralMsgEl.className = "settings-status mt-8";
+            }
+        }, 3500);
+    }
+}
+
+async function loadPOReferrals(poPeriodId = null) {
+    const tbody = document.getElementById("po-referral-tbody");
+    const token = getToken();
+    if (!token) return;
+
+    try {
+        const qs = poPeriodId != null && poPeriodId !== "" ? `?poPeriodId=${encodeURIComponent(poPeriodId)}` : "";
+        const response = await fetch(`${API_BASE}/api/admin/referrals${qs}`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (response.status === 401) {
+            clearToken();
+            showLoginView();
+            return;
+        }
+
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="8" class="empty-state-sm">${escapeHtml(result.message || "Gagal memuat data referral.")}</td></tr>`;
+            }
+            return;
+        }
+
+        referralReportCache = result;
+        if (result.selectedPoPeriodId != null) {
+            selectedReferralPoId = result.selectedPoPeriodId;
+        }
+        renderPOReferralSection(result);
+
+    } catch (err) {
+        console.error("Load PO referrals error:", err);
+        if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="8" class="empty-state-sm">Gagal terhubung ke server untuk memuat rekap referral.</td></tr>`;
+        }
+    }
+}
+
+function renderPOReferralSection(report) {
+    if (!report) return;
+    const periods = Array.isArray(report.periods) ? report.periods : [];
+    const rows = Array.isArray(report.referrals) ? report.referrals : [];
+    const totals = report.totals || {};
+
+    if (poReferralBatchSelect) {
+        if (periods.length === 0) {
+            poReferralBatchSelect.innerHTML = `<option value="">Belum ada periode PO</option>`;
+            poReferralBatchSelect.disabled = true;
+        } else {
+            poReferralBatchSelect.disabled = false;
+            const activePoId = report.selectedPoPeriodId != null ? String(report.selectedPoPeriodId) : String(periods[0].id);
+            poReferralBatchSelect.innerHTML = periods.map((p) => {
+                const statusText = p.status === "open" ? "Aktif" : "Ditutup";
+                return `<option value="${escapeHtml(String(p.id))}">${escapeHtml(p.batchName || `Batch PO #${p.id}`)} (${statusText})</option>`;
+            }).join("");
+            poReferralBatchSelect.value = activePoId;
+        }
+    }
+
+    setText("po-ref-paid-orders", String(totals.paidOrdersCount || 0));
+    setText(
+        "po-ref-pending-orders-sub",
+        (totals.pendingOrdersCount || 0) > 0
+            ? `+ ${totals.pendingOrdersCount} pending (${totals.pendingPcs || 0} pcs)`
+            : "Status Lunas & Finish batch ini"
+    );
+    setText("po-ref-paid-pcs", `${totals.paidPcs || 0} pcs`);
+    setText("po-ref-paid-revenue", formatRupiah(totals.paidRevenue || 0));
+    setText("po-ref-total-commission", formatRupiah(totals.totalCommission || 0));
+
+    const tbody = document.getElementById("po-referral-tbody");
+    if (!tbody) return;
+
+    if (rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="empty-state-sm">Belum ada kode referral terdaftar.</td></tr>`;
+        return;
+    }
+
+    const readOnly = isInvestorRole();
+
+    tbody.innerHTML = rows.map((r) => {
+        const paidPcs = Number(r.paidPcs || 0);
+        const pct = Number(r.commissionPct != null ? r.commissionPct : calculateReferralCommissionPct(paidPcs));
+        const paidRev = Number(r.paidRevenue || 0);
+        const commAmt = Number(r.commissionAmount != null ? r.commissionAmount : Math.round(paidRev * pct / 100));
+        const nextLabel = r.nextTierInfo?.label || (pct >= 5 ? "Maksimal 5%" : "-");
+        const ownerDiffers = r.ownerName && r.ownerName.toLowerCase() !== String(r.code || "").toLowerCase();
+
+        const statusBadge = r.isDeleted
+            ? `<span class="badge-pill badge-neutral">Dihapus</span>`
+            : r.isActive
+                ? `<span class="badge-pill badge-green">Aktif</span>`
+                : `<span class="badge-pill badge-neutral">Nonaktif</span>`;
+
+        const orderSub = (r.pendingOrdersCount || 0) > 0
+            ? `<div class="text-muted-sm mt-4">+ ${r.pendingOrdersCount} pending (${r.pendingPcs || 0} pcs)</div>`
+            : "";
+
+        const actionCell = (readOnly || r.id == null)
+            ? `<span class="text-muted-sm">-</span>`
+            : `
+                <div class="po-referral-actions-cell">
+                    <button
+                        type="button"
+                        class="btn-outline-sm po-ref-action-btn po-ref-toggle-btn"
+                        data-ref-id="${r.id}"
+                        data-active="${r.isActive ? "1" : "0"}"
+                    >${r.isActive ? "Nonaktifkan" : "Aktifkan"}</button>
+                    <button
+                        type="button"
+                        class="btn-delete-small po-ref-action-btn po-ref-delete-btn"
+                        data-ref-id="${r.id}"
+                        data-code="${escapeHtml(r.code || "")}"
+                    >Hapus</button>
+                </div>
+            `;
+
+        return `
+            <tr>
+                <td>
+                    <strong>${escapeHtml(r.code || "-")}</strong>
+                    ${ownerDiffers ? `<div class="text-muted-sm">${escapeHtml(r.ownerName)}</div>` : ""}
+                </td>
+                <td>${statusBadge}</td>
+                <td class="align-right">
+                    <strong>${r.paidOrdersCount || 0} pesanan</strong>
+                    ${orderSub}
+                </td>
+                <td class="align-right"><strong>${paidPcs} pcs</strong></td>
+                <td>
+                    <span class="badge-pill ${pct > 0 ? "badge-gold" : "badge-neutral"}">${pct}%</span>
+                    <div class="text-muted-sm mt-4">${escapeHtml(nextLabel)}</div>
+                </td>
+                <td class="align-right">${formatRupiah(paidRev)}</td>
+                <td class="align-right"><strong class="text-green">${formatRupiah(commAmt)}</strong></td>
+                <td class="align-right">${actionCell}</td>
+            </tr>
+        `;
+    }).join("");
+
+    tbody.querySelectorAll(".po-ref-toggle-btn").forEach((btn) => {
+        btn.addEventListener("click", () => handleToggleReferral(btn));
+    });
+    tbody.querySelectorAll(".po-ref-delete-btn").forEach((btn) => {
+        btn.addEventListener("click", () => handleDeleteReferral(btn));
+    });
+}
+
+async function handleCreateReferral(e) {
+    e.preventDefault();
+    if (isInvestorRole()) return;
+
+    const code = (poReferralNewCodeInput?.value || "").trim();
+    const ownerName = (poReferralNewOwnerInput?.value || "").trim();
+    if (!code) {
+        showPOReferralMsg("Kode referral wajib diisi.", "error");
+        return;
+    }
+
+    const origText = poReferralAddBtn ? poReferralAddBtn.innerText : "Tambah Kode Referral";
+    if (poReferralAddBtn) {
+        poReferralAddBtn.disabled = true;
+        poReferralAddBtn.innerText = "Menambahkan...";
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/api/admin/referrals`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${getToken()}`
+            },
+            body: JSON.stringify({ code, ownerName })
+        });
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            showPOReferralMsg(result.message || "Gagal menambahkan kode referral.", "error");
+            return;
+        }
+
+        if (poReferralNewCodeInput) poReferralNewCodeInput.value = "";
+        if (poReferralNewOwnerInput) poReferralNewOwnerInput.value = "";
+        showPOReferralMsg(result.message || "Kode referral berhasil ditambahkan.", "success");
+        await loadPOReferrals(selectedReferralPoId);
+
+    } catch (err) {
+        console.error("Create referral error:", err);
+        showPOReferralMsg("Gagal terhubung ke server.", "error");
+    } finally {
+        if (poReferralAddBtn) {
+            poReferralAddBtn.disabled = false;
+            poReferralAddBtn.innerText = origText;
+        }
+    }
+}
+
+async function handleToggleReferral(btn) {
+    if (isInvestorRole()) return;
+    const refId = btn.dataset.refId;
+    const currentlyActive = btn.dataset.active === "1";
+    const origText = btn.innerText;
+    btn.disabled = true;
+    btn.innerText = "...";
+
+    try {
+        const response = await fetch(`${API_BASE}/api/admin/referrals/${encodeURIComponent(refId)}`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${getToken()}`
+            },
+            body: JSON.stringify({ isActive: !currentlyActive })
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+            showPOReferralMsg(result.message || "Gagal mengubah status kode referral.", "error");
+            btn.disabled = false;
+            btn.innerText = origText;
+            return;
+        }
+
+        showPOReferralMsg(result.message || "Status kode referral diperbarui.", "success");
+        await loadPOReferrals(selectedReferralPoId);
+    } catch (err) {
+        console.error("Toggle referral error:", err);
+        showPOReferralMsg("Gagal terhubung ke server.", "error");
+        btn.disabled = false;
+        btn.innerText = origText;
+    }
+}
+
+async function handleDeleteReferral(btn) {
+    if (isInvestorRole()) return;
+    const refId = btn.dataset.refId;
+    const codeLabel = btn.dataset.code || "kode ini";
+    if (!confirm(`Hapus kode referral "${codeLabel}" dari daftar aktif?\n\nRiwayat pesanan lama yang memakai kode ini tetap tersimpan di laporan.`)) {
+        return;
+    }
+
+    btn.disabled = true;
+    try {
+        const response = await fetch(`${API_BASE}/api/admin/referrals/${encodeURIComponent(refId)}`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${getToken()}` }
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+            showPOReferralMsg(result.message || "Gagal menghapus kode referral.", "error");
+            btn.disabled = false;
+            return;
+        }
+
+        showPOReferralMsg(result.message || "Kode referral dihapus.", "success");
+        await loadPOReferrals(selectedReferralPoId);
+    } catch (err) {
+        console.error("Delete referral error:", err);
+        showPOReferralMsg("Gagal terhubung ke server.", "error");
+        btn.disabled = false;
+    }
+}
+
+if (poReferralBatchSelect) {
+    poReferralBatchSelect.addEventListener("change", () => {
+        const val = poReferralBatchSelect.value ? Number(poReferralBatchSelect.value) : null;
+        selectedReferralPoId = Number.isFinite(val) ? val : null;
+        userPickedReferralBatch = true;
+        loadPOReferrals(selectedReferralPoId);
+    });
+}
+
+if (poReferralAddForm) {
+    poReferralAddForm.addEventListener("submit", handleCreateReferral);
 }
 
 /* =========================

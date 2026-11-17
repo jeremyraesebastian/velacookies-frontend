@@ -6,7 +6,7 @@
 
     <title>Velacookies — Homemade Cookies</title>
 
-    <link rel="stylesheet" href="style.css?v=20261117b">
+    <link rel="stylesheet" href="style.css?v=20261117c">
 </head>
 
 <body>
@@ -732,6 +732,22 @@
                     ></textarea>
                 </div>
 
+                <div class="form-group checkout-referral-box" id="checkout-referral-group">
+                    <div class="checkout-referral-head">
+                        <label class="form-label checkout-referral-label" for="checkout-referral">Kode Referral</label>
+                        <span class="checkout-referral-optional">Opsional</span>
+                    </div>
+                    <input
+                        type="text"
+                        id="checkout-referral"
+                        class="form-input checkout-referral-input"
+                        placeholder="Punya kode referral? Ketik di sini"
+                        autocomplete="off"
+                        maxlength="32"
+                    >
+                    <span class="form-error" id="checkout-referral-error"></span>
+                </div>
+
                 <button class="modal-add-btn" id="checkout-submit">
                     Kirim Pesanan
                 </button>
@@ -825,7 +841,7 @@
 
 
 
-    <script src="script.js?v=20261117b"></script>
+    <script src="script.js?v=20261117c"></script>
 
 </body>
 </html>

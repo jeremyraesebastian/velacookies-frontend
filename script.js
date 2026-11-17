@@ -885,6 +885,9 @@ function buildCashWhatsAppMessage(order) {
     if (order.locationDetail) {
         lines.push(`Kelas/Alamat: ${order.locationDetail}`);
     }
+    if (order.referralCode) {
+        lines.push(`Kode Referral: ${order.referralCode}`);
+    }
 
     if (totalPcs >= 3) {
         const dp = Math.round(order.total * 0.5);
@@ -969,6 +972,9 @@ const checkoutSummaryTotalEl = document.getElementById("checkout-summary-total")
 const checkoutNameInput = document.getElementById("checkout-name");
 const checkoutWaInput = document.getElementById("checkout-wa");
 const checkoutNoteInput = document.getElementById("checkout-note");
+const checkoutReferralGroup = document.getElementById("checkout-referral-group");
+const checkoutReferralInput = document.getElementById("checkout-referral");
+const checkoutReferralError = document.getElementById("checkout-referral-error");
 const checkoutNameError = document.getElementById("checkout-name-error");
 const checkoutWaError = document.getElementById("checkout-wa-error");
 const checkoutSubmitBtn = document.getElementById("checkout-submit");
@@ -1015,6 +1021,8 @@ function openCheckoutModal() {
     if (checkoutNameInput) checkoutNameInput.value = "";
     if (checkoutWaInput) checkoutWaInput.value = "";
     if (checkoutNoteInput) checkoutNoteInput.value = "";
+    if (checkoutReferralInput) checkoutReferralInput.value = "";
+    if (checkoutReferralGroup) checkoutReferralGroup.classList.remove("has-value");
     resetLocationFields();
     resetPaymentField();
     clearCheckoutErrors();
@@ -1040,10 +1048,13 @@ function clearCheckoutErrors() {
     if (checkoutLocationDetailError) checkoutLocationDetailError.innerText = "";
     if (checkoutSchoolClassError) checkoutSchoolClassError.innerText = "";
     if (checkoutPaymentError) checkoutPaymentError.innerText = "";
+    if (checkoutReferralError) checkoutReferralError.innerText = "";
     if (checkoutNameInput) checkoutNameInput.classList.remove("invalid");
     if (checkoutWaInput) checkoutWaInput.classList.remove("invalid");
     if (checkoutLocationDetailInput) checkoutLocationDetailInput.classList.remove("invalid");
     if (checkoutSchoolClassDetailInput) checkoutSchoolClassDetailInput.classList.remove("invalid");
+    if (checkoutReferralInput) checkoutReferralInput.classList.remove("invalid");
+    if (checkoutReferralGroup) checkoutReferralGroup.classList.remove("has-error");
 }
 
 /* LOKASI — helper */
@@ -1114,6 +1125,18 @@ checkoutPaymentRadios.forEach((radio) => {
         if (checkoutPaymentError) checkoutPaymentError.innerText = "";
     });
 });
+
+if (checkoutReferralInput) {
+    checkoutReferralInput.addEventListener("input", () => {
+        const hasVal = checkoutReferralInput.value.trim() !== "";
+        if (checkoutReferralGroup) {
+            checkoutReferralGroup.classList.toggle("has-value", hasVal);
+            checkoutReferralGroup.classList.remove("has-error");
+        }
+        checkoutReferralInput.classList.remove("invalid");
+        if (checkoutReferralError) checkoutReferralError.innerText = "";
+    });
+}
 
 if (checkoutModalClose) checkoutModalClose.addEventListener("click", closeCheckoutModal);
 
@@ -1199,6 +1222,7 @@ if (checkoutSubmitBtn) {
         const name = checkoutNameInput.value.trim();
         const wa = checkoutWaInput.value.trim();
         const note = checkoutNoteInput.value.trim();
+        const referralCode = checkoutReferralInput ? checkoutReferralInput.value.trim() : "";
 
         let hasError = false;
 
@@ -1294,6 +1318,7 @@ if (checkoutSubmitBtn) {
             customerName: name,
             whatsapp: wa,
             note: note,
+            referralCode: referralCode,
             location: selectedLocation,
             locationDetail: finalLocationDetail,
             paymentMethod: selectedPaymentMethod,
@@ -1334,6 +1359,7 @@ if (checkoutSubmitBtn) {
                     name: name,
                     wa: wa,
                     note: note,
+                    referralCode: result.referralCode || referralCode || null,
                     items: confirmedItems,
                     total: result.total,
                     paymentMethod: selectedPaymentMethod,
@@ -1342,6 +1368,12 @@ if (checkoutSubmitBtn) {
                     locationDetail: finalLocationDetail
                 });
 
+            } else if (result.field === "referralCode" && checkoutReferralError && checkoutReferralInput) {
+                checkoutReferralError.innerText =
+                    result.message || "Kode referral tidak valid. Periksa kembali atau kosongkan jika tidak menggunakan kode.";
+                checkoutReferralInput.classList.add("invalid");
+                if (checkoutReferralGroup) checkoutReferralGroup.classList.add("has-error");
+                checkoutReferralInput.focus();
             } else {
                 alert(result.message || "Gagal membuat pesanan.");
             }
