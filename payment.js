@@ -66,7 +66,7 @@ let currentOrder = null;
 let paymentSettings = {
     adminWaNumber: "6285117122454",
     qrisImageUrl: "images/qris.jpeg",
-    qrisOwnerName: "Velacookies"
+    qrisOwnerName: "Vela Business"
 };
 
 let countdownInterval = null;
@@ -310,7 +310,8 @@ function renderOrder(order) {
         };
     }
     if (qrisOwnerEl) {
-        qrisOwnerEl.innerText = paymentSettings.qrisOwnerName || "Velacookies";
+        const rawOwner = (paymentSettings.qrisOwnerName || "Vela Business").trim();
+        qrisOwnerEl.innerText = /^velacookies$/i.test(rawOwner) ? "Vela Business" : (rawOwner || "Vela Business");
     }
 
     /* Items */

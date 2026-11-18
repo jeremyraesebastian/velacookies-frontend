@@ -786,7 +786,7 @@ function calculateCartTotal(items) {
 let paymentSettings = {
     adminWaNumber: "6285117122454",
     qrisImageUrl: "/images/qris.jpeg",
-    qrisOwnerName: "Velacookies"
+    qrisOwnerName: "Vela Business"
 };
 
 let confirmationRedirectTimer = null;
