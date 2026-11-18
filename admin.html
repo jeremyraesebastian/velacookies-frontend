@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="admin.css?v=20261117d">
+    <link rel="stylesheet" href="admin.css?v=20261118a">
 </head>
 <body class="admin-body">
 
@@ -1732,7 +1732,7 @@
                             <div class="wa-knowledge-card-header">
                                 <div>
                                     <h2 class="card-title">Basis pengetahuan Chatbot AI Velacookies</h2>
-                                    <p class="card-subtitle">Perbarui informasi katalog, alergen, daya tahan, aturan order/COD, refund, dan kontak resmi. Perubahan langsung digunakan Gemini pada pesan berikutnya.</p>
+                                    <p class="card-subtitle">Perbarui informasi katalog, alergen, daya tahan, aturan order/COD, refund, dan kontak resmi. Perubahan langsung digunakan AI Chatbot (LLM_CHAIN) pada pesan berikutnya.</p>
                                 </div>
                                 <div class="wa-knowledge-header-actions">
                                     <button type="button" class="btn-outline" id="wa-knowledge-reset-all-btn">Reset semua default</button>
@@ -1759,27 +1759,27 @@
                                         <h2 class="card-title">Monitor kesehatan AI &amp; log panggilan</h2>
                                         <span class="badge-pill badge-green" id="wa-health-status-badge">Memeriksa...</span>
                                     </div>
-                                    <p class="card-subtitle">Pantau model Gemini yang aktif, waktu respons rata-rata, status failover kuota, dan 25 riwayat pemanggilan AI terbaru.</p>
+                                    <p class="card-subtitle">Pantau otak Chatbot WhatsApp (LLM_CHAIN), rantai model Gemini Vision pemeriksa struk QRIS, statistik 24 jam, dan 25 log pemanggilan terbaru.</p>
                                 </div>
                                 <button type="button" class="btn-outline" id="wa-health-refresh-btn">Segarkan monitor</button>
                             </div>
 
                             <div class="wa-health-config-grid mt-14" id="wa-health-config-grid">
                                 <div class="wa-health-kv-box">
-                                    <span class="mini-label">MODEL AKTIF SAAT INI</span>
-                                    <strong id="wa-health-active-model">gemini-3.8-flash</strong>
+                                    <span class="mini-label">OTAK CHATBOT WA (LLM_CHAIN)</span>
+                                    <strong id="wa-health-active-model">Memuat rantai...</strong>
                                 </div>
                                 <div class="wa-health-kv-box">
-                                    <span class="mini-label">MODEL UTAMA &rarr; CADANGAN</span>
-                                    <strong id="wa-health-models-pair">gemini-3.8-flash &rarr; gemini-3-flash-preview</strong>
+                                    <span class="mini-label">PEMERIKSA STRUK QRIS (VISION)</span>
+                                    <strong id="wa-health-models-pair">gemini-3.8-flash &rarr; gemini-3.6-flash &rarr; gemini-3.5-flash-lite</strong>
                                 </div>
                                 <div class="wa-health-kv-box">
-                                    <span class="mini-label">THINKING &amp; HARD TIMEOUT</span>
-                                    <strong id="wa-health-thinking-timeout">low · batas 15 dtk</strong>
+                                    <span class="mini-label">AKTIVITAS 24 JAM (CHAT vs VISION)</span>
+                                    <strong id="wa-health-thinking-timeout">Chat: 0 · Vision: 0</strong>
                                 </div>
                                 <div class="wa-health-kv-box">
-                                    <span class="mini-label">STATUS API KEY &amp; SDK</span>
-                                    <strong id="wa-health-apikey-status">Aktif &amp; Siap</strong>
+                                    <span class="mini-label">PROVIDER AI &amp; STATUS API KEY</span>
+                                    <strong id="wa-health-apikey-status">Memeriksa...</strong>
                                 </div>
                             </div>
 
@@ -2352,6 +2352,6 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
-    <script src="admin.js?v=20261117d"></script>
+    <script src="admin.js?v=20261118a"></script>
 </body>
 </html>

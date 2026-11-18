@@ -782,6 +782,7 @@ function doLogout() {
     referralReportCache = null;
     selectedReferralPoId = null;
     userPickedReferralBatch = false;
+    proofLoadPromises.clear();
     showLoginView();
 }
 
@@ -902,8 +903,12 @@ function renderSummary() {
     }
 }
 
+function hasOrderProof(o) {
+    return Boolean(o && (o.hasPaymentProof || o.paymentProofUrl));
+}
+
 function isAwaitingVerification(o) {
-    return (o.status || "pending") === "pending" && Boolean(o.paymentProofUrl || o.customerConfirmed);
+    return (o.status || "pending") === "pending" && Boolean(hasOrderProof(o) || o.customerConfirmed);
 }
 
 document.querySelectorAll("[data-quick-status]").forEach((card) => {
@@ -1283,7 +1288,7 @@ function getPaymentStatusSub(order) {
     const statusVal = order.status || "pending";
     if (statusVal === "finished") return { text: "Lunas · Finish", cls: "" };
     if (statusVal === "success") return { text: "Lunas", cls: "" };
-    if (statusVal === "pending" && order.paymentProofUrl) return { text: "Bukti terunggah", cls: "claimed" };
+    if (statusVal === "pending" && hasOrderProof(order)) return { text: "Bukti terunggah", cls: "claimed" };
     if (statusVal === "pending" && order.customerConfirmed) return { text: "Klaim sudah bayar", cls: "claimed" };
     if (statusVal === "pending") return { text: "Belum lunas", cls: "" };
     return { text: "-", cls: "" };
@@ -1436,12 +1441,15 @@ function openOrderDetailPage(orderId) {
     selectedInlineOrderId = orderId;
     renderOrderDetailPage(order);
     switchTab("order-detail");
+    if (hasOrderProof(order) && !order.paymentProofUrl) {
+        ensureOrderProofLoaded(order.orderId);
+    }
 }
 
 function buildOrderTimelineHtml(order) {
     const steps = [{ label: "Pesanan dibuat", time: order.createdAt, done: true }];
-    if (order.customerConfirmed || order.paymentProofUrl) {
-        steps.push({ label: order.paymentProofUrl ? "Bukti pembayaran diunggah" : "Pelanggan klaim sudah bayar", time: order.customerConfirmedAt, done: true });
+    if (order.customerConfirmed || hasOrderProof(order)) {
+        steps.push({ label: hasOrderProof(order) ? "Bukti pembayaran diunggah" : "Pelanggan klaim sudah bayar", time: order.customerConfirmedAt, done: true });
     }
     if (order.status === "finished") {
         steps.push({ label: "Pembayaran diverifikasi (Lunas)", time: order.paidAt, done: true });
@@ -1501,7 +1509,7 @@ function renderOrderDetailPage(order) {
         } else {
             actionButtons.push(`<button type="button" class="btn-primary detail-action-btn" data-action="approve">Terima pembayaran</button>`);
         }
-        if (statusVal === "pending" && (order.paymentProofUrl || order.customerConfirmed)) {
+        if (statusVal === "pending" && (hasOrderProof(order) || order.customerConfirmed)) {
             actionButtons.push(`<button type="button" class="btn-outline btn-danger-outline detail-action-btn" data-action="reject">Tolak bukti</button>`);
         }
         if (statusVal === "pending") {
@@ -1594,7 +1602,7 @@ function renderOrderDetailPage(order) {
                 return;
             }
             if (action === "approve") {
-                if (order.paymentProofUrl || order.customerConfirmed) {
+                if (hasOrderProof(order) || order.customerConfirmed) {
                     await verifyOrderProof(order.orderId, "approve", btn);
                 } else {
                     await updateOrderStatus(order.orderId, "success", btn);
@@ -1789,6 +1797,9 @@ function openOrderModal(order) {
     `;
 
     orderModal.classList.add("active");
+    if (hasOrderProof(order) && !order.paymentProofUrl) {
+        ensureOrderProofLoaded(order.orderId);
+    }
 
     orderModalBody.querySelectorAll(".action-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -4141,6 +4152,12 @@ function renderWaVerifyQueue() {
     grid.querySelectorAll(".vq-detail-btn").forEach((btn) => {
         btn.addEventListener("click", () => openOrderDetailPage(btn.dataset.orderId));
     });
+
+    queue.forEach((order) => {
+        if (hasOrderProof(order) && !order.paymentProofUrl) {
+            ensureOrderProofLoaded(order.orderId);
+        }
+    });
 }
 
 function renderBotHealthBanner(botHealth, isBotOn = true) {
@@ -4148,30 +4165,33 @@ function renderBotHealthBanner(botHealth, isBotOn = true) {
         waBotHealthCache = botHealth;
     }
     const bh = botHealth || waBotHealthCache || {};
-    const activeModel = bh.activeModel || bh.primaryModel || "gemini-3.8-flash";
-    const primaryModel = bh.primaryModel || "gemini-3.8-flash";
-    const fallbackModel = bh.fallbackModel || "gemini-3-flash-preview";
+    const chatEng = bh.chatEngine || {};
+    const visEng = bh.visionEngine || {};
+    const chatActiveModel = chatEng.activeModel || bh.activeModel || bh.primaryModel || "gemini-3.8-flash";
+    const chatChainLabel = chatEng.chainLabel || (Array.isArray(chatEng.chain) ? chatEng.chain.join(" -> ") : chatActiveModel);
+    const visActiveModel = visEng.activeModel || "gemini-3.8-flash";
+    const visChainLabel = visEng.chainLabel || (Array.isArray(visEng.chain) ? visEng.chain.join(" -> ") : `${visActiveModel} -> gemini-3.6-flash -> gemini-3.5-flash-lite`);
     const healthStatus = bh.status || "healthy";
 
     if (waSettingBotActiveTitle) {
-        waSettingBotActiveTitle.innerText = `Aktifkan Balasan Otomatis AI (${activeModel})`;
+        waSettingBotActiveTitle.innerText = `Aktifkan Balasan Otomatis Chatbot AI (${chatActiveModel})`;
     }
 
     if (waBotStatusPill) {
         if (!isBotOn) {
-            waBotStatusPill.innerText = "Bot AI Nonaktif (Manual)";
+            waBotStatusPill.innerText = "Chatbot Nonaktif (Manual)";
             waBotStatusPill.className = "badge-pill badge-gold";
         } else if (healthStatus === "error") {
             waBotStatusPill.innerText = bh.statusLabel || "API Key / SDK Belum Aktif";
             waBotStatusPill.className = "badge-pill badge-danger";
         } else if (healthStatus === "degraded") {
-            waBotStatusPill.innerText = bh.statusLabel || `Terdegradasi (Fallback · ${activeModel})`;
+            waBotStatusPill.innerText = bh.statusLabel || `Terdegradasi (${chatActiveModel})`;
             waBotStatusPill.className = "badge-pill badge-gold";
         } else if (healthStatus === "failover") {
-            waBotStatusPill.innerText = `AI Aktif · Failover (${activeModel})`;
+            waBotStatusPill.innerText = `Failover Aktif · ${chatActiveModel}`;
             waBotStatusPill.className = "badge-pill badge-green";
         } else {
-            waBotStatusPill.innerText = `AI Aktif · ${activeModel}`;
+            waBotStatusPill.innerText = `Chatbot: ${chatActiveModel} · Vision: ${visActiveModel}`;
             waBotStatusPill.className = "badge-pill badge-green";
         }
     }
@@ -4184,33 +4204,39 @@ function renderBotHealthBanner(botHealth, isBotOn = true) {
             waHealthStatusBadge.innerText = bh.statusLabel || "Terdegradasi (Fallback)";
             waHealthStatusBadge.className = "badge-pill badge-gold";
         } else if (healthStatus === "failover") {
-            waHealthStatusBadge.innerText = bh.statusLabel || `Failover Aktif · ${activeModel}`;
+            waHealthStatusBadge.innerText = bh.statusLabel || `Failover Aktif · ${chatActiveModel}`;
             waHealthStatusBadge.className = "badge-pill badge-green";
         } else {
-            waHealthStatusBadge.innerText = bh.statusLabel || `AI Sehat · ${activeModel}`;
+            waHealthStatusBadge.innerText = bh.statusLabel || `Chat: ${chatActiveModel} | Vision: ${visActiveModel}`;
             waHealthStatusBadge.className = "badge-pill badge-green";
         }
     }
 
     if (waHealthActiveModel) {
-        const cooldownSec = Number(bh.primaryCooldownRemainingSec || 0);
-        waHealthActiveModel.innerText = cooldownSec > 0
-            ? `${activeModel} (Cooldown utama ${cooldownSec} dtk)`
-            : activeModel;
+        waHealthActiveModel.innerText = `${chatActiveModel}${chatChainLabel && chatChainLabel !== chatActiveModel ? ` (${chatChainLabel})` : ""}`;
     }
     if (waHealthModelsPair) {
-        waHealthModelsPair.innerText = `${primaryModel} -> ${fallbackModel}`;
+        const cooldownVis = Number(visEng.cooldownRemainingSec || bh.primaryCooldownRemainingSec || 0);
+        waHealthModelsPair.innerText = cooldownVis > 0
+            ? `${visActiveModel} [Cooldown utama ${cooldownVis} dtk] (${visChainLabel})`
+            : `${visChainLabel} (maks ${visEng.perOrderLimit || 3}x auto/order)`;
     }
+    const s24 = bh.stats24h || {};
     if (waHealthThinkingTimeout) {
-        waHealthThinkingTimeout.innerText = `thinking: ${bh.thinkingLevel || "low"} · batas ${bh.timeoutSeconds || 15} dtk`;
+        const chatCalls = Number(chatEng.calls24h ?? s24.chatCalls ?? 0);
+        const visCalls = Number(visEng.calls24h ?? s24.visionCalls ?? 0);
+        const timeoutSec = visEng.timeoutSeconds || bh.timeoutSeconds || 15;
+        waHealthThinkingTimeout.innerText = `Chat: ${chatCalls}x · Vision: ${visCalls}x · timeout ${timeoutSec} dtk`;
     }
     if (waHealthApikeyStatus) {
-        const ok = bh.apiKeyConfigured !== false && bh.sdkInstalled !== false;
-        waHealthApikeyStatus.innerText = ok ? "API Key & SDK google-genai Aktif" : "API Key / SDK Belum Siap";
-        waHealthApikeyStatus.className = ok ? "text-green" : "";
+        const providers = Array.isArray(chatEng.providersConfigured) && chatEng.providersConfigured.length > 0
+            ? chatEng.providersConfigured.join(", ")
+            : (bh.apiKeyConfigured !== false ? "gemini" : "belum ada key");
+        const visReady = visEng.ready !== undefined ? Boolean(visEng.ready) : (bh.apiKeyConfigured !== false && bh.sdkInstalled !== false);
+        const chatReady = chatEng.ready !== undefined ? Boolean(chatEng.ready) : visReady;
+        waHealthApikeyStatus.innerText = `Aktif (${providers}) · Vision: ${visReady ? "Siap" : "Belum siap"}`;
+        waHealthApikeyStatus.className = (chatReady && visReady) ? "text-green" : "";
     }
-
-    const s24 = bh.stats24h || {};
     if (waHealthStatTotal) waHealthStatTotal.innerText = String(s24.totalCalls || 0);
     if (waHealthStatSuccess) waHealthStatSuccess.innerText = String(s24.successCalls || 0);
     if (waHealthStatFallback) waHealthStatFallback.innerText = String(s24.fallbackCalls || 0);
@@ -4556,7 +4582,7 @@ function getWaFilteredConversations() {
     return waConversationsCache.filter((c) => {
         if (waActiveFilter === "awaiting_verification") {
             const vs = c.verificationStatus || "";
-            const hasProof = c.order && (c.order.paymentProofUrl || c.order.customerConfirmed);
+            const hasProof = c.order && (hasOrderProof(c.order) || c.order.customerConfirmed);
             if (vs !== "awaiting_verification" && vs !== "dp_awaiting_verification" && !hasProof) return false;
         } else if (waActiveFilter === "waiting_proof") {
             const vs = c.verificationStatus || "";
@@ -4610,7 +4636,7 @@ function renderWaConversationList() {
             verifBadge = `<span class="status-badge status-finished">Finish</span>`;
         } else if (c.order && c.order.status === "success") {
             verifBadge = `<span class="status-badge status-success">Lunas</span>`;
-        } else if (c.order && (c.order.paymentProofUrl || c.order.customerConfirmed)) {
+        } else if (c.order && (hasOrderProof(c.order) || c.order.customerConfirmed)) {
             verifBadge = `<span class="status-badge status-pending">Cek struk</span>`;
         }
 
@@ -4653,6 +4679,10 @@ async function selectWaConversation(convId) {
         const order = data.order;
         const messages = data.messages || [];
         waActiveConvObject = conv;
+        const cachedConv = waConversationsCache.find((c) => String(c.convId) === String(convId));
+        if (cachedConv && order) {
+            cachedConv.order = order;
+        }
 
         if (waActiveAvatar) {
             const initials = (conv.customerName || "VC").trim().slice(0, 2).toUpperCase();
@@ -4741,10 +4771,157 @@ function renderWaMessages(messages) {
     waMessagesViewport.scrollTop = waMessagesViewport.scrollHeight;
 }
 
+const proofLoadPromises = new Map();
+
+function renderProofIntoLazySlots(orderId, proofUrl) {
+    if (!orderId || !proofUrl) return;
+    document.querySelectorAll(".proof-lazy-slot").forEach((slot) => {
+        if ((slot.dataset.proofOrderId || "").toUpperCase() !== orderId.toUpperCase()) return;
+        const compact = slot.dataset.compact === "1";
+        const safeUrl = escapeHtml(proofUrl);
+        slot.outerHTML = `<a href="${safeUrl}" target="_blank" rel="noopener" title="Klik untuk lihat ukuran penuh"><img src="${safeUrl}" alt="Struk Pembayaran" class="wa-proof-preview-img" style="margin-top:8px;max-height:${compact ? "180px" : "260px"};width:auto;max-width:100%;border-radius:8px;display:block;"></a>`;
+    });
+}
+
+async function ensureOrderProofLoaded(orderId) {
+    const oid = String(orderId || "").trim().toUpperCase();
+    if (!oid) return null;
+
+    const findTargets = () => {
+        const targets = [];
+        const o1 = allOrders.find((o) => (o.orderId || "").toUpperCase() === oid);
+        if (o1) targets.push(o1);
+        waConversationsCache.forEach((c) => {
+            if (c.order && (c.order.orderId || "").toUpperCase() === oid) targets.push(c.order);
+        });
+        return targets;
+    };
+
+    const targetsNow = findTargets();
+    const cached = targetsNow.find((o) => Boolean(o.paymentProofUrl));
+    if (cached) {
+        renderProofIntoLazySlots(oid, cached.paymentProofUrl);
+        return cached.paymentProofUrl;
+    }
+
+    if (targetsNow.length > 0 && !targetsNow.some((o) => hasOrderProof(o))) {
+        return null;
+    }
+
+    if (proofLoadPromises.has(oid)) {
+        return proofLoadPromises.get(oid);
+    }
+
+    const token = getToken();
+    if (!token) return null;
+
+    const promise = (async () => {
+        try {
+            const res = await fetch(`${API_BASE}/api/admin/orders/${encodeURIComponent(oid)}/proof`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (!res.ok) return null;
+            const data = await res.json();
+            if (!data.success) return null;
+
+            findTargets().forEach((o) => {
+                o.hasPaymentProof = Boolean(data.hasPaymentProof || data.paymentProofUrl);
+                if (data.paymentProofUrl) o.paymentProofUrl = data.paymentProofUrl;
+                if (data.aiReceiptAnalysis) o.aiReceiptAnalysis = data.aiReceiptAnalysis;
+            });
+
+            if (data.paymentProofUrl) {
+                renderProofIntoLazySlots(oid, data.paymentProofUrl);
+            } else {
+                document.querySelectorAll(".proof-lazy-slot").forEach((slot) => {
+                    if ((slot.dataset.proofOrderId || "").toUpperCase() === oid) {
+                        slot.innerHTML = `<span class="text-muted-sm">Gambar bukti pembayaran tidak ditemukan.</span>`;
+                    }
+                });
+            }
+            return data.paymentProofUrl || null;
+        } catch (err) {
+            console.error("Load proof error:", err);
+            return null;
+        } finally {
+            proofLoadPromises.delete(oid);
+        }
+    })();
+
+    proofLoadPromises.set(oid, promise);
+    return promise;
+}
+
+async function reanalyzeOrderProof(orderId, btnEl) {
+    const oid = String(orderId || "").trim().toUpperCase();
+    if (!oid || isInvestorRole()) return;
+    const token = getToken();
+    if (!token) return;
+
+    const origText = btnEl ? btnEl.innerText : "Analisa Ulang AI";
+    if (btnEl) {
+        btnEl.disabled = true;
+        btnEl.innerText = "Menganalisa AI...";
+    }
+
+    try {
+        const res = await fetch(`${API_BASE}/api/admin/orders/${encodeURIComponent(oid)}/reanalyze-proof`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            alert(data.message || "Gagal menjalankan analisa ulang AI Vision.");
+            return;
+        }
+
+        const matchOrders = allOrders.filter((o) => (o.orderId || "").toUpperCase() === oid);
+        matchOrders.forEach((o) => { o.aiReceiptAnalysis = data.receiptAnalysis; });
+        waConversationsCache.forEach((c) => {
+            if (c.order && (c.order.orderId || "").toUpperCase() === oid) {
+                c.order.aiReceiptAnalysis = data.receiptAnalysis;
+            }
+        });
+
+        if (selectedInlineOrderId && selectedInlineOrderId.toUpperCase() === oid && matchOrders[0]) {
+            renderOrderDetailPage(matchOrders[0]);
+        }
+        if (orderModal && orderModal.classList.contains("active") && matchOrders[0]) {
+            openOrderModal(matchOrders[0]);
+        }
+        if (waPanelVerify && !waPanelVerify.hidden) {
+            renderWaVerifyQueue();
+        }
+        if (waSelectedConvId) {
+            const activeConv = waConversationsCache.find((c) => String(c.convId) === String(waSelectedConvId));
+            if (activeConv && activeConv.order && (activeConv.order.orderId || "").toUpperCase() === oid) {
+                renderWaOrderContext(activeConv, activeConv.order);
+            }
+        }
+        loadBotHealth();
+    } catch (err) {
+        console.error("Reanalyze proof error:", err);
+        alert("Gagal terhubung ke server saat menjalankan analisa ulang AI.");
+    } finally {
+        if (btnEl && btnEl.isConnected) {
+            btnEl.disabled = false;
+            btnEl.innerText = origText;
+        }
+    }
+}
+
+document.addEventListener("click", (e) => {
+    const btn = e.target && e.target.closest ? e.target.closest(".reanalyze-proof-btn") : null;
+    if (!btn) return;
+    const oid = btn.dataset.orderId;
+    if (oid) reanalyzeOrderProof(oid, btn);
+});
+
 function buildAdminReceiptAnalysisBoxHtml(order, compact = false) {
     const ai = order && order.aiReceiptAnalysis;
     const proofUrl = order && order.paymentProofUrl;
-    if (!ai && !proofUrl) {
+    const hasProof = hasOrderProof(order);
+    if (!ai && !hasProof) {
         if (compact) return "";
         return `
             <div class="wa-ai-analysis-box">
@@ -4768,6 +4945,16 @@ function buildAdminReceiptAnalysisBoxHtml(order, compact = false) {
         </div>
     ` : "";
 
+    const proofSlotHtml = proofUrl
+        ? `<a href="${escapeHtml(proofUrl)}" target="_blank" rel="noopener" title="Klik untuk lihat ukuran penuh"><img src="${escapeHtml(proofUrl)}" alt="Struk Pembayaran" class="wa-proof-preview-img" style="margin-top:8px;max-height:${compact ? "180px" : "260px"};width:auto;max-width:100%;border-radius:8px;display:block;"></a>`
+        : hasProof && order && order.orderId
+            ? `<div class="proof-lazy-slot" data-proof-order-id="${escapeHtml(order.orderId)}" data-compact="${compact ? "1" : "0"}" style="margin-top:8px;padding:10px;border-radius:8px;border:1px dashed var(--surface-border);"><span class="text-muted-sm">Memuat gambar bukti pembayaran...</span></div>`
+            : "";
+
+    const reanalyzeBtnHtml = (!isInvestorRole() && hasProof && order && order.orderId)
+        ? `<div style="margin-top:8px;display:flex;justify-content:flex-end;"><button type="button" class="btn-outline-sm reanalyze-proof-btn" data-order-id="${escapeHtml(order.orderId)}">Analisa Ulang AI</button></div>`
+        : "";
+
     return `
         <div class="wa-ai-analysis-box" style="${compact ? "margin-top:10px;margin-bottom:12px;" : ""}">
             <div class="page-title-row" style="justify-content:space-between;margin-bottom:6px;gap:6px;">
@@ -4786,7 +4973,8 @@ function buildAdminReceiptAnalysisBoxHtml(order, compact = false) {
                 ${concernsHtml}
                 ${ai.summaryNote ? `<p class="text-muted-sm" style="margin-top:6px;font-size:11.5px;line-height:1.45;">${escapeHtml(ai.summaryNote)}</p>` : ""}
             ` : ""}
-            ${proofUrl ? `<a href="${escapeHtml(proofUrl)}" target="_blank" rel="noopener" title="Klik untuk lihat ukuran penuh"><img src="${escapeHtml(proofUrl)}" alt="Struk Pembayaran" class="wa-proof-preview-img" style="margin-top:8px;max-height:${compact ? "180px" : "260px"};width:auto;max-width:100%;border-radius:8px;display:block;"></a>` : ""}
+            ${proofSlotHtml}
+            ${reanalyzeBtnHtml}
         </div>
     `;
 }
@@ -4894,6 +5082,10 @@ function renderWaOrderContext(conv, order) {
             const reason = prompt("Masukkan alasan penolakan struk (akan dikirim ke WA pelanggan):", "Nominal belum sesuai atau foto struk kurang jelas");
             if (reason) verifyOrderProof(order.orderId, "reject", rejectBtn, reason);
         });
+    }
+
+    if (hasOrderProof(order) && !order.paymentProofUrl) {
+        ensureOrderProofLoaded(order.orderId);
     }
 }
 
