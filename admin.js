@@ -750,7 +750,8 @@ function doLogout() {
     currentFinanceReport = null;
     skuHppCatalogCache = [...DEFAULT_SKU_HPP_CATALOG];
     selectedViewPoId = null;
-    poDeleteTarget = null;
+    if (typeof closePODeleteModal === "function") closePODeleteModal(true);
+    else poDeleteTarget = null;
     referralReportCache = null;
     selectedReferralPoId = null;
     userPickedReferralBatch = false;
@@ -6260,21 +6261,91 @@ function renderPOHistory(history) {
 }
 
 /* =========================
-   PRE-ORDER — 2-STEP DELETE BATCH MODAL
+   FLOATING ADMIN TOAST & PO DELETE POP-UP MODAL
    ========================= */
+
+let adminToastTimer = null;
+
+function showAdminToast(message, type = "success", durationMs = 4200) {
+    const toastEl = document.getElementById("admin-toast");
+    const textEl = document.getElementById("admin-toast-text");
+    const iconEl = document.getElementById("admin-toast-icon");
+    if (!toastEl || !textEl) return;
+
+    const isError = type === "error";
+    textEl.innerText = String(message || "");
+    toastEl.classList.remove("is-success", "is-error", "show");
+    toastEl.classList.add(isError ? "is-error" : "is-success");
+
+    if (iconEl) {
+        iconEl.innerHTML = isError
+            ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`
+            : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+    }
+
+    toastEl.hidden = false;
+    toastEl.classList.add("show");
+
+    if (adminToastTimer) clearTimeout(adminToastTimer);
+    adminToastTimer = setTimeout(() => {
+        toastEl.classList.remove("show");
+        setTimeout(() => {
+            if (!toastEl.classList.contains("show")) toastEl.hidden = true;
+        }, 220);
+    }, durationMs);
+}
 
 const poDeleteModal = document.getElementById("po-delete-modal");
 const poDeleteStep1 = document.getElementById("po-delete-step-1");
 const poDeleteStep2 = document.getElementById("po-delete-step-2");
+const poDelStepInd1 = document.getElementById("po-del-step-ind-1");
+const poDelStepInd2 = document.getElementById("po-del-step-ind-2");
+const poDelFinishedStatCard = document.getElementById("po-del-finished-stat-card");
 const poDeleteConfirmInput = document.getElementById("po-delete-confirm-input");
+const poDelMatchHint = document.getElementById("po-del-match-hint");
 const poDeleteFinalBtn = document.getElementById("po-delete-final-btn");
 const poDeleteError = document.getElementById("po-delete-error");
+let poDeleteInFlight = false;
 
-function closePODeleteModal() {
+function setPODeleteStep(stepNum) {
+    const isStep2 = stepNum === 2;
+    if (poDeleteStep1) poDeleteStep1.hidden = isStep2;
+    if (poDeleteStep2) poDeleteStep2.hidden = !isStep2;
+
+    if (poDelStepInd1) {
+        poDelStepInd1.classList.toggle("is-active", !isStep2);
+        poDelStepInd1.classList.toggle("is-done", isStep2);
+    }
+    if (poDelStepInd2) {
+        poDelStepInd2.classList.toggle("is-active", isStep2);
+        poDelStepInd2.classList.remove("is-done");
+    }
+}
+
+function syncPODeleteInputMatch() {
+    const raw = (poDeleteConfirmInput?.value || "").trim();
+    const matched = raw === "HAPUS";
+    if (poDeleteFinalBtn) poDeleteFinalBtn.disabled = !matched || poDeleteInFlight;
+    if (poDeleteConfirmInput) poDeleteConfirmInput.classList.toggle("is-valid", matched);
+    if (poDelMatchHint) {
+        poDelMatchHint.classList.toggle("is-valid", matched);
+        poDelMatchHint.innerHTML = matched
+            ? "Cocok — tekan <strong>Enter</strong> atau klik tombol hapus untuk melanjutkan."
+            : "Ketik <code>HAPUS</code> huruf kapital persis untuk mengaktifkan tombol hapus.";
+    }
+    if (poDeleteError && matched) {
+        poDeleteError.hidden = true;
+        poDeleteError.innerText = "";
+    }
+    return matched;
+}
+
+function closePODeleteModal(force = false) {
+    if (poDeleteInFlight && !force) return;
     poDeleteTarget = null;
-    if (poDeleteModal) poDeleteModal.hidden = true;
+    if (poDeleteModal) poDeleteModal.classList.remove("active");
     if (poDeleteConfirmInput) poDeleteConfirmInput.value = "";
-    if (poDeleteFinalBtn) poDeleteFinalBtn.disabled = true;
+    syncPODeleteInputMatch();
     if (poDeleteError) {
         poDeleteError.hidden = true;
         poDeleteError.innerText = "";
@@ -6284,7 +6355,7 @@ function closePODeleteModal() {
 function openPODeleteModal(batchObj) {
     if (!poDeleteModal || !batchObj || isInvestorRole()) return;
     if (batchObj.status === "open") {
-        alert("Tutup batch pre-order ini terlebih dahulu sebelum menghapus.");
+        showAdminToast("Tutup batch pre-order ini terlebih dahulu sebelum menghapus.", "error");
         return;
     }
 
@@ -6311,34 +6382,48 @@ function openPODeleteModal(batchObj) {
     setText("po-del-finished-orders", `${finishedCount} pesanan`);
     setText("po-del-step2-batch-label", batchTitle);
 
+    if (poDelFinishedStatCard) {
+        poDelFinishedStatCard.classList.toggle("is-danger", finishedCount > 0);
+    }
+
     const finishedWarn = document.getElementById("po-del-finished-warning");
     if (finishedWarn) finishedWarn.hidden = finishedCount === 0;
 
-    if (poDeleteStep1) poDeleteStep1.hidden = false;
-    if (poDeleteStep2) poDeleteStep2.hidden = true;
+    setPODeleteStep(1);
     if (poDeleteConfirmInput) poDeleteConfirmInput.value = "";
-    if (poDeleteFinalBtn) poDeleteFinalBtn.disabled = true;
+    syncPODeleteInputMatch();
     if (poDeleteError) {
         poDeleteError.hidden = true;
         poDeleteError.innerText = "";
     }
 
-    poDeleteModal.hidden = false;
+    poDeleteModal.classList.add("active");
 }
 
-bindClick("po-delete-close", closePODeleteModal);
-bindClick("po-delete-cancel-1", closePODeleteModal);
-bindClick("po-delete-cancel-2", closePODeleteModal);
+bindClick("po-delete-close", () => closePODeleteModal());
+bindClick("po-delete-cancel-1", () => closePODeleteModal());
+bindClick("po-delete-cancel-2", () => closePODeleteModal());
+
+if (poDeleteModal) {
+    poDeleteModal.addEventListener("click", (e) => {
+        if (e.target === poDeleteModal) closePODeleteModal();
+    });
+}
+
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && poDeleteModal && poDeleteModal.classList.contains("active")) {
+        closePODeleteModal();
+    }
+});
 
 bindClick("po-delete-next-btn", () => {
     if (!poDeleteTarget) return;
-    if (poDeleteStep1) poDeleteStep1.hidden = true;
-    if (poDeleteStep2) poDeleteStep2.hidden = false;
+    setPODeleteStep(2);
     if (poDeleteConfirmInput) {
         poDeleteConfirmInput.value = "";
         poDeleteConfirmInput.focus();
     }
-    if (poDeleteFinalBtn) poDeleteFinalBtn.disabled = true;
+    syncPODeleteInputMatch();
     if (poDeleteError) {
         poDeleteError.hidden = true;
         poDeleteError.innerText = "";
@@ -6346,8 +6431,7 @@ bindClick("po-delete-next-btn", () => {
 });
 
 bindClick("po-delete-back-btn", () => {
-    if (poDeleteStep1) poDeleteStep1.hidden = false;
-    if (poDeleteStep2) poDeleteStep2.hidden = true;
+    setPODeleteStep(1);
     if (poDeleteError) {
         poDeleteError.hidden = true;
         poDeleteError.innerText = "";
@@ -6355,19 +6439,20 @@ bindClick("po-delete-back-btn", () => {
 });
 
 if (poDeleteConfirmInput) {
-    poDeleteConfirmInput.addEventListener("input", () => {
-        const matched = poDeleteConfirmInput.value.trim() === "HAPUS";
-        if (poDeleteFinalBtn) poDeleteFinalBtn.disabled = !matched;
-        if (poDeleteError && matched) {
-            poDeleteError.hidden = true;
-            poDeleteError.innerText = "";
+    poDeleteConfirmInput.addEventListener("input", syncPODeleteInputMatch);
+    poDeleteConfirmInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            if (syncPODeleteInputMatch() && poDeleteFinalBtn && !poDeleteFinalBtn.disabled) {
+                poDeleteFinalBtn.click();
+            }
         }
     });
 }
 
 if (poDeleteFinalBtn) {
     poDeleteFinalBtn.addEventListener("click", async () => {
-        if (!poDeleteTarget || isInvestorRole()) return;
+        if (!poDeleteTarget || isInvestorRole() || poDeleteInFlight) return;
         const typed = (poDeleteConfirmInput?.value || "").trim();
         if (typed !== "HAPUS") {
             if (poDeleteError) {
@@ -6379,6 +6464,7 @@ if (poDeleteFinalBtn) {
 
         const deletedId = poDeleteTarget.id;
         const origText = poDeleteFinalBtn.innerText;
+        poDeleteInFlight = true;
         poDeleteFinalBtn.disabled = true;
         poDeleteFinalBtn.innerText = "Menghapus...";
         if (poDeleteError) {
@@ -6406,6 +6492,7 @@ if (poDeleteFinalBtn) {
                     poDeleteError.hidden = false;
                     poDeleteError.innerText = result.message || "Gagal menghapus riwayat Batch PO.";
                 }
+                poDeleteInFlight = false;
                 poDeleteFinalBtn.disabled = false;
                 poDeleteFinalBtn.innerText = origText;
                 return;
@@ -6414,14 +6501,14 @@ if (poDeleteFinalBtn) {
             if (String(selectedViewPoId) === String(deletedId)) {
                 selectedViewPoId = null;
             }
-            closePODeleteModal();
+            closePODeleteModal(true);
             await Promise.all([
                 loadOrders(),
                 loadStocks(),
                 loadPOSettings()
             ]);
             if (currentFinanceReport) await loadFinance();
-            alert(result.message || "Riwayat Batch Pre-Order berhasil dihapus.");
+            showAdminToast(result.message || "Riwayat Batch Pre-Order berhasil dihapus.", "success");
         } catch (err) {
             console.error("Delete PO batch error:", err);
             if (poDeleteError) {
@@ -6430,6 +6517,7 @@ if (poDeleteFinalBtn) {
             }
             poDeleteFinalBtn.disabled = false;
         } finally {
+            poDeleteInFlight = false;
             poDeleteFinalBtn.innerText = origText;
         }
     });

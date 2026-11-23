@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="admin.css?v=20261123a">
+    <link rel="stylesheet" href="admin.css?v=20261123b">
 </head>
 <body class="admin-body">
 
@@ -2301,35 +2301,74 @@
         </div>
     </div>
 
-    <!-- MODAL HAPUS BATCH PRE-ORDER (VERIFIKASI 2-TAHAP) -->
-    <div class="modal-overlay" id="po-delete-modal" hidden>
-        <div class="modal-card modal-card-narrow" role="dialog" aria-modal="true" aria-labelledby="po-delete-modal-title">
-            <div class="modal-header">
-                <div class="modal-header-title">
-                    <h2 class="modal-title" id="po-delete-modal-title">Hapus Riwayat Batch Pre-Order</h2>
-                    <span class="badge-pill badge-danger">Verifikasi 2-Tahap</span>
+    <!-- =====================================================
+         MODAL HAPUS BATCH PRE-ORDER (POP-UP 2 TAHAP)
+         ===================================================== -->
+    <div class="admin-modal-overlay" id="po-delete-modal" role="dialog" aria-modal="true" aria-labelledby="po-delete-modal-title">
+        <div class="admin-modal po-delete-modal-card">
+            <button type="button" class="admin-modal-close" id="po-delete-close" aria-label="Tutup">&times;</button>
+
+            <div class="po-del-header-row">
+                <div class="po-del-icon-wrap" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18"/>
+                        <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/>
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                        <line x1="10" y1="11" x2="10" y2="17"/>
+                        <line x1="14" y1="11" x2="14" y2="17"/>
+                    </svg>
                 </div>
-                <button type="button" class="modal-close" id="po-delete-close" aria-label="Tutup">&times;</button>
+                <div class="po-del-header-text">
+                    <h3 id="po-delete-modal-title">Hapus Riwayat Batch Pre-Order</h3>
+                    <p>Tindakan permanen dengan verifikasi 2 tahap.</p>
+                </div>
+            </div>
+
+            <div class="po-del-stepper" aria-label="Tahap verifikasi penghapusan">
+                <div class="po-del-step-pill is-active" id="po-del-step-ind-1">
+                    <span class="po-del-step-num">1</span>
+                    <span>Tinjau Dampak (1/2)</span>
+                </div>
+                <div class="po-del-step-sep"></div>
+                <div class="po-del-step-pill" id="po-del-step-ind-2">
+                    <span class="po-del-step-num">2</span>
+                    <span>Konfirmasi Akhir (2/2)</span>
+                </div>
             </div>
 
             <div class="bulk-modal-body">
-                <!-- TAHAP 1: RINGKASAN & PERINGATAN -->
+                <!-- TAHAP 1: RINGKASAN GRID 2 KOLOM & PERINGATAN -->
                 <div id="po-delete-step-1">
-                    <div class="finish-order-summary-box">
-                        <div class="meta-kv-row"><span>Batch</span><strong id="po-del-batch-name">—</strong></div>
-                        <div class="meta-kv-row"><span>Periode Jadwal</span><strong id="po-del-batch-dates">—</strong></div>
-                        <div class="meta-kv-row"><span>Total Pesanan di Batch</span><strong id="po-del-total-orders">0 pesanan</strong></div>
-                        <div class="meta-kv-row"><span>Pesanan Terbayar / Lunas</span><strong id="po-del-paid-orders">0 pesanan</strong></div>
-                        <div class="meta-kv-row"><span>Pesanan Pending (Stok Dipulihkan)</span><strong id="po-del-pending-orders">0 pesanan</strong></div>
-                        <div class="meta-kv-row"><span>Pesanan Berstatus Finish</span><strong id="po-del-finished-orders">0 pesanan</strong></div>
+                    <div class="po-del-batch-strip">
+                        <strong id="po-del-batch-name">—</strong>
+                        <span id="po-del-batch-dates">—</span>
                     </div>
 
-                    <div class="finish-warning-box po-delete-warning mt-14" id="po-del-finished-warning" hidden>
+                    <div class="po-del-stat-grid mt-12">
+                        <div class="po-del-stat-card">
+                            <span>Total Pesanan</span>
+                            <strong id="po-del-total-orders">0 pesanan</strong>
+                        </div>
+                        <div class="po-del-stat-card">
+                            <span>Terbayar / Lunas</span>
+                            <strong id="po-del-paid-orders">0 pesanan</strong>
+                        </div>
+                        <div class="po-del-stat-card">
+                            <span>Pending (Stok Kembali)</span>
+                            <strong id="po-del-pending-orders">0 pesanan</strong>
+                        </div>
+                        <div class="po-del-stat-card" id="po-del-finished-stat-card">
+                            <span>Status Finish</span>
+                            <strong id="po-del-finished-orders">0 pesanan</strong>
+                        </div>
+                    </div>
+
+                    <div class="finish-warning-box po-delete-warning mt-12" id="po-del-finished-warning" hidden>
                         <strong>Batch ini memiliki pesanan berstatus Finish / Selesai</strong>
-                        <p>Menghapus batch ini akan menghapus seluruh pesanan di dalamnya secara permanen, termasuk data omzet &amp; pesanan berstatus <strong>Finish</strong>. Pesanan <strong>Pending</strong> akan dipulihkan stoknya terlebih dahulu.</p>
+                        <p>Seluruh pesanan termasuk status <strong>Finish</strong> &amp; data omzet batch ini akan terhapus permanen. Pesanan <strong>Pending</strong> akan dipulihkan stoknya terlebih dahulu.</p>
                     </div>
 
-                    <div class="finish-warning-box mt-14" id="po-del-general-warning">
+                    <div class="finish-warning-box mt-12" id="po-del-general-warning">
                         <strong>Tindakan ini permanen dan tidak bisa dibatalkan.</strong>
                         <p>Pastikan batch ini memang data testing atau salah input sebelum melanjutkan ke konfirmasi tahap 2.</p>
                     </div>
@@ -2340,12 +2379,13 @@
                     </div>
                 </div>
 
-                <!-- TAHAP 2: KETIK HAPUS -->
+                <!-- TAHAP 2: KETIK HAPUS + ENTER -->
                 <div id="po-delete-step-2" hidden>
                     <div class="po-delete-step-box">
                         <strong>Konfirmasi Penghapusan Permanen (Tahap 2 dari 2)</strong>
-                        <p>Ketik kata <code>HAPUS</code> secara persis pada kolom di bawah ini untuk menghapus batch <strong id="po-del-step2-batch-label">—</strong> beserta seluruh pesanannya.</p>
-                        <input type="text" id="po-delete-confirm-input" class="form-input mt-8" placeholder="Ketik HAPUS" autocomplete="off">
+                        <p>Ketik kata <code>HAPUS</code> secara persis pada kolom di bawah untuk menghapus batch <strong id="po-del-step2-batch-label">—</strong> beserta seluruh pesanannya.</p>
+                        <input type="text" id="po-delete-confirm-input" class="form-input mt-10" placeholder="Ketik HAPUS" autocomplete="off">
+                        <div class="po-del-match-hint mt-6" id="po-del-match-hint">Ketik <code>HAPUS</code> huruf kapital persis untuk mengaktifkan tombol hapus.</div>
                     </div>
 
                     <p class="form-error mt-8" id="po-delete-error" hidden></p>
@@ -2353,14 +2393,24 @@
                     <div class="bulk-actions mt-16">
                         <button type="button" class="btn-outline" id="po-delete-back-btn">&larr; Kembali</button>
                         <button type="button" class="btn-outline" id="po-delete-cancel-2">Batal</button>
-                        <button type="button" class="btn-danger" id="po-delete-final-btn" disabled>Hapus Permanen Batch &amp; Pesanannya</button>
+                        <button type="button" class="btn-danger" id="po-delete-final-btn" disabled>Hapus Permanen Batch</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- TOAST NOTIFIKASI MELAYANG -->
+    <div class="admin-toast" id="admin-toast" role="status" aria-live="polite" hidden>
+        <span class="admin-toast-icon" id="admin-toast-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+            </svg>
+        </span>
+        <span id="admin-toast-text"></span>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
-    <script src="admin.js?v=20261123a"></script>
+    <script src="admin.js?v=20261123b"></script>
 </body>
 </html>
