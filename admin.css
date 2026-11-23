@@ -1,9 +1,9 @@
 /* =========================================================
-   VELACOOKIES ADMIN PANEL — INTER DESIGN SYSTEM (PREMIUM UI)
+   VELACOOKIES ADMIN PANEL — HELVETICA DESIGN SYSTEM
    ========================================================= */
 
 :root {
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
     /* Typographic Scale */
@@ -32,15 +32,15 @@
     --gold: #C8922B;
     --gold-bg: #FDF4E3;
     --gold-border: #F2D8A7;
-    --gold-text: #9C6B14;
+    --gold-text: #85590D;
 
-    --danger: #C93B2B;
+    --danger: #B42318;
     --danger-bg: #FDECE9;
     --danger-border: #F5C3BC;
 
     --text-main: #18241E;
     --text-secondary: #536058;
-    --text-muted: #7F8A83;
+    --text-muted: #55635B;
 
     --radius-lg: 16px;
     --radius-md: 12px;
@@ -63,12 +63,11 @@
     font-size: var(--font-size-base);
     line-height: 1.5;
     letter-spacing: -0.011em;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Numeric figures alignment for finance, metrics, dates, and IDs */
+/* Numeric figures alignment for finance, metrics, charts, dates, and IDs */
 .recon-val,
 .metric-value,
 .metric-number,
@@ -79,7 +78,10 @@
 .tab-count,
 .detail-total strong,
 .table-modern td strong,
-.finance-amount {
+.finance-amount,
+.chart-bar-value,
+.chart-bar-label,
+.dash-chart-footer strong {
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum";
 }
@@ -3008,6 +3010,14 @@ body.is-investor-readonly .btn-delete-cf {
     gap: 18px;
 }
 
+.chart-header-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
 .chart-legend-inline {
     display: flex;
     align-items: center;
@@ -3028,13 +3038,112 @@ body.is-investor-readonly .btn-delete-cf {
 .sq-tan { background: #D5CBB8; }
 
 .chart-7day-figma {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 10px;
-    align-items: end;
-    height: 180px;
-    padding: 20px 6px 8px;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 204px;
+    padding: 18px 8px 10px;
     border-bottom: 1px solid var(--surface-border);
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.chart-7day-figma .chart-bar-wrap {
+    flex: 1 0 56px;
+    min-width: 52px;
+    padding: 4px 4px 6px;
+    border-radius: 8px;
+    gap: 5px;
+    transition: background 0.16s ease;
+}
+
+.chart-7day-figma.is-year .chart-bar-wrap {
+    flex: 1 0 42px;
+    min-width: 38px;
+    padding: 4px 3px 6px;
+}
+
+.chart-7day-figma.is-month .chart-bar-wrap {
+    flex: 0 0 28px;
+    min-width: 26px;
+    padding: 4px 2px 6px;
+}
+
+.chart-7day-figma .chart-bar-wrap:hover {
+    background: #F4F1E8;
+}
+
+.chart-7day-figma .chart-bar-wrap.is-active {
+    background: #EDF5F0;
+}
+
+.chart-7day-figma .chart-bar-pair {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    height: 120px;
+}
+
+.chart-7day-figma .chart-bar {
+    max-width: none;
+    min-height: 4px;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.2s ease, background 0.16s ease;
+}
+
+.chart-7day-figma .chart-bar.bar-rev {
+    width: 11px;
+    background: var(--green-primary);
+}
+
+.chart-7day-figma .chart-bar.bar-pcs {
+    width: 8px;
+    background: #D5CBB8;
+}
+
+.chart-7day-figma .chart-bar-wrap:hover .chart-bar.bar-rev,
+.chart-7day-figma .chart-bar-wrap.is-active .chart-bar.bar-rev {
+    background: var(--green-dark);
+}
+
+.chart-7day-figma .chart-bar-wrap:hover .chart-bar.bar-pcs,
+.chart-7day-figma .chart-bar-wrap.is-active .chart-bar.bar-pcs {
+    background: #BFB199;
+}
+
+.chart-7day-figma.is-month .chart-bar-pair {
+    gap: 2px;
+}
+
+.chart-7day-figma.is-month .chart-bar.bar-rev {
+    width: 8px;
+}
+
+.chart-7day-figma.is-month .chart-bar.bar-pcs {
+    width: 6px;
+}
+
+.chart-7day-figma .chart-bar-value {
+    min-height: 15px;
+    line-height: 15px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.chart-7day-figma .chart-bar-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.chart-7day-figma .chart-bar-wrap.is-active .chart-bar-label,
+.chart-7day-figma .chart-bar-wrap.is-active .chart-bar-value {
+    color: var(--green-primary);
+    font-weight: 700;
 }
 
 .dash-chart-footer {
@@ -4159,10 +4268,6 @@ body.is-investor-readonly .btn-delete-cf {
     gap: 6px;
 }
 
-.dash-chart-wide .chart-bar-col {
-    min-width: 0;
-}
-
 @media (max-width: 760px) {
     .variant-highlight-grid {
         grid-template-columns: 1fr;
@@ -4426,6 +4531,28 @@ body.is-investor-readonly .btn-delete-cf {
         right: 16px;
         bottom: 16px;
         max-width: none;
+    }
+}
+
+/* KEYBOARD ACCESSIBILITY & REDUCED MOTION */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex="0"]:focus-visible {
+    outline: 2px solid var(--green-primary);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
 }
 

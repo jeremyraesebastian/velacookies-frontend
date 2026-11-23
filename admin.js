@@ -1353,61 +1353,90 @@ function renderDashboardChart(selectedVal) {
     let totalOrdersCount = 0;
     let totalPcsCount = 0;
     let totalRev = 0;
+    let defaultChartSubtitle = "Omzet harian dan jumlah pesanan terbayar (klik batang untuk rincian laporan)";
 
     if (dashPeriodMode === "year") {
         const yr = selectedVal || (dashYearSelect?.value || getCurrentYearString());
         const monthShort = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+        defaultChartSubtitle = "Omzet bulanan dan jumlah pcs terjual (klik batang untuk detail bulan tersebut)";
         setText("dash-chart-title", `Tren penjualan Tahun ${yr}`);
-        setText("dash-chart-subtitle", "Omzet bulanan & total pcs terjual (klik bulan untuk melihat detail dashboard bulan tersebut)");
+        setText("dash-chart-subtitle", defaultChartSubtitle);
         setText("dash-chart-total-label", `TOTAL TAHUN ${yr}`);
         setText("dash-chart-avg-label", "RATA-RATA BULANAN");
-        chartEl.classList.add("dash-chart-wide");
+        setText("dash-chart-mode-pill", "12 Bulan");
+        chartEl.classList.add("dash-chart-wide", "is-year");
+        chartEl.classList.remove("is-month");
 
         for (let m = 1; m <= 12; m++) {
             const ym = `${yr}-${String(m).padStart(2, "0")}`;
             const mData = getMetrics(allOrders.filter((o) => isPaidOrder(o) && getLocalDateString(o.createdAt).startsWith(ym)));
-            bars.push({ key: ym, label: monthShort[m - 1], clickType: "month", ...mData });
+            bars.push({
+                key: ym,
+                label: monthShort[m - 1],
+                hoverLabel: `${monthShort[m - 1]} ${yr}`,
+                clickType: "month",
+                ...mData
+            });
         }
     } else if (dashPeriodMode === "month") {
         const ym = selectedVal || (dashMonthInput?.value || getCurrentMonthString());
         const [y, m] = ym.split("-").map(Number);
         const daysInMonth = (y && m) ? new Date(y, m, 0).getDate() : 30;
+        defaultChartSubtitle = "Omzet harian dalam bulan terpilih (klik batang untuk laporan harian)";
         setText("dash-chart-title", `Tren harian — ${formatMonthLabelID(ym)}`);
-        setText("dash-chart-subtitle", "Omzet harian dalam bulan terpilih (klik batang untuk melihat laporan harian)");
+        setText("dash-chart-subtitle", defaultChartSubtitle);
         setText("dash-chart-total-label", "TOTAL BULAN INI");
         setText("dash-chart-avg-label", "RATA-RATA HARIAN");
-        chartEl.classList.add("dash-chart-wide");
+        setText("dash-chart-mode-pill", `${daysInMonth} Hari`);
+        chartEl.classList.add("dash-chart-wide", "is-month");
+        chartEl.classList.remove("is-year");
 
         for (let d = 1; d <= daysInMonth; d++) {
             const ds = `${ym}-${String(d).padStart(2, "0")}`;
             const mData = getMetrics(allOrders.filter((o) => isPaidOrder(o) && getLocalDateString(o.createdAt) === ds));
-            bars.push({ key: ds, label: String(d), clickType: "date", ...mData });
+            bars.push({
+                key: ds,
+                label: String(d),
+                hoverLabel: formatDateShort(ds),
+                clickType: "date",
+                ...mData
+            });
         }
     } else {
         const anchor = selectedVal || (dashDateInput?.value || getTodayDateString());
+        defaultChartSubtitle = "Omzet harian dan jumlah pesanan terbayar (klik batang untuk rincian laporan)";
         setText("dash-chart-title", "Penjualan 7 hari terakhir");
-        setText("dash-chart-subtitle", "Omzet harian dan jumlah pesanan terbayar (klik batang untuk rincian laporan)");
+        setText("dash-chart-subtitle", defaultChartSubtitle);
         setText("dash-chart-total-label", "TOTAL 7 HARI");
         setText("dash-chart-avg-label", "RATA-RATA HARIAN");
-        chartEl.classList.remove("dash-chart-wide");
+        setText("dash-chart-mode-pill", "7 Hari");
+        chartEl.classList.remove("dash-chart-wide", "is-year", "is-month");
 
         for (let i = 6; i >= 0; i--) {
             const dateStr = getDateStringOffset(anchor, -i);
             const mData = getMetrics(allOrders.filter((o) => isPaidOrder(o) && getLocalDateString(o.createdAt) === dateStr));
             const [, mm, dd] = dateStr.split("-");
-            bars.push({ key: dateStr, label: `${dd}/${mm}`, isActive: dateStr === anchor, clickType: "date", ...mData });
+            bars.push({
+                key: dateStr,
+                label: `${dd}/${mm}`,
+                hoverLabel: formatDateShort(dateStr),
+                isActive: dateStr === anchor,
+                clickType: "date",
+                ...mData
+            });
         }
     }
 
     const maxRev = Math.max(...bars.map((d) => d.revenue), 1);
     const maxPcs = Math.max(...bars.map((d) => d.items), 1);
 
-    chartEl.innerHTML = bars.map((d) => {
+    chartEl.innerHTML = bars.map((d, idx) => {
         totalRev += d.revenue;
         totalOrdersCount += d.orders;
         totalPcsCount += d.items;
+        const readout = `${d.hoverLabel || d.key} · Omzet ${formatRupiah(d.revenue)} · ${d.orders} pesanan · ${d.items} pcs`;
         return `
-            <div class="chart-bar-wrap ${d.isActive ? "is-active" : ""}" data-bar-type="${d.clickType}" data-bar-key="${d.key}" title="${d.key} · ${formatRupiah(d.revenue)} · ${d.orders} pesanan · ${d.items} pcs">
+            <div class="chart-bar-wrap ${d.isActive ? "is-active" : ""}" tabindex="0" role="button" data-bar-idx="${idx}" data-bar-type="${d.clickType}" data-bar-key="${d.key}" aria-label="${escapeHtml(readout)}" title="${escapeHtml(readout)}">
                 <span class="chart-bar-value">${d.orders > 0 ? d.orders : ""}</span>
                 <div class="chart-bar-pair">
                     <div class="chart-bar bar-rev" style="height:${Math.max((d.revenue / maxRev) * 100, d.revenue > 0 ? 6 : 2)}%;"></div>
@@ -1418,15 +1447,34 @@ function renderDashboardChart(selectedVal) {
         `;
     }).join("");
 
+    const activateChartBar = (bar) => {
+        if (bar.dataset.barType === "month") {
+            dashPeriodMode = "month";
+            if (dashMonthInput) dashMonthInput.value = bar.dataset.barKey;
+            renderDashboard();
+        } else {
+            if (reportDateInput) reportDateInput.value = bar.dataset.barKey;
+            switchTab("reports");
+        }
+    };
+
+    const showBarReadout = (bar) => {
+        const d = bars[Number(bar.dataset.barIdx)];
+        if (!d) return;
+        setText("dash-chart-subtitle", `${d.hoverLabel || d.key} · Omzet ${formatRupiah(d.revenue)} · ${d.orders} pesanan · ${d.items} pcs`);
+    };
+
+    chartEl.onmouseleave = () => setText("dash-chart-subtitle", defaultChartSubtitle);
+
     chartEl.querySelectorAll(".chart-bar-wrap").forEach((bar) => {
-        bar.addEventListener("click", () => {
-            if (bar.dataset.barType === "month") {
-                dashPeriodMode = "month";
-                if (dashMonthInput) dashMonthInput.value = bar.dataset.barKey;
-                renderDashboard();
-            } else {
-                if (reportDateInput) reportDateInput.value = bar.dataset.barKey;
-                switchTab("reports");
+        bar.addEventListener("mouseenter", () => showBarReadout(bar));
+        bar.addEventListener("focus", () => showBarReadout(bar));
+        bar.addEventListener("blur", () => setText("dash-chart-subtitle", defaultChartSubtitle));
+        bar.addEventListener("click", () => activateChartBar(bar));
+        bar.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                activateChartBar(bar);
             }
         });
     });
