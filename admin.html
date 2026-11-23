@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="admin.css?v=20261118a">
+    <link rel="stylesheet" href="admin.css?v=20261123a">
 </head>
 <body class="admin-body">
 
@@ -170,18 +170,26 @@
                     <div class="page-header">
                         <div>
                             <h1 class="page-title">Ringkasan operasional</h1>
-                            <p class="page-subtitle" id="dashboard-date-subtitle">Memuat ringkasan aktivitas hari ini...</p>
+                            <p class="page-subtitle" id="dashboard-date-subtitle">Memuat ringkasan aktivitas...</p>
                         </div>
                         <div class="page-header-actions">
+                            <div class="period-segmented" id="dash-period-tabs" role="tablist" aria-label="Filter periode dashboard">
+                                <button type="button" class="period-seg-btn active" data-dash-period="day">Per Hari</button>
+                                <button type="button" class="period-seg-btn" data-dash-period="month">Per Bulan</button>
+                                <button type="button" class="period-seg-btn" data-dash-period="year">Per Tahun</button>
+                            </div>
+                            <input type="date" id="dash-date-input" class="filter-select" title="Pilih Tanggal">
+                            <input type="month" id="dash-month-input" class="filter-select" title="Pilih Bulan" hidden>
+                            <select id="dash-year-select" class="filter-select" title="Pilih Tahun" hidden></select>
                             <button type="button" class="btn-outline" id="overview-refresh-btn">Muat ulang</button>
-                            <button type="button" class="btn-outline" id="dash-export-btn">Ekspor hari ini</button>
+                            <button type="button" class="btn-outline" id="dash-export-btn">Ekspor periode</button>
                         </div>
                     </div>
 
                     <!-- 4 TOP METRIC CARDS -->
                     <div class="metrics-grid-4">
                         <div class="metric-card">
-                            <span class="metric-label">PENJUALAN HARI INI</span>
+                            <span class="metric-label" id="dash-rev-label">OMZET PENJUALAN HARI INI</span>
                             <div class="metric-main-row">
                                 <strong class="metric-value" id="dash-today-revenue">Rp 0</strong>
                                 <span class="metric-delta" id="dash-today-rev-delta"></span>
@@ -190,16 +198,16 @@
                         </div>
 
                         <div class="metric-card">
-                            <span class="metric-label">PESANAN AKTIF</span>
+                            <span class="metric-label" id="dash-profit-label">PROFIT &amp; HPP PERIODE INI</span>
                             <div class="metric-main-row">
-                                <strong class="metric-value" id="dash-active-orders">0</strong>
-                                <span class="badge-pill badge-gold" id="dash-pending-pill">0 menunggu</span>
+                                <strong class="metric-value text-green" id="dash-period-profit">Rp 0</strong>
+                                <span class="badge-pill badge-green" id="dash-period-margin-pill">Margin 0%</span>
                             </div>
-                            <span class="metric-sub" id="dash-active-orders-sub">0 terbayar · 0 menunggu verifikasi</span>
+                            <span class="metric-sub" id="dash-period-hpp-sub">General HPP Rp 0 · sesuai master HPP varian</span>
                         </div>
 
                         <div class="metric-card">
-                            <span class="metric-label">PCS TERJUAL HARI INI</span>
+                            <span class="metric-label" id="dash-pcs-label">PCS TERJUAL PERIODE INI</span>
                             <div class="metric-main-row">
                                 <strong class="metric-value" id="dash-today-pcs">0 pcs</strong>
                             </div>
@@ -213,6 +221,26 @@
                                 <span class="badge-pill badge-danger" id="dash-action-badge">Prioritas</span>
                             </div>
                             <span class="metric-sub" id="dash-action-sub">0 bukti bayar · 0 stok rendah</span>
+                        </div>
+                    </div>
+
+                    <!-- VARIAN TERLARIS & TERKECIL (DASHBOARD) -->
+                    <div class="variant-highlight-grid mt-14">
+                        <div class="surface-card variant-highlight-card is-best">
+                            <div class="variant-highlight-head">
+                                <span class="mini-label">VARIAN TERLARIS</span>
+                                <span class="badge-pill badge-green" id="dash-best-variant-pill">Terlaris</span>
+                            </div>
+                            <strong class="variant-highlight-title" id="dash-best-variant-name">Belum ada penjualan</strong>
+                            <span class="variant-highlight-meta" id="dash-best-variant-meta">0 pcs terjual · Omzet Rp 0 · Profit Rp 0</span>
+                        </div>
+                        <div class="surface-card variant-highlight-card is-least">
+                            <div class="variant-highlight-head">
+                                <span class="mini-label">VARIAN TERKECIL</span>
+                                <span class="badge-pill badge-neutral" id="dash-least-variant-pill">Terendah</span>
+                            </div>
+                            <strong class="variant-highlight-title" id="dash-least-variant-name">Belum ada penjualan</strong>
+                            <span class="variant-highlight-meta" id="dash-least-variant-meta">0 pcs terjual · Omzet Rp 0 · Profit Rp 0</span>
                         </div>
                     </div>
 
@@ -254,12 +282,12 @@
                     <!-- SPLIT: PENJUALAN 7 HARI TERAKHIR (LEFT) + BATCH PRE-ORDER AKTIF (RIGHT) -->
                     <div class="dashboard-mid-grid mt-20">
 
-                        <!-- LEFT: 7-DAY REVENUE & PCS CHART -->
+                        <!-- LEFT: TREND REVENUE & PCS CHART -->
                         <div class="surface-card">
                             <div class="card-header-row">
                                 <div>
-                                    <h2 class="card-title">Penjualan 7 hari terakhir</h2>
-                                    <p class="card-subtitle">Omzet harian dan jumlah pesanan terbayar (klik batang untuk rincian laporan)</p>
+                                    <h2 class="card-title" id="dash-chart-title">Penjualan 7 hari terakhir</h2>
+                                    <p class="card-subtitle" id="dash-chart-subtitle">Omzet harian dan jumlah pesanan terbayar (klik batang untuk rincian laporan)</p>
                                 </div>
                                 <div class="chart-legend-inline">
                                     <span><i class="legend-sq sq-green"></i> Omzet</span>
@@ -271,11 +299,11 @@
 
                             <div class="dash-chart-footer">
                                 <div>
-                                    <span class="mini-label">TOTAL 7 HARI</span>
+                                    <span class="mini-label" id="dash-chart-total-label">TOTAL 7 HARI</span>
                                     <strong id="dash-7d-total-rev">Rp 0</strong>
                                 </div>
                                 <div>
-                                    <span class="mini-label">RATA-RATA HARIAN</span>
+                                    <span class="mini-label" id="dash-chart-avg-label">RATA-RATA HARIAN</span>
                                     <strong id="dash-7d-avg-rev">Rp 0</strong>
                                 </div>
                                 <div>
@@ -384,6 +412,9 @@
 
                     <!-- LEGACY HIDDEN SUMMARY IDs FOR BACKWARD COMPATIBILITY -->
                     <div hidden>
+                        <span id="dash-active-orders">0</span>
+                        <span id="dash-pending-pill">0 menunggu</span>
+                        <span id="dash-active-orders-sub"></span>
                         <span id="summary-total-revenue"></span>
                         <span id="summary-total-orders"></span>
                         <span id="summary-today-orders"></span>
@@ -453,7 +484,7 @@
                         <div class="admin-toolbar">
                             <div class="search-wrap">
                                 <svg class="search-svg" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="9" r="5.5"/><path d="M13.2 13.2L17 17"/></svg>
-                                <input type="search" id="search-input" class="search-input" placeholder="Cari ID pesanan (VC-xxxx), nama, atau nomor WA...">
+                                <input type="search" id="search-input" class="search-input" placeholder="Cari ID pesanan (VC2-001 / VC-xxxx), nama, atau nomor WA...">
                             </div>
 
                             <select id="location-filter" class="filter-select">
@@ -746,15 +777,24 @@
                     <div class="page-header">
                         <div>
                             <h1 class="page-title">Pre-order</h1>
-                            <p class="page-subtitle">Atur periode buka-tutup pre-order, kuota produksi per batch, jadwal pengiriman, dan daftar peserta batch.</p>
+                            <p class="page-subtitle">Atur periode buka-tutup pre-order, pantau laporan rinci per batch dan lokasi, serta kelola arsip riwayat batch.</p>
                         </div>
                         <div class="page-header-actions">
+                            <select id="po-batch-viewer-select" class="filter-select po-batch-select" title="Pilih batch untuk dilihat detailnya"></select>
                             <button type="button" class="btn-outline btn-danger-outline" id="btn-close-po" style="display: none;">Tutup batch sekarang</button>
                             <button type="button" class="btn-primary" id="po-header-open-btn">Buka / Perbarui Batch PO</button>
                         </div>
                     </div>
 
-                    <!-- ACTIVE BATCH HERO BANNER -->
+                    <div class="po-archive-banner" id="po-viewing-archive-banner" hidden>
+                        <div class="po-archive-banner-info">
+                            <span class="badge-pill badge-neutral">MODE ARSIP</span>
+                            <span id="po-viewing-archive-label">Sedang meninjau riwayat batch pre-order.</span>
+                        </div>
+                        <button type="button" class="btn-outline-sm" id="po-back-active-btn">Kembali ke Batch Aktif</button>
+                    </div>
+
+                    <!-- ACTIVE / SELECTED BATCH HERO BANNER -->
                     <div class="po-hero-banner" id="po-hero-banner">
                         <div class="po-hero-top">
                             <div>
@@ -799,10 +839,35 @@
                                 <small>Jadwal pengantaran</small>
                             </div>
                             <div class="po-hero-stat-item">
-                                <span class="mini-label-light">ESTIMASI OMZET BATCH</span>
+                                <span class="mini-label-light">OMZET BATCH (LUNAS)</span>
                                 <strong id="po-hero-est-revenue">Rp 0</strong>
                                 <small id="po-hero-paid-revenue">Rp 0 sudah lunas</small>
                             </div>
+                            <div class="po-hero-stat-item">
+                                <span class="mini-label-light">PROFIT &amp; HPP BATCH</span>
+                                <strong id="po-hero-profit">Rp 0</strong>
+                                <small id="po-hero-hpp-profit">HPP Rp 0 · Margin 0%</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VARIAN TERLARIS & TERKECIL BATCH INI -->
+                    <div class="variant-highlight-grid mt-16">
+                        <div class="surface-card variant-highlight-card is-best">
+                            <div class="variant-highlight-head">
+                                <span class="mini-label">VARIAN TERLARIS BATCH INI</span>
+                                <span class="badge-pill badge-green" id="po-best-variant-pill">Terlaris</span>
+                            </div>
+                            <strong class="variant-highlight-title" id="po-best-variant-name">Belum ada penjualan lunas</strong>
+                            <span class="variant-highlight-meta" id="po-best-variant-meta">0 pcs terjual · Omzet Rp 0 · Profit Rp 0</span>
+                        </div>
+                        <div class="surface-card variant-highlight-card is-least">
+                            <div class="variant-highlight-head">
+                                <span class="mini-label">VARIAN TERKECIL BATCH INI</span>
+                                <span class="badge-pill badge-neutral" id="po-least-variant-pill">Terendah</span>
+                            </div>
+                            <strong class="variant-highlight-title" id="po-least-variant-name">Belum ada penjualan lunas</strong>
+                            <span class="variant-highlight-meta" id="po-least-variant-meta">0 pcs terjual · Omzet Rp 0 · Profit Rp 0</span>
                         </div>
                     </div>
 
@@ -814,8 +879,8 @@
                             <div class="surface-card">
                                 <div class="card-header-row">
                                     <div>
-                                        <h2 class="card-title">Alokasi per varian — Batch aktif</h2>
-                                        <p class="card-subtitle">Rekap jumlah pcs yang dipesan di periode PO ini untuk panduan produksi dapur</p>
+                                        <h2 class="card-title" id="po-variant-table-title">Alokasi &amp; Profit per varian — Batch terpilih</h2>
+                                        <p class="card-subtitle">Rekap jumlah pcs, omzet, HPP varian, dan profit pada batch yang dipilih</p>
                                     </div>
                                     <span class="badge-pill badge-neutral" id="po-variant-total-badge">Total 0 pcs</span>
                                 </div>
@@ -825,10 +890,12 @@
                                         <thead>
                                             <tr>
                                                 <th>VARIAN PRODUK</th>
-                                                <th class="align-right">JUMLAH PESANAN</th>
-                                                <th class="align-right">TERALOKASI (PCS)</th>
-                                                <th>PORSI BATCH</th>
-                                                <th class="align-right">NILAI OMZET</th>
+                                                <th class="align-right">PESANAN</th>
+                                                <th class="align-right">PCS</th>
+                                                <th>PORSI</th>
+                                                <th class="align-right">OMZET</th>
+                                                <th class="align-right">HPP</th>
+                                                <th class="align-right">PROFIT</th>
                                             </tr>
                                         </thead>
                                         <tbody id="po-variant-allocation-tbody"></tbody>
@@ -932,18 +999,49 @@
 
                     </div>
 
-                    <!-- PESERTA BATCH AKTIF -->
+                    <!-- RINCIAN PENJUALAN PER LOKASI & VARIAN (VERSI BATCH PRE-ORDER) -->
+                    <div class="surface-card mt-20">
+                        <div class="card-header-row">
+                            <div>
+                                <h2 class="card-title">Rincian per lokasi &amp; varian (Batch ini)</h2>
+                                <p class="card-subtitle" id="po-location-detail-subtitle">Memecah pcs, omzet, dan jumlah tiap varian cookies per lokasi pengambilan pada batch terpilih.</p>
+                            </div>
+                            <div class="toolbar-inline">
+                                <select id="po-loc-status-mode" class="filter-select" title="Filter status pesanan rincian lokasi">
+                                    <option value="active">Semua pesanan aktif batch (Dapur)</option>
+                                    <option value="paid">Hanya pesanan lunas (Terbayar &amp; Finish)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="clean-table">
+                                <thead>
+                                    <tr>
+                                        <th>LOKASI / VARIAN PRODUK</th>
+                                        <th class="align-right">PESANAN</th>
+                                        <th class="align-right">QTY (PCS)</th>
+                                        <th class="align-right">OMZET</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="po-location-detail-tbody"></tbody>
+                            </table>
+                            <p class="table-empty" id="po-location-detail-empty" hidden>Belum ada pesanan pada batch ini.</p>
+                        </div>
+                    </div>
+
+                    <!-- PESERTA BATCH -->
                     <div class="surface-card mt-20">
                         <div class="card-header-row">
                             <div>
                                 <div class="page-title-row">
-                                    <h2 class="card-title">Peserta Batch Aktif</h2>
+                                    <h2 class="card-title" id="po-participants-title">Peserta Batch Terpilih</h2>
                                     <span class="badge-pill badge-green" id="po-participants-count-badge">0 pesanan</span>
                                 </div>
                                 <p class="card-subtitle">Daftar pesanan yang terhubung ke periode pre-order ini</p>
                             </div>
                             <div class="toolbar-inline">
-                                <input type="search" id="po-participant-search" class="form-input input-sm" placeholder="Cari nama atau VC-xxxx...">
+                                <input type="search" id="po-participant-search" class="form-input input-sm" placeholder="Cari nama atau VC2-001...">
                                 <select id="po-participant-filter" class="filter-select">
                                     <option value="all">Semua pembayaran</option>
                                     <option value="success">Sudah lunas</option>
@@ -977,7 +1075,7 @@
                         <div class="card-header-row">
                             <div>
                                 <h2 class="card-title">Riwayat batch pre-order</h2>
-                                <p class="card-subtitle">Arsip periode pre-order yang pernah dibuka di sistem</p>
+                                <p class="card-subtitle">Lihat detail lengkap arsip batch atau hapus batch yang sudah ditutup</p>
                             </div>
                         </div>
 
@@ -985,13 +1083,15 @@
                             <table class="clean-table">
                                 <thead>
                                     <tr>
-                                        <th>ID PERIODE</th>
+                                        <th>BATCH</th>
                                         <th>NAMA BATCH</th>
                                         <th>PERIODE BUKA &ndash; TUTUP</th>
                                         <th>TANGGAL PRODUKSI</th>
                                         <th class="align-right">PESANAN</th>
                                         <th class="align-right">TERALOKASI</th>
+                                        <th class="align-right">OMZET LUNAS</th>
                                         <th>STATUS</th>
+                                        <th class="align-right">AKSI</th>
                                     </tr>
                                 </thead>
                                 <tbody id="po-history-tbody"></tbody>
@@ -1010,36 +1110,43 @@
                     <div class="page-header">
                         <div>
                             <h1 class="page-title">Keuangan</h1>
-                            <p class="page-subtitle">Ringkasan arus kas masuk-keluar, alokasi anggaran omzet, serta rekonsiliasi saldo QRIS dan COD.</p>
+                            <p class="page-subtitle">Ringkasan General Omzet, HPP Penjualan, Profit per varian (6 SKU), serta rekonsiliasi saldo QRIS dan COD.</p>
                         </div>
                         <div class="page-header-actions">
-                            <input type="month" id="finance-month" class="filter-select">
+                            <div class="period-segmented" id="finance-period-tabs" role="tablist" aria-label="Filter periode keuangan">
+                                <button type="button" class="period-seg-btn" data-fin-period="day">Per Hari</button>
+                                <button type="button" class="period-seg-btn active" data-fin-period="month">Per Bulan</button>
+                                <button type="button" class="period-seg-btn" data-fin-period="year">Per Tahun</button>
+                            </div>
+                            <input type="date" id="finance-date" class="filter-select" title="Pilih Tanggal" hidden>
+                            <input type="month" id="finance-month" class="filter-select" title="Pilih Bulan">
+                            <select id="finance-year" class="filter-select" title="Pilih Tahun" hidden></select>
                             <button type="button" class="btn-outline" id="finance-refresh">Muat ulang</button>
-                            <button type="button" class="btn-outline" id="finance-export">Ekspor laporan (.xlsx)</button>
-                            <button type="button" class="btn-primary" id="finance-scroll-form-btn">+ Catat pengeluaran</button>
+                            <button type="button" class="btn-outline" id="fin-go-sku-hpp-btn">Atur HPP Varian &rarr;</button>
+                            <button type="button" class="btn-primary" id="finance-export">Ekspor laporan (.xlsx)</button>
                         </div>
                     </div>
 
                     <!-- 4 TOP FINANCE METRIC CARDS -->
                     <div class="metrics-grid-4">
                         <div class="metric-card">
-                            <span class="metric-label">TOTAL PEMASUKAN (OMZET)</span>
+                            <span class="metric-label">GENERAL OMZET PENJUALAN</span>
                             <div class="metric-main-row">
                                 <strong class="metric-value" id="fin-revenue">Rp 0</strong>
                             </div>
-                            <span class="metric-sub" id="fin-period-status">Periode berjalan</span>
+                            <span class="metric-sub" id="fin-period-status">0 pesanan terbayar · 0 pcs</span>
                         </div>
 
                         <div class="metric-card">
-                            <span class="metric-label">TOTAL PENGELUARAN</span>
+                            <span class="metric-label">GENERAL HPP PENJUALAN</span>
                             <div class="metric-main-row">
-                                <strong class="metric-value text-danger" id="fin-total-spent">Rp 0</strong>
+                                <strong class="metric-value text-danger" id="fin-general-hpp">Rp 0</strong>
                             </div>
-                            <span class="metric-sub" id="fin-total-spent-sub">Bahan baku (HPP) + operasional</span>
+                            <span class="metric-sub" id="fin-general-hpp-sub">0% dari omzet · total HPP varian terjual</span>
                         </div>
 
                         <div class="metric-card">
-                            <span class="metric-label">LABA BERSIH PERIODE INI</span>
+                            <span class="metric-label">GENERAL PROFIT PENJUALAN</span>
                             <div class="metric-main-row">
                                 <strong class="metric-value text-green" id="fin-net-remaining">Rp 0</strong>
                             </div>
@@ -1055,91 +1162,48 @@
                         </div>
                     </div>
 
-                    <!-- SPLIT: ALOKASI ANGGARAN (LEFT) + REKONSILIASI KAS (RIGHT) -->
+                    <!-- SPLIT: VARIAN TERLARIS & TERKECIL (LEFT) + REKONSILIASI PEMBAYARAN (RIGHT) -->
                     <div class="finance-top-split mt-20">
 
-                        <!-- LEFT: 3 BUCKETS ALOKASI DANA -->
+                        <!-- LEFT: VARIAN TERLARIS & TERKECIL -->
                         <div class="surface-card">
                             <div class="card-header-row">
                                 <div>
-                                    <h2 class="card-title">Alokasi dana dari omzet</h2>
-                                    <p class="card-subtitle">Pembagian otomatis berdasarkan persentase anggaran toko</p>
+                                    <h2 class="card-title">Varian terlaris &amp; terkecil</h2>
+                                    <p class="card-subtitle" id="fin-variant-highlights-subtitle">Performa penjualan varian pada periode terpilih</p>
                                 </div>
-                                <button type="button" class="btn-link-sm" id="fin-edit-allocation-link">Ubah rasio % &rarr;</button>
+                                <span class="badge-pill badge-neutral" id="fin-highlight-period-pill">Per Bulan</span>
                             </div>
 
-                            <div class="metrics-grid-3 mt-12">
-                                <!-- HPP BUCKET -->
-                                <div class="finance-bucket-box">
-                                    <div class="finance-bucket-header">
-                                        <strong>HPP (Bahan baku)</strong>
-                                        <span class="badge-pill badge-green" id="fin-hpp-pct">40%</span>
+                            <div class="variant-highlight-grid mt-12">
+                                <div class="variant-highlight-box is-best">
+                                    <div class="variant-highlight-head">
+                                        <span class="mini-label">VARIAN TERLARIS</span>
+                                        <span class="badge-pill badge-green">Terlaris</span>
                                     </div>
-                                    <strong class="bucket-big-val" id="fin-hpp-allocated">Rp 0</strong>
-                                    <div class="finance-row mt-8">
-                                        <span>Terpakai</span>
-                                        <strong id="fin-hpp-spent">Rp 0</strong>
-                                    </div>
-                                    <div class="finance-row">
-                                        <span>Sisa alokasi</span>
-                                        <strong class="text-green" id="fin-hpp-remaining">Rp 0</strong>
-                                    </div>
-                                    <div class="finance-progress mt-8">
-                                        <div class="finance-progress-bar" id="fin-hpp-bar"></div>
-                                    </div>
-                                    <span class="progress-caption" id="fin-hpp-usage-label">0% terpakai</span>
+                                    <strong class="variant-highlight-title" id="fin-best-variant-name">Belum ada penjualan</strong>
+                                    <span class="variant-highlight-meta" id="fin-best-variant-meta">0 pcs · Omzet Rp 0</span>
+                                    <span class="variant-highlight-profit text-green" id="fin-best-variant-profit">Profit Rp 0</span>
                                 </div>
 
-                                <!-- CASHFLOW BUCKET -->
-                                <div class="finance-bucket-box">
-                                    <div class="finance-bucket-header">
-                                        <strong>Operasional (Cashflow)</strong>
-                                        <span class="badge-pill badge-green" id="fin-cashflow-pct">40%</span>
+                                <div class="variant-highlight-box is-least">
+                                    <div class="variant-highlight-head">
+                                        <span class="mini-label">VARIAN TERKECIL</span>
+                                        <span class="badge-pill badge-neutral">Terendah</span>
                                     </div>
-                                    <strong class="bucket-big-val" id="fin-cashflow-allocated">Rp 0</strong>
-                                    <div class="finance-row mt-8">
-                                        <span>Terpakai</span>
-                                        <strong id="fin-cashflow-spent">Rp 0</strong>
-                                    </div>
-                                    <div class="finance-row">
-                                        <span>Sisa alokasi</span>
-                                        <strong class="text-green" id="fin-cashflow-remaining">Rp 0</strong>
-                                    </div>
-                                    <div class="finance-progress mt-8">
-                                        <div class="finance-progress-bar" id="fin-cashflow-bar"></div>
-                                    </div>
-                                    <span class="progress-caption" id="fin-cashflow-usage-label">0% terpakai</span>
-                                </div>
-
-                                <!-- PROFIT BUCKET -->
-                                <div class="finance-bucket-box">
-                                    <div class="finance-bucket-header">
-                                        <strong>Target Profit</strong>
-                                        <span class="badge-pill badge-gold" id="fin-profit-pct">20%</span>
-                                    </div>
-                                    <strong class="bucket-big-val" id="fin-profit-allocated">Rp 0</strong>
-                                    <div class="finance-row mt-8">
-                                        <span>Total keluar</span>
-                                        <strong id="fin-profit-detail">Rp 0</strong>
-                                    </div>
-                                    <div class="finance-row">
-                                        <span>Laba aktual</span>
-                                        <strong class="text-green" id="fin-profit-final">Rp 0</strong>
-                                    </div>
-                                    <div class="finance-progress mt-8">
-                                        <div class="finance-progress-bar" style="width: 100%; opacity: 0.3;"></div>
-                                    </div>
-                                    <span class="progress-caption">Akumulasi laba bersih</span>
+                                    <strong class="variant-highlight-title" id="fin-least-variant-name">Belum ada penjualan</strong>
+                                    <span class="variant-highlight-meta" id="fin-least-variant-meta">0 pcs · Omzet Rp 0</span>
+                                    <span class="variant-highlight-profit" id="fin-least-variant-profit">Profit Rp 0</span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- RIGHT: REKONSILIASI KAS -->
+                        <!-- RIGHT: REKONSILIASI METODE PEMBAYARAN -->
                         <div class="surface-card">
                             <div class="card-header-row">
                                 <div>
-                                    <h2 class="card-title">Rekonsiliasi kas</h2>
-                                    <p class="card-subtitle">Posisi dana masuk berdasarkan metode pembayaran bulan ini</p>
+                                    <h2 class="card-title">Rekonsiliasi metode pembayaran</h2>
+                                    <p class="card-subtitle" id="fin-recon-subtitle">Posisi dana masuk QRIS vs COD pada periode terpilih</p>
                                 </div>
                                 <span class="badge-pill badge-green">Tersinkron</span>
                             </div>
@@ -1148,170 +1212,57 @@
                                 <div class="recon-item">
                                     <div>
                                         <strong>Rekening QRIS (Terverifikasi)</strong>
-                                        <span>Pesanan QRIS berstatus lunas</span>
+                                        <span>Pesanan QRIS berstatus terbayar / finish</span>
                                     </div>
                                     <strong class="recon-val" id="fin-recon-qris">Rp 0</strong>
                                 </div>
                                 <div class="recon-item">
                                     <div>
                                         <strong>Kas Tunai / COD (Terverifikasi)</strong>
-                                        <span>Pesanan COD berstatus lunas</span>
+                                        <span>Pesanan COD berstatus terbayar / finish</span>
                                     </div>
                                     <strong class="recon-val" id="fin-recon-cod">Rp 0</strong>
                                 </div>
-                                <div class="recon-item">
-                                    <div>
-                                        <strong>Pengeluaran Tercatat (HPP + Operasional)</strong>
-                                        <span>Mengurangi saldo kas periode ini</span>
-                                    </div>
-                                    <strong class="recon-val text-danger" id="fin-recon-out">&minus; Rp 0</strong>
-                                </div>
                                 <div class="recon-item recon-total">
                                     <div>
-                                        <strong>Saldo Bersih Periode Ini</strong>
-                                        <span>Total kas masuk dikurangi pengeluaran</span>
+                                        <strong>Total Dana Masuk Terverifikasi</strong>
+                                        <span>Gabungan seluruh penjualan lunas periode ini</span>
                                     </div>
-                                    <strong class="recon-val text-green" id="fin-recon-net">Rp 0</strong>
+                                    <strong class="recon-val text-green" id="fin-recon-total">Rp 0</strong>
                                 </div>
                             </div>
                         </div>
 
                     </div>
 
-                    <!-- SPLIT: TABEL TRANSAKSI GABUNGAN (LEFT) + FORM CATAT PENGELUARAN (RIGHT) -->
-                    <div class="finance-split-grid mt-20">
-
-                        <!-- LEFT: UNIFIED TRANSACTIONS TABLE -->
-                        <div class="surface-card">
-                            <div class="card-header-row">
-                                <div>
-                                    <h2 class="card-title">Buku kas &amp; riwayat transaksi</h2>
-                                    <p class="card-subtitle">Periode <span id="hpp-history-month">—</span> <span id="cf-history-month" hidden></span></p>
-                                </div>
-                                <div class="filter-pills-inline">
-                                    <select id="finance-history-filter" class="filter-select">
-                                        <option value="all">Semua transaksi (Masuk &amp; Keluar)</option>
-                                        <option value="in">Pemasukan (Penjualan Lunas)</option>
-                                        <option value="hpp">Pengeluaran HPP (Bahan Baku)</option>
-                                        <option value="cashflow">Pengeluaran Operasional</option>
-                                    </select>
-                                </div>
+                    <!-- FULL-WIDTH: DETAIL PENJUALAN, HPP & PROFIT PER VARIAN (6 SKU) -->
+                    <div class="surface-card mt-20">
+                        <div class="card-header-row">
+                            <div>
+                                <h2 class="card-title">Detail penjualan, HPP &amp; profit per varian (6 SKU)</h2>
+                                <p class="card-subtitle" id="finance-variant-subtitle">Omzet, HPP varian, dan profit bersih dihitung otomatis dari pesanan terbayar pada periode terpilih.</p>
                             </div>
-
-                            <div class="table-responsive">
-                                <table class="clean-table">
-                                    <thead>
-                                        <tr>
-                                            <th>TANGGAL</th>
-                                            <th>DESKRIPSI</th>
-                                            <th>KATEGORI / POS</th>
-                                            <th>JENIS</th>
-                                            <th class="align-right">NOMINAL</th>
-                                            <th class="align-right">AKSI</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="finance-unified-tbody"></tbody>
-                                </table>
-                            </div>
-
-                            <!-- LEGACY TBODIES HIDDEN IF NEEDED -->
-                            <div hidden>
-                                <div id="finance-history-hpp-section"><tbody id="hpp-history-tbody"></tbody><p id="hpp-history-empty"></p></div>
-                                <div id="finance-history-cf-section"><tbody id="cf-history-tbody"></tbody><p id="cf-history-empty"></p></div>
-                            </div>
-
-                            <div class="finance-history-footer">
-                                <span>Total pengeluaran tercatat bulan ini</span>
-                                <strong id="finance-history-total-footer">Rp 0</strong>
-                            </div>
+                            <span class="badge-pill badge-neutral" id="finance-variant-summary-badge">6 SKU aktif</span>
                         </div>
 
-                        <!-- RIGHT: CATAT PENGELUARAN FORM -->
-                        <div class="surface-card" id="finance-form-card">
-                            <span class="mini-label">INPUT KAS KELUAR</span>
-                            <h2 class="card-title mt-4">Catat pengeluaran</h2>
-                            <p class="card-subtitle">Pilih pos pengeluaran HPP (bahan baku) atau Operasional (cashflow).</p>
-
-                            <div class="segmented-tabs mt-14">
-                                <button type="button" class="finance-tab active" data-finance-tab="hpp">+ Pembelian HPP</button>
-                                <button type="button" class="finance-tab" data-finance-tab="cashflow">+ Biaya Operasional</button>
-                            </div>
-
-                            <!-- FORM HPP -->
-                            <div class="finance-form-panel mt-14" data-finance-content="hpp">
-                                <form id="hpp-form">
-                                    <div class="form-row-2">
-                                        <div class="form-group">
-                                            <label class="form-label" for="hpp-item">Nama bahan / item *</label>
-                                            <input type="text" id="hpp-item" class="form-input" placeholder="Anchor butter, Nutella, tepung..." required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label" for="hpp-date">Tanggal *</label>
-                                            <input type="date" id="hpp-date" class="form-input" required>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-row-2">
-                                        <div class="form-group">
-                                            <label class="form-label" for="hpp-qty">Jumlah (opsional)</label>
-                                            <input type="number" id="hpp-qty" class="form-input" step="0.01" min="0" placeholder="2">
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label" for="hpp-unit">Satuan (opsional)</label>
-                                            <input type="text" id="hpp-unit" class="form-input" placeholder="kg, jar, pack">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label class="form-label" for="hpp-amount">Total harga (Rp) *</label>
-                                        <input type="number" id="hpp-amount" class="form-input" min="1" placeholder="45000" required>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label class="form-label" for="hpp-note">Catatan toko / supplier</label>
-                                        <input type="text" id="hpp-note" class="form-input" placeholder="Toko Bahan Kue Karawang">
-                                    </div>
-
-                                    <button type="submit" class="btn-primary btn-full" id="hpp-submit">Simpan pengeluaran HPP</button>
-                                </form>
-                            </div>
-
-                            <!-- FORM CASHFLOW -->
-                            <div class="finance-form-panel mt-14" data-finance-content="cashflow" hidden>
-                                <form id="cashflow-form">
-                                    <div class="form-row-2">
-                                        <div class="form-group">
-                                            <label class="form-label" for="cf-category">Kategori biaya</label>
-                                            <select id="cf-category" class="form-input">
-                                                <option value="">Pilih kategori</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label" for="cf-date">Tanggal *</label>
-                                            <input type="date" id="cf-date" class="form-input" required>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label class="form-label" for="cf-desc">Deskripsi pengeluaran *</label>
-                                        <input type="text" id="cf-desc" class="form-input" placeholder="Kemasan box, stiker, gas, bensin kurir..." required>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label class="form-label" for="cf-amount">Nominal (Rp) *</label>
-                                        <input type="number" id="cf-amount" class="form-input" min="1" placeholder="25000" required>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label class="form-label" for="cf-note">Catatan tambahan</label>
-                                        <input type="text" id="cf-note" class="form-input" placeholder="Opsional">
-                                    </div>
-
-                                    <button type="submit" class="btn-primary btn-full" id="cf-submit">Simpan biaya operasional</button>
-                                </form>
-                            </div>
+                        <div class="table-responsive">
+                            <table class="clean-table">
+                                <thead>
+                                    <tr>
+                                        <th>VARIAN PRODUK</th>
+                                        <th class="align-right">TERJUAL (PCS)</th>
+                                        <th class="align-right">HARGA JUAL</th>
+                                        <th class="align-right">TOTAL OMZET</th>
+                                        <th class="align-right">HPP / PCS</th>
+                                        <th class="align-right">TOTAL HPP</th>
+                                        <th class="align-right">PROFIT / PCS</th>
+                                        <th class="align-right">TOTAL PROFIT</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="finance-variant-tbody"></tbody>
+                                <tfoot id="finance-variant-tfoot"></tfoot>
+                            </table>
                         </div>
-
                     </div>
 
                 </section>
@@ -1930,7 +1881,7 @@
                     <div class="page-header">
                         <div>
                             <h1 class="page-title">Pengaturan</h1>
-                            <p class="page-subtitle">Konfigurasi identitas toko, metode pembayaran QRIS, rasio alokasi anggaran, dan koneksi WhatsApp.</p>
+                            <p class="page-subtitle">Konfigurasi identitas toko, metode pembayaran QRIS, HPP per varian (6 SKU), dan koneksi WhatsApp.</p>
                         </div>
                         <div class="page-header-actions">
                             <span class="text-muted-sm" id="settings-updated"></span>
@@ -1945,9 +1896,9 @@
                                 <strong>Toko &amp; Pembayaran QRIS</strong>
                                 <span>Nama penerima QRIS, gambar QR, dan nomor WA Admin</span>
                             </button>
-                            <button type="button" class="settings-nav-item" data-settings-section="sec-budget-allocation">
-                                <strong>Alokasi Anggaran Keuangan</strong>
-                                <span>Persentase pembagian HPP, Operasional, dan Profit</span>
+                            <button type="button" class="settings-nav-item" data-settings-section="sec-sku-hpp">
+                                <strong>HPP per Varian (6 SKU)</strong>
+                                <span>Atur harga pokok per pcs untuk hitung HPP &amp; profit</span>
                             </button>
                             <button type="button" class="settings-nav-item" data-settings-section="sec-wa-shortcut">
                                 <strong>Chatbot &amp; Koneksi WhatsApp</strong>
@@ -2012,35 +1963,34 @@
                                 </div>
                             </div>
 
-                            <!-- SECTION 2: ALOKASI ANGGARAN KEUANGAN -->
-                            <div class="surface-card mt-20" id="sec-budget-allocation">
+                            <!-- SECTION 2: PENGATURAN HPP PER VARIAN (6 SKU) -->
+                            <div class="surface-card mt-20" id="sec-sku-hpp">
                                 <div class="card-header-row">
                                     <div>
-                                        <h2 class="card-title">Rasio Alokasi Anggaran Keuangan</h2>
-                                        <p class="card-subtitle">Atur persentase pembagian omzet bulanan ke pos HPP, Operasional (Cashflow), dan Profit. Total wajib 100%.</p>
+                                        <h2 class="card-title">Pengaturan HPP per Varian (6 SKU)</h2>
+                                        <p class="card-subtitle">Nilai HPP per pcs ini digunakan secara otomatis untuk menghitung General HPP, General Profit, dan rincian laba per varian di Keuangan, Dashboard, serta Pre-Order.</p>
                                     </div>
-                                    <span class="badge-pill badge-neutral" id="budget-total-pct-badge">Total: 100%</span>
+                                    <span class="badge-pill badge-neutral">6 SKU Aktif</span>
                                 </div>
 
-                                <form id="budget-settings-form" class="mt-14">
-                                    <div class="metrics-grid-3">
-                                        <div class="form-group">
-                                            <label class="form-label" for="budget-hpp-pct">Pos HPP / Bahan Baku (%)</label>
-                                            <input type="number" id="budget-hpp-pct" class="form-input" min="0" max="100" value="40" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label" for="budget-cf-pct">Pos Operasional / Cashflow (%)</label>
-                                            <input type="number" id="budget-cf-pct" class="form-input" min="0" max="100" value="40" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label" for="budget-profit-pct">Pos Target Profit (%)</label>
-                                            <input type="number" id="budget-profit-pct" class="form-input" min="0" max="100" value="20" required>
-                                        </div>
+                                <form id="sku-hpp-form" class="mt-14">
+                                    <div class="table-responsive">
+                                        <table class="clean-table sku-hpp-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>VARIAN PRODUK</th>
+                                                    <th class="align-right">HARGA JUAL</th>
+                                                    <th class="align-right">HPP / PCS (RP)</th>
+                                                    <th class="align-right">PROFIT / PCS &amp; MARGIN</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="sku-hpp-tbody"></tbody>
+                                        </table>
                                     </div>
 
-                                    <div class="settings-actions mt-8">
-                                        <button type="submit" class="btn-primary" id="budget-settings-submit">Simpan rasio anggaran</button>
-                                        <span class="settings-status" id="budget-settings-status"></span>
+                                    <div class="settings-actions mt-14">
+                                        <button type="submit" class="btn-primary" id="sku-hpp-submit">Simpan HPP Varian</button>
+                                        <span class="settings-status" id="sku-hpp-status"></span>
                                     </div>
                                 </form>
                             </div>
@@ -2351,7 +2301,66 @@
         </div>
     </div>
 
+    <!-- MODAL HAPUS BATCH PRE-ORDER (VERIFIKASI 2-TAHAP) -->
+    <div class="modal-overlay" id="po-delete-modal" hidden>
+        <div class="modal-card modal-card-narrow" role="dialog" aria-modal="true" aria-labelledby="po-delete-modal-title">
+            <div class="modal-header">
+                <div class="modal-header-title">
+                    <h2 class="modal-title" id="po-delete-modal-title">Hapus Riwayat Batch Pre-Order</h2>
+                    <span class="badge-pill badge-danger">Verifikasi 2-Tahap</span>
+                </div>
+                <button type="button" class="modal-close" id="po-delete-close" aria-label="Tutup">&times;</button>
+            </div>
+
+            <div class="bulk-modal-body">
+                <!-- TAHAP 1: RINGKASAN & PERINGATAN -->
+                <div id="po-delete-step-1">
+                    <div class="finish-order-summary-box">
+                        <div class="meta-kv-row"><span>Batch</span><strong id="po-del-batch-name">—</strong></div>
+                        <div class="meta-kv-row"><span>Periode Jadwal</span><strong id="po-del-batch-dates">—</strong></div>
+                        <div class="meta-kv-row"><span>Total Pesanan di Batch</span><strong id="po-del-total-orders">0 pesanan</strong></div>
+                        <div class="meta-kv-row"><span>Pesanan Terbayar / Lunas</span><strong id="po-del-paid-orders">0 pesanan</strong></div>
+                        <div class="meta-kv-row"><span>Pesanan Pending (Stok Dipulihkan)</span><strong id="po-del-pending-orders">0 pesanan</strong></div>
+                        <div class="meta-kv-row"><span>Pesanan Berstatus Finish</span><strong id="po-del-finished-orders">0 pesanan</strong></div>
+                    </div>
+
+                    <div class="finish-warning-box po-delete-warning mt-14" id="po-del-finished-warning" hidden>
+                        <strong>Batch ini memiliki pesanan berstatus Finish / Selesai</strong>
+                        <p>Menghapus batch ini akan menghapus seluruh pesanan di dalamnya secara permanen, termasuk data omzet &amp; pesanan berstatus <strong>Finish</strong>. Pesanan <strong>Pending</strong> akan dipulihkan stoknya terlebih dahulu.</p>
+                    </div>
+
+                    <div class="finish-warning-box mt-14" id="po-del-general-warning">
+                        <strong>Tindakan ini permanen dan tidak bisa dibatalkan.</strong>
+                        <p>Pastikan batch ini memang data testing atau salah input sebelum melanjutkan ke konfirmasi tahap 2.</p>
+                    </div>
+
+                    <div class="bulk-actions mt-16">
+                        <button type="button" class="btn-outline" id="po-delete-cancel-1">Batal</button>
+                        <button type="button" class="btn-outline btn-danger-outline" id="po-delete-next-btn">Lanjut ke Verifikasi Akhir &rarr;</button>
+                    </div>
+                </div>
+
+                <!-- TAHAP 2: KETIK HAPUS -->
+                <div id="po-delete-step-2" hidden>
+                    <div class="po-delete-step-box">
+                        <strong>Konfirmasi Penghapusan Permanen (Tahap 2 dari 2)</strong>
+                        <p>Ketik kata <code>HAPUS</code> secara persis pada kolom di bawah ini untuk menghapus batch <strong id="po-del-step2-batch-label">—</strong> beserta seluruh pesanannya.</p>
+                        <input type="text" id="po-delete-confirm-input" class="form-input mt-8" placeholder="Ketik HAPUS" autocomplete="off">
+                    </div>
+
+                    <p class="form-error mt-8" id="po-delete-error" hidden></p>
+
+                    <div class="bulk-actions mt-16">
+                        <button type="button" class="btn-outline" id="po-delete-back-btn">&larr; Kembali</button>
+                        <button type="button" class="btn-outline" id="po-delete-cancel-2">Batal</button>
+                        <button type="button" class="btn-danger" id="po-delete-final-btn" disabled>Hapus Permanen Batch &amp; Pesanannya</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
-    <script src="admin.js?v=20261118a"></script>
+    <script src="admin.js?v=20261123a"></script>
 </body>
 </html>

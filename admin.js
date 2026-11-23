@@ -191,63 +191,22 @@ const stockModalNote = document.getElementById("stock-modal-note");
 const stockModalSave = document.getElementById("stock-modal-save");
 const stockModalError = document.getElementById("stock-modal-error");
 
+/* Dashboard Period Filter DOM */
+const dashDateInput = document.getElementById("dash-date-input");
+const dashMonthInput = document.getElementById("dash-month-input");
+const dashYearSelect = document.getElementById("dash-year-select");
+
 /* Finance Tab DOM */
+const financeDateInput = document.getElementById("finance-date");
 const financeMonthInput = document.getElementById("finance-month");
+const financeYearSelect = document.getElementById("finance-year");
 const financeRefreshBtn = document.getElementById("finance-refresh");
 const finRevenue = document.getElementById("fin-revenue");
 const finPeriodStatus = document.getElementById("fin-period-status");
-const finTotalSpent = document.getElementById("fin-total-spent");
+const finGeneralHpp = document.getElementById("fin-general-hpp");
 const finNetRemaining = document.getElementById("fin-net-remaining");
-
-const finHppPct = document.getElementById("fin-hpp-pct");
-const finHppAllocated = document.getElementById("fin-hpp-allocated");
-const finHppSpent = document.getElementById("fin-hpp-spent");
-const finHppRemaining = document.getElementById("fin-hpp-remaining");
-const finHppBar = document.getElementById("fin-hpp-bar");
-const finHppUsageLabel = document.getElementById("fin-hpp-usage-label");
-
-const finCashflowPct = document.getElementById("fin-cashflow-pct");
-const finCashflowAllocated = document.getElementById("fin-cashflow-allocated");
-const finCashflowSpent = document.getElementById("fin-cashflow-spent");
-const finCashflowRemaining = document.getElementById("fin-cashflow-remaining");
-const finCashflowBar = document.getElementById("fin-cashflow-bar");
-const finCashflowUsageLabel = document.getElementById("fin-cashflow-usage-label");
-
-const finProfitPct = document.getElementById("fin-profit-pct");
-const finProfitAllocated = document.getElementById("fin-profit-allocated");
-const finProfitDetail = document.getElementById("fin-profit-detail");
-const finProfitFinal = document.getElementById("fin-profit-final");
-
-const financeTabs = document.querySelectorAll(".finance-tab");
-const financeFormPanels = document.querySelectorAll(".finance-form-panel");
-const financeHistoryFilter = document.getElementById("finance-history-filter");
-const financeHistoryHppSection = document.getElementById("finance-history-hpp-section");
-const financeHistoryCfSection = document.getElementById("finance-history-cf-section");
-const financeHistoryTotalFooter = document.getElementById("finance-history-total-footer");
-
-const hppForm = document.getElementById("hpp-form");
-const hppDate = document.getElementById("hpp-date");
-const hppItem = document.getElementById("hpp-item");
-const hppQty = document.getElementById("hpp-qty");
-const hppUnit = document.getElementById("hpp-unit");
-const hppAmount = document.getElementById("hpp-amount");
-const hppNote = document.getElementById("hpp-note");
-const hppSubmit = document.getElementById("hpp-submit");
-
-const cashflowForm = document.getElementById("cashflow-form");
-const cfDate = document.getElementById("cf-date");
-const cfCategory = document.getElementById("cf-category");
-const cfDesc = document.getElementById("cf-desc");
-const cfAmount = document.getElementById("cf-amount");
-const cfNote = document.getElementById("cf-note");
-const cfSubmit = document.getElementById("cf-submit");
-
-const hppHistoryTbody = document.getElementById("hpp-history-tbody");
-const hppHistoryEmpty = document.getElementById("hpp-history-empty");
-const hppHistoryMonth = document.getElementById("hpp-history-month");
-const cfHistoryTbody = document.getElementById("cf-history-tbody");
-const cfHistoryEmpty = document.getElementById("cf-history-empty");
-const cfHistoryMonth = document.getElementById("cf-history-month");
+const financeVariantTbody = document.getElementById("finance-variant-tbody");
+const financeVariantTfoot = document.getElementById("finance-variant-tfoot");
 
 /* WhatsApp Chatbot & Verification DOM */
 const sidebarWaBadge = document.getElementById("sidebar-wa-badge");
@@ -257,9 +216,6 @@ const waMetricVerify = document.getElementById("wa-metric-verify");
 const waMetricDp = document.getElementById("wa-metric-dp");
 const waMetricHuman = document.getElementById("wa-metric-human");
 
-const waSubtabInboxBtn = document.getElementById("wa-subtab-inbox-btn");
-const waSubtabGatewayBtn = document.getElementById("wa-subtab-gateway-btn");
-const waSubtabKnowledgeBtn = document.getElementById("wa-subtab-knowledge-btn");
 const waPanelInbox = document.getElementById("wa-subview-inbox");
 const waPanelGateway = document.getElementById("wa-subview-gateway");
 const waPanelKnowledge = document.getElementById("wa-subview-knowledge");
@@ -345,16 +301,26 @@ let currentOrderPage = 1;
 const ORDERS_PER_PAGE = 8;
 let selectedInlineOrderId = null;
 
+const DEFAULT_SKU_HPP_CATALOG = [
+    { productId: "chocochip", addonName: "", skuKey: "chocochip", displayName: "Velaclassic Chocochip", sellPrice: 12000, hppUnit: 6000 },
+    { productId: "biscoff", addonName: "", skuKey: "biscoff", displayName: "Vela Lotus Biscoff", sellPrice: 15000, hppUnit: 6000 },
+    { productId: "scoopable", addonName: "", skuKey: "scoopable", displayName: "Scoopable Nutella Cookies", sellPrice: 28000, hppUnit: 15000 },
+    { productId: "scoopable", addonName: "Strawberry + Extra Nutella", skuKey: "scoopable||Strawberry + Extra Nutella", displayName: "Scoopable Nutella Cookies (+ Strawberry + Extra Nutella)", sellPrice: 36000, hppUnit: 20000 },
+    { productId: "nutella-tin", addonName: "", skuKey: "nutella-tin", displayName: "Cookie Nutella Tin", sellPrice: 80000, hppUnit: 54500 },
+    { productId: "nutella-tin", addonName: "Strawberry + Extra Nutella", skuKey: "nutella-tin||Strawberry + Extra Nutella", displayName: "Cookie Nutella Tin (+ Strawberry + Extra Nutella)", sellPrice: 95000, hppUnit: 64500 }
+];
+
 let allStocks = [];
-let currentFinanceMonth = "";
-let currentFinanceSummary = null;
-let cashflowCategories = [];
+let dashPeriodMode = "day";
+let financePeriodMode = "month";
+let currentFinanceReport = null;
+let skuHppCatalogCache = [...DEFAULT_SKU_HPP_CATALOG];
 let currentPOData = null;
 let poStatusCache = null;
+let selectedViewPoId = null;
+let poDeleteTarget = null;
 let currentStockFilter = "all";
 let stockAdjustMode = "add";
-let financeHppItems = [];
-let financeCfItems = [];
 
 /* WA Chatbot State */
 let waConversationsCache = [];
@@ -417,16 +383,19 @@ function applyRolePermissionsUI() {
         "#inline-stock-form input, #inline-stock-form select, #inline-stock-form textarea, #inline-stock-form button",
         "#po-form input, #po-form select, #po-form textarea, #po-form button",
         "#po-referral-add-form input, #po-referral-add-form button",
-        "#hpp-form input, #hpp-form select, #hpp-form textarea, #hpp-form button",
-        "#cashflow-form input, #cashflow-form select, #cashflow-form textarea, #cashflow-form button",
         "#settings-form input, #settings-form select, #settings-form textarea, #settings-form button",
-        "#budget-settings-form input, #budget-settings-form select, #budget-settings-form button",
+        "#sku-hpp-form input, #sku-hpp-form button",
         "#wa-gateway-form input, #wa-gateway-form select, #wa-gateway-form textarea, #wa-gateway-form button",
         "#wa-setting-approve-tpl, #wa-setting-reject-tpl"
     ];
     document.querySelectorAll(writeFormSelectors.join(", ")).forEach((el) => {
         el.disabled = isInvestor;
     });
+
+    if (poStatusCache) {
+        if (btnClosePo) btnClosePo.style.display = (poStatusCache.isOpen === true && !isInvestor) ? "inline-flex" : "none";
+        renderPOHistory(getPOHistoryWithCurrent());
+    }
 }
 
 
@@ -712,7 +681,7 @@ function switchTab(targetTab) {
     if (targetTab === "whatsapp") loadWaWorkspace();
     if (targetTab === "settings") {
         loadSettings();
-        loadBudgetSettings();
+        loadSkuHppSettings();
         if (!isInvestorRole()) {
             loadInvestorAccountSettings();
         }
@@ -778,7 +747,10 @@ function doLogout() {
     currentAdminUsername = "Admin";
     applyRolePermissionsUI();
     allOrders = [];
-    currentFinanceSummary = null;
+    currentFinanceReport = null;
+    skuHppCatalogCache = [...DEFAULT_SKU_HPP_CATALOG];
+    selectedViewPoId = null;
+    poDeleteTarget = null;
     referralReportCache = null;
     selectedReferralPoId = null;
     userPickedReferralBatch = false;
@@ -790,7 +762,9 @@ if (logoutBtn) logoutBtn.addEventListener("click", doLogout);
 
 function bootWorkspace() {
     applyRolePermissionsUI();
+    initPeriodFilterControls();
     switchTab("dashboard");
+    loadSkuHppSettings();
     loadOrders();
     loadStocks();
     loadPOSettings();
@@ -837,6 +811,7 @@ async function loadOrders() {
         renderDashboard();
         if (allStocks.length) renderStocks(allStocks);
         if (poStatusCache) renderPOPage();
+        if (document.querySelector('[data-tab-content="finance"]:not([hidden])')) loadFinance();
 
     } catch (error) {
         console.error("Load orders error:", error);
@@ -952,30 +927,398 @@ function getLowStockItems() {
     return allStocks.filter((s) => (s.stock || 0) <= 5);
 }
 
+function getCurrentYearString() {
+    const p = getWIBParts(new Date());
+    return p ? String(p.year) : String(new Date().getFullYear());
+}
+
+function getPreviousMonthString(ym) {
+    if (!ym || !/^\d{4}-\d{2}$/.test(ym)) return "";
+    const [yStr, mStr] = ym.split("-");
+    let y = parseInt(yStr, 10);
+    let m = parseInt(mStr, 10) - 1;
+    if (m <= 0) {
+        m = 12;
+        y -= 1;
+    }
+    return `${y}-${String(m).padStart(2, "0")}`;
+}
+
+function formatMonthLabelID(ym) {
+    if (!ym || !/^\d{4}-\d{2}$/.test(ym)) return ym || "-";
+    const [y, m] = ym.split("-").map(Number);
+    const d = new Date(Date.UTC(y, m - 1, 1, 12, 0, 0));
+    return d.toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta", month: "long", year: "numeric" });
+}
+
+function collectAvailableYears(extraYears = []) {
+    const set = new Set([getCurrentYearString()]);
+    allOrders.forEach((o) => {
+        const ds = getLocalDateString(o.createdAt);
+        if (ds && ds.length >= 4) set.add(ds.slice(0, 4));
+    });
+    (extraYears || []).forEach((y) => {
+        if (y) set.add(String(y));
+    });
+    return Array.from(set).sort((a, b) => Number(b) - Number(a));
+}
+
+function syncYearSelectOptions(selectEl, extraYears = []) {
+    if (!selectEl) return;
+    const years = collectAvailableYears(extraYears);
+    const prev = selectEl.value;
+    selectEl.innerHTML = years.map((y) => `<option value="${y}">${y}</option>`).join("");
+    if (prev && years.includes(prev)) {
+        selectEl.value = prev;
+    } else if (years.length > 0) {
+        selectEl.value = years[0];
+    }
+}
+
+function toggleDashPeriodInputs() {
+    document.querySelectorAll("#dash-period-tabs [data-dash-period]").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.dashPeriod === dashPeriodMode);
+    });
+    if (dashDateInput) dashDateInput.hidden = dashPeriodMode !== "day";
+    if (dashMonthInput) dashMonthInput.hidden = dashPeriodMode !== "month";
+    if (dashYearSelect) dashYearSelect.hidden = dashPeriodMode !== "year";
+}
+
+function toggleFinancePeriodInputs() {
+    document.querySelectorAll("#finance-period-tabs [data-fin-period]").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.finPeriod === financePeriodMode);
+    });
+    if (financeDateInput) financeDateInput.hidden = financePeriodMode !== "day";
+    if (financeMonthInput) financeMonthInput.hidden = financePeriodMode !== "month";
+    if (financeYearSelect) financeYearSelect.hidden = financePeriodMode !== "year";
+}
+
+function initPeriodFilterControls() {
+    if (dashDateInput && !dashDateInput.value) dashDateInput.value = getTodayDateString();
+    if (dashMonthInput && !dashMonthInput.value) dashMonthInput.value = getCurrentMonthString();
+    syncYearSelectOptions(dashYearSelect);
+    toggleDashPeriodInputs();
+
+    if (financeDateInput && !financeDateInput.value) financeDateInput.value = getTodayDateString();
+    if (financeMonthInput && !financeMonthInput.value) financeMonthInput.value = getCurrentMonthString();
+    syncYearSelectOptions(financeYearSelect);
+    toggleFinancePeriodInputs();
+}
+
+function computeClientSalesAnalytics(ordersList, catalog) {
+    const skuSource = Array.isArray(catalog) && catalog.length ? catalog : DEFAULT_SKU_HPP_CATALOG;
+    const vMap = new Map();
+    const byNameMap = new Map();
+
+    skuSource.forEach((sku, idx) => {
+        const pid = String(sku.productId || "").trim().toLowerCase();
+        const addon = String(sku.addonName || "").trim();
+        const key = `${pid}||${addon}`;
+        const sellPrice = Number(sku.sellPrice || 0);
+        const hppUnit = Math.max(0, Number(sku.hppUnit || 0));
+        const entry = {
+            _idx: idx,
+            isCanonical: true,
+            productId: pid,
+            addonName: addon,
+            skuKey: addon ? `${pid}||${addon}` : pid,
+            displayName: sku.displayName || pid,
+            sellPrice,
+            hppUnit,
+            profitUnit: sellPrice - hppUnit,
+            qty: 0,
+            totalRevenue: 0,
+            totalHpp: 0,
+            totalProfit: 0,
+            marginPct: 0,
+            sharePct: 0,
+            _orderIds: new Set()
+        };
+        vMap.set(key, entry);
+        byNameMap.set(String(entry.displayName).trim().toLowerCase(), entry);
+    });
+
+    let paidOrdersCount = 0;
+    let paidOrderTotalSum = 0;
+    let qrisRevenue = 0;
+    let codRevenue = 0;
+    let nextExtraIdx = vMap.size;
+
+    (ordersList || []).forEach((order) => {
+        const oId = order.orderId || order.id || Math.random();
+        const oTotal = Number(order.total || 0);
+        paidOrdersCount += 1;
+        paidOrderTotalSum += oTotal;
+        if ((order.paymentMethod || "cash") === "qris") qrisRevenue += oTotal;
+        else codRevenue += oTotal;
+
+        (order.items || []).forEach((it) => {
+            const qty = Number(it.quantity || 0);
+            if (qty <= 0) return;
+            const pid = String(it.productId || "").trim().toLowerCase();
+            const addon = String(it.addonName || "").trim();
+            const pName = String(it.name || pid).trim();
+            const displayNm = addon ? `${pName} (+ ${addon})` : pName;
+            const unitSell = Number(it.price || 0) + Number(it.addonPrice || 0);
+            const subtotal = it.subtotal != null ? Number(it.subtotal) : unitSell * qty;
+
+            let key = `${pid}||${addon}`;
+            let entry = vMap.get(key) || byNameMap.get(displayNm.toLowerCase());
+            if (!entry) {
+                key = `${pid || pName.toLowerCase()}||${addon}`;
+                entry = vMap.get(key);
+            }
+            if (!entry) {
+                entry = {
+                    _idx: nextExtraIdx++,
+                    isCanonical: false,
+                    productId: pid || pName.toLowerCase(),
+                    addonName: addon,
+                    skuKey: addon ? `${pid || pName}||${addon}` : (pid || pName),
+                    displayName: displayNm || "-",
+                    sellPrice: unitSell,
+                    hppUnit: 0,
+                    profitUnit: unitSell,
+                    qty: 0,
+                    totalRevenue: 0,
+                    totalHpp: 0,
+                    totalProfit: 0,
+                    marginPct: 0,
+                    sharePct: 0,
+                    _orderIds: new Set()
+                };
+                vMap.set(key, entry);
+            }
+            entry.qty += qty;
+            entry.totalRevenue += subtotal;
+            entry._orderIds.add(oId);
+        });
+    });
+
+    let totalPcs = 0;
+    let generalRevenue = 0;
+    let generalHpp = 0;
+    const allVariants = Array.from(vMap.values()).map((entry) => {
+        const totalHpp = entry.qty * entry.hppUnit;
+        const totalProfit = entry.totalRevenue - totalHpp;
+        const marginPct = entry.totalRevenue > 0
+            ? Math.round((totalProfit / entry.totalRevenue) * 1000) / 10
+            : (entry.sellPrice > 0 ? Math.round((entry.profitUnit / entry.sellPrice) * 1000) / 10 : 0);
+        totalPcs += entry.qty;
+        generalRevenue += entry.totalRevenue;
+        generalHpp += totalHpp;
+        return {
+            productId: entry.productId,
+            addonName: entry.addonName,
+            skuKey: entry.skuKey,
+            displayName: entry.displayName,
+            sellPrice: entry.sellPrice,
+            hppUnit: entry.hppUnit,
+            profitUnit: entry.profitUnit,
+            qty: entry.qty,
+            orderCount: entry._orderIds.size,
+            totalRevenue: entry.totalRevenue,
+            totalHpp,
+            totalProfit,
+            marginPct,
+            sharePct: 0,
+            _idx: entry._idx,
+            _isCanonical: entry.isCanonical
+        };
+    });
+
+    if (generalRevenue === 0 && paidOrderTotalSum > 0) {
+        generalRevenue = paidOrderTotalSum;
+    }
+
+    const generalProfit = generalRevenue - generalHpp;
+    const generalMarginPct = generalRevenue > 0 ? Math.round((generalProfit / generalRevenue) * 1000) / 10 : 0;
+
+    allVariants.forEach((v) => {
+        v.sharePct = totalPcs > 0 ? Math.round((v.qty / totalPcs) * 1000) / 10 : 0;
+    });
+
+    const soldVariants = allVariants.filter((v) => v.qty > 0);
+    const canonicalVariants = allVariants.filter((v) => v._isCanonical);
+    const poolLeast = canonicalVariants.length ? canonicalVariants : allVariants;
+
+    const bestSeller = soldVariants.length
+        ? soldVariants.reduce((best, cur) => {
+            if (cur.qty !== best.qty) return cur.qty > best.qty ? cur : best;
+            if (cur.totalRevenue !== best.totalRevenue) return cur.totalRevenue > best.totalRevenue ? cur : best;
+            return cur._idx < best._idx ? cur : best;
+        }, soldVariants[0])
+        : null;
+
+    const leastSeller = soldVariants.length && poolLeast.length
+        ? poolLeast.reduce((least, cur) => {
+            if (cur.qty !== least.qty) return cur.qty < least.qty ? cur : least;
+            if (cur.totalRevenue !== least.totalRevenue) return cur.totalRevenue < least.totalRevenue ? cur : least;
+            return cur._idx < least._idx ? cur : least;
+        }, poolLeast[0])
+        : null;
+
+    const leastSellerSold = soldVariants.length
+        ? soldVariants.reduce((least, cur) => {
+            if (cur.qty !== least.qty) return cur.qty < least.qty ? cur : least;
+            if (cur.totalRevenue !== least.totalRevenue) return cur.totalRevenue < least.totalRevenue ? cur : least;
+            return cur._idx < least._idx ? cur : least;
+        }, soldVariants[0])
+        : null;
+
+    const zeroSalesVariants = soldVariants.length
+        ? poolLeast.filter((v) => v.qty === 0).map((v) => v.displayName)
+        : [];
+
+    const bestKey = bestSeller ? bestSeller.skuKey : null;
+    const leastKey = leastSeller ? leastSeller.skuKey : null;
+
+    const variants = allVariants
+        .slice()
+        .sort((a, b) => (b.qty - a.qty) || (b.totalRevenue - a.totalRevenue) || (a._idx - b._idx))
+        .map((v) => ({
+            ...v,
+            isBestSeller: Boolean(bestKey && v.skuKey === bestKey),
+            isLeastSeller: Boolean(leastKey && v.skuKey === leastKey && (!bestKey || leastKey !== bestKey))
+        }));
+
+    return {
+        generalRevenue,
+        generalHpp,
+        generalProfit,
+        generalMarginPct,
+        totalPcs,
+        paidOrdersCount,
+        qrisRevenue,
+        codRevenue,
+        bestSeller,
+        leastSeller,
+        leastSellerSold,
+        zeroSalesVariants,
+        variants
+    };
+}
+
+function renderVariantHighlightPair(prefix, data, emptyLabel = "Belum ada penjualan") {
+    const best = data?.bestSeller || null;
+    const least = data?.leastSeller || null;
+    const leastSold = data?.leastSellerSold || null;
+    const zeroList = Array.isArray(data?.zeroSalesVariants) ? data.zeroSalesVariants : [];
+
+    if (best) {
+        setText(`${prefix}-best-variant-name`, best.displayName);
+        setText(`${prefix}-best-variant-meta`, `${best.qty} pcs terjual · Omzet ${formatRupiah(best.totalRevenue)} · Profit ${formatRupiah(best.totalProfit)}`);
+        if (document.getElementById(`${prefix}-best-variant-profit`)) {
+            setText(`${prefix}-best-variant-profit`, `Profit ${formatRupiah(best.totalProfit)} (${best.marginPct}%)`);
+        }
+    } else {
+        setText(`${prefix}-best-variant-name`, emptyLabel);
+        setText(`${prefix}-best-variant-meta`, "0 pcs terjual · Omzet Rp 0");
+        if (document.getElementById(`${prefix}-best-variant-profit`)) {
+            setText(`${prefix}-best-variant-profit`, "Profit Rp 0");
+        }
+    }
+
+    if (least) {
+        let leastName = least.displayName;
+        let leastMeta = `${least.qty} pcs terjual · Omzet ${formatRupiah(least.totalRevenue)} · Profit ${formatRupiah(least.totalProfit)}`;
+        let leastProfitText = `Profit ${formatRupiah(least.totalProfit)}`;
+
+        if (least.qty === 0) {
+            if (zeroList.length > 1) {
+                leastName = `${zeroList.length} varian belum terjual`;
+                leastMeta = zeroList.join(", ");
+            } else {
+                leastMeta = `0 pcs terjual · Belum ada pembelian`;
+            }
+            if (leastSold && leastSold.skuKey !== best?.skuKey) {
+                leastProfitText = `Terendah laku: ${leastSold.displayName} (${leastSold.qty} pcs)`;
+            } else {
+                leastProfitText = zeroList.length ? "Belum terjual pada periode ini" : leastProfitText;
+            }
+        }
+        setText(`${prefix}-least-variant-name`, leastName);
+        setText(`${prefix}-least-variant-meta`, leastMeta);
+        if (document.getElementById(`${prefix}-least-variant-profit`)) {
+            setText(`${prefix}-least-variant-profit`, leastProfitText);
+        }
+    } else {
+        setText(`${prefix}-least-variant-name`, emptyLabel);
+        setText(`${prefix}-least-variant-meta`, "0 pcs terjual · Omzet Rp 0");
+        if (document.getElementById(`${prefix}-least-variant-profit`)) {
+            setText(`${prefix}-least-variant-profit`, "Profit Rp 0");
+        }
+    }
+}
+
 function renderDashboard() {
+    syncYearSelectOptions(dashYearSelect);
+    toggleDashPeriodInputs();
+
     const todayWIB = getTodayDateString();
-    const yesterday = getDateStringOffset(todayWIB, -1);
-    const successOrders = allOrders.filter(isPaidOrder);
+    const curMonthWIB = getCurrentMonthString();
+    const curYearWIB = getCurrentYearString();
+
+    const paidOrdersAll = allOrders.filter(isPaidOrder);
     const pendingOrders = allOrders.filter((o) => (o.status || "pending") === "pending");
     const verifyOrders = pendingOrders.filter(isAwaitingVerification);
-    const todayMetrics = getMetrics(successOrders.filter((o) => getLocalDateString(o.createdAt) === todayWIB));
-    const yesterdayMetrics = getMetrics(successOrders.filter((o) => getLocalDateString(o.createdAt) === yesterday));
-    const allMetrics = getMetrics(successOrders);
 
-    const todayDate = new Date().toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta", weekday: "long", day: "numeric", month: "long", year: "numeric" });
-    setText("dashboard-date-subtitle", `${todayDate} · ${pendingOrders.length} pesanan menunggu tindakan`);
+    let periodVal = todayWIB;
+    let prevVal = getDateStringOffset(todayWIB, -1);
+    let periodLabel = "HARI INI";
+    let periodDesc = "hari ini";
+    let matchFn = (o, val) => getLocalDateString(o.createdAt) === val;
 
-    setText("dash-today-revenue", formatRupiah(todayMetrics.revenue));
-    renderDelta(document.getElementById("dash-today-rev-delta"), todayMetrics.revenue, yesterdayMetrics.revenue);
-    setText("dash-today-rev-sub", `Dari ${todayMetrics.orders} pesanan terbayar · total semua waktu ${formatRupiah(allMetrics.revenue)}`);
+    if (dashPeriodMode === "month") {
+        periodVal = (dashMonthInput && dashMonthInput.value) || curMonthWIB;
+        if (dashMonthInput) dashMonthInput.value = periodVal;
+        prevVal = getPreviousMonthString(periodVal);
+        periodLabel = `BULAN (${formatMonthLabelID(periodVal).toUpperCase()})`;
+        periodDesc = formatMonthLabelID(periodVal);
+        matchFn = (o, val) => getLocalDateString(o.createdAt).startsWith(val);
+    } else if (dashPeriodMode === "year") {
+        periodVal = (dashYearSelect && dashYearSelect.value) || curYearWIB;
+        if (dashYearSelect) dashYearSelect.value = periodVal;
+        prevVal = String(Number(periodVal) - 1);
+        periodLabel = `TAHUN ${periodVal}`;
+        periodDesc = `Tahun ${periodVal}`;
+        matchFn = (o, val) => getLocalDateString(o.createdAt).startsWith(val + "-");
+    } else {
+        periodVal = (dashDateInput && dashDateInput.value) || todayWIB;
+        if (dashDateInput) dashDateInput.value = periodVal;
+        prevVal = getDateStringOffset(periodVal, -1);
+        periodLabel = periodVal === todayWIB ? "HARI INI" : formatDateShort(periodVal).toUpperCase();
+        periodDesc = periodVal === todayWIB ? "hari ini" : formatDateShort(periodVal);
+        matchFn = (o, val) => getLocalDateString(o.createdAt) === val;
+    }
 
-    setText("dash-active-orders", String(pendingOrders.length + todayMetrics.orders));
+    const periodPaidOrders = paidOrdersAll.filter((o) => matchFn(o, periodVal));
+    const prevPaidOrders = prevVal ? paidOrdersAll.filter((o) => matchFn(o, prevVal)) : [];
+
+    const periodAnalytics = computeClientSalesAnalytics(periodPaidOrders, skuHppCatalogCache);
+    const prevMetrics = getMetrics(prevPaidOrders);
+    const allMetrics = getMetrics(paidOrdersAll);
+
+    setText("dashboard-date-subtitle", `Periode: ${periodDesc} · ${pendingOrders.length} pesanan menunggu tindakan`);
+
+    setText("dash-rev-label", `OMZET PENJUALAN ${periodLabel}`);
+    setText("dash-today-revenue", formatRupiah(periodAnalytics.generalRevenue));
+    renderDelta(document.getElementById("dash-today-rev-delta"), periodAnalytics.generalRevenue, prevMetrics.revenue);
+    setText("dash-today-rev-sub", `Dari ${periodAnalytics.paidOrdersCount} pesanan terbayar · total semua waktu ${formatRupiah(allMetrics.revenue)}`);
+
+    setText("dash-profit-label", `PROFIT & HPP (${periodLabel})`);
+    setText("dash-period-profit", formatRupiah(periodAnalytics.generalProfit));
+    setText("dash-period-margin-pill", `Margin ${periodAnalytics.generalMarginPct}%`);
+    setText("dash-period-hpp-sub", `General HPP ${formatRupiah(periodAnalytics.generalHpp)} · ${periodAnalytics.paidOrdersCount} pesanan`);
+
+    setText("dash-active-orders", String(pendingOrders.length + periodAnalytics.paidOrdersCount));
     setText("dash-pending-pill", `${pendingOrders.length} menunggu`);
-    setText("dash-active-orders-sub", `${todayMetrics.orders} terbayar hari ini · ${verifyOrders.length} menunggu verifikasi`);
+    setText("dash-active-orders-sub", `${periodAnalytics.paidOrdersCount} terbayar (${periodDesc}) · ${verifyOrders.length} menunggu verifikasi`);
 
-    setText("dash-today-pcs", `${todayMetrics.items} pcs`);
-    const avg = todayMetrics.orders ? (todayMetrics.items / todayMetrics.orders).toFixed(1).replace(".0", "") : 0;
-    setText("dash-avg-pcs", `Rata-rata ${avg} pcs per pesanan`);
+    setText("dash-pcs-label", `PCS TERJUAL (${periodLabel})`);
+    setText("dash-today-pcs", `${periodAnalytics.totalPcs} pcs`);
+    const avg = periodAnalytics.paidOrdersCount ? (periodAnalytics.totalPcs / periodAnalytics.paidOrdersCount).toFixed(1).replace(".0", "") : 0;
+    setText("dash-avg-pcs", `${periodAnalytics.paidOrdersCount} pesanan · rata-rata ${avg} pcs/pesanan`);
 
     const needsHuman = Number(waMetricsCache.needsHumanCount || 0);
     const lowStocks = getLowStockItems();
@@ -995,50 +1338,103 @@ function renderDashboard() {
         ? lowStocks.map((s) => `${s.displayName} (${s.stock} pcs)`).join(", ")
         : "Seluruh SKU memiliki stok cukup untuk dipesan.");
 
-    renderDashboardChart();
+    renderVariantHighlightPair("dash", periodAnalytics, `Belum ada penjualan (${periodDesc})`);
+    renderDashboardChart(periodVal);
     renderDashboardPOCard();
     renderDashboardStockList();
 }
 
-function renderDashboardChart() {
+function renderDashboardChart(selectedVal) {
     const chartEl = document.getElementById("dash-chart-7day");
     if (!chartEl) return;
-    const today = getTodayDateString();
-    const days = [];
-    for (let i = 6; i >= 0; i--) {
-        const dateStr = getDateStringOffset(today, -i);
-        const m = getMetrics(allOrders.filter((o) => isPaidOrder(o) && getLocalDateString(o.createdAt) === dateStr));
-        days.push({ date: dateStr, ...m });
-    }
-    const maxRev = Math.max(...days.map((d) => d.revenue), 1);
-    const maxPcs = Math.max(...days.map((d) => d.items), 1);
 
-    chartEl.innerHTML = days.map((d) => {
-        const [, mm, dd] = d.date.split("-");
+    const bars = [];
+    let totalOrdersCount = 0;
+    let totalPcsCount = 0;
+    let totalRev = 0;
+
+    if (dashPeriodMode === "year") {
+        const yr = selectedVal || (dashYearSelect?.value || getCurrentYearString());
+        const monthShort = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+        setText("dash-chart-title", `Tren penjualan Tahun ${yr}`);
+        setText("dash-chart-subtitle", "Omzet bulanan & total pcs terjual (klik bulan untuk melihat detail dashboard bulan tersebut)");
+        setText("dash-chart-total-label", `TOTAL TAHUN ${yr}`);
+        setText("dash-chart-avg-label", "RATA-RATA BULANAN");
+        chartEl.classList.add("dash-chart-wide");
+
+        for (let m = 1; m <= 12; m++) {
+            const ym = `${yr}-${String(m).padStart(2, "0")}`;
+            const mData = getMetrics(allOrders.filter((o) => isPaidOrder(o) && getLocalDateString(o.createdAt).startsWith(ym)));
+            bars.push({ key: ym, label: monthShort[m - 1], clickType: "month", ...mData });
+        }
+    } else if (dashPeriodMode === "month") {
+        const ym = selectedVal || (dashMonthInput?.value || getCurrentMonthString());
+        const [y, m] = ym.split("-").map(Number);
+        const daysInMonth = (y && m) ? new Date(y, m, 0).getDate() : 30;
+        setText("dash-chart-title", `Tren harian — ${formatMonthLabelID(ym)}`);
+        setText("dash-chart-subtitle", "Omzet harian dalam bulan terpilih (klik batang untuk melihat laporan harian)");
+        setText("dash-chart-total-label", "TOTAL BULAN INI");
+        setText("dash-chart-avg-label", "RATA-RATA HARIAN");
+        chartEl.classList.add("dash-chart-wide");
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const ds = `${ym}-${String(d).padStart(2, "0")}`;
+            const mData = getMetrics(allOrders.filter((o) => isPaidOrder(o) && getLocalDateString(o.createdAt) === ds));
+            bars.push({ key: ds, label: String(d), clickType: "date", ...mData });
+        }
+    } else {
+        const anchor = selectedVal || (dashDateInput?.value || getTodayDateString());
+        setText("dash-chart-title", "Penjualan 7 hari terakhir");
+        setText("dash-chart-subtitle", "Omzet harian dan jumlah pesanan terbayar (klik batang untuk rincian laporan)");
+        setText("dash-chart-total-label", "TOTAL 7 HARI");
+        setText("dash-chart-avg-label", "RATA-RATA HARIAN");
+        chartEl.classList.remove("dash-chart-wide");
+
+        for (let i = 6; i >= 0; i--) {
+            const dateStr = getDateStringOffset(anchor, -i);
+            const mData = getMetrics(allOrders.filter((o) => isPaidOrder(o) && getLocalDateString(o.createdAt) === dateStr));
+            const [, mm, dd] = dateStr.split("-");
+            bars.push({ key: dateStr, label: `${dd}/${mm}`, isActive: dateStr === anchor, clickType: "date", ...mData });
+        }
+    }
+
+    const maxRev = Math.max(...bars.map((d) => d.revenue), 1);
+    const maxPcs = Math.max(...bars.map((d) => d.items), 1);
+
+    chartEl.innerHTML = bars.map((d) => {
+        totalRev += d.revenue;
+        totalOrdersCount += d.orders;
+        totalPcsCount += d.items;
         return `
-            <div class="chart-bar-wrap ${d.date === today ? "is-active" : ""}" data-date="${d.date}" title="${formatRupiah(d.revenue)} · ${d.orders} pesanan · ${d.items} pcs">
-                <span class="chart-bar-value">${d.orders}</span>
+            <div class="chart-bar-wrap ${d.isActive ? "is-active" : ""}" data-bar-type="${d.clickType}" data-bar-key="${d.key}" title="${d.key} · ${formatRupiah(d.revenue)} · ${d.orders} pesanan · ${d.items} pcs">
+                <span class="chart-bar-value">${d.orders > 0 ? d.orders : ""}</span>
                 <div class="chart-bar-pair">
-                    <div class="chart-bar bar-rev" style="height:${Math.max((d.revenue / maxRev) * 100, 3)}%;"></div>
-                    <div class="chart-bar bar-pcs" style="height:${Math.max((d.items / maxPcs) * 100, 3)}%;"></div>
+                    <div class="chart-bar bar-rev" style="height:${Math.max((d.revenue / maxRev) * 100, d.revenue > 0 ? 6 : 2)}%;"></div>
+                    <div class="chart-bar bar-pcs" style="height:${Math.max((d.items / maxPcs) * 100, d.items > 0 ? 6 : 2)}%;"></div>
                 </div>
-                <span class="chart-bar-label">${dd}/${mm}</span>
+                <span class="chart-bar-label">${d.label}</span>
             </div>
         `;
     }).join("");
 
     chartEl.querySelectorAll(".chart-bar-wrap").forEach((bar) => {
         bar.addEventListener("click", () => {
-            if (reportDateInput) reportDateInput.value = bar.dataset.date;
-            switchTab("reports");
+            if (bar.dataset.barType === "month") {
+                dashPeriodMode = "month";
+                if (dashMonthInput) dashMonthInput.value = bar.dataset.barKey;
+                renderDashboard();
+            } else {
+                if (reportDateInput) reportDateInput.value = bar.dataset.barKey;
+                switchTab("reports");
+            }
         });
     });
 
-    const totalRev = days.reduce((s, d) => s + d.revenue, 0);
+    const divisor = bars.length || 1;
     setText("dash-7d-total-rev", formatRupiah(totalRev));
-    setText("dash-7d-avg-rev", formatRupiah(Math.round(totalRev / 7)));
-    setText("dash-7d-total-orders", `${days.reduce((s, d) => s + d.orders, 0)} pesanan`);
-    setText("dash-7d-total-pcs", `${days.reduce((s, d) => s + d.items, 0)} pcs`);
+    setText("dash-7d-avg-rev", formatRupiah(Math.round(totalRev / divisor)));
+    setText("dash-7d-total-orders", `${totalOrdersCount} pesanan`);
+    setText("dash-7d-total-pcs", `${totalPcsCount} pcs`);
 }
 
 function getPOBatchOrders(poId) {
@@ -1054,7 +1450,7 @@ function renderDashboardPOCard() {
         pill.innerText = po ? (isOpen ? "Dibuka" : "Ditutup") : "Belum ada batch";
         pill.className = `badge-pill ${isOpen ? "badge-green" : "badge-neutral"}`;
     }
-    setText("dash-po-batch-code", po ? `Periode #${po.id}` : "Batch PO");
+    setText("dash-po-batch-code", po ? `Batch #${po.batchNumber || po.id}` : "Batch PO");
     setText("dash-po-title", po ? po.batchName : "Belum ada batch pre-order");
 
     const orders = po ? getPOBatchOrders(po.id) : [];
@@ -1112,14 +1508,31 @@ function bindClick(id, handler) {
     if (el) el.addEventListener("click", handler);
 }
 
+document.querySelectorAll("#dash-period-tabs [data-dash-period]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+        dashPeriodMode = btn.dataset.dashPeriod || "day";
+        initPeriodFilterControls();
+        renderDashboard();
+    });
+});
+if (dashDateInput) dashDateInput.addEventListener("change", renderDashboard);
+if (dashMonthInput) dashMonthInput.addEventListener("change", renderDashboard);
+if (dashYearSelect) dashYearSelect.addEventListener("change", renderDashboard);
+
 bindClick("dash-queue-verify", () => { switchTab("whatsapp"); switchWaSubtab("verification"); });
 bindClick("dash-queue-wa", () => { switchTab("whatsapp"); setWaInboxFilter("needs_human"); switchWaSubtab("inbox"); });
 bindClick("dash-queue-stock", () => { currentStockFilter = "low"; switchTab("stocks"); });
 bindClick("dash-go-po-btn", () => switchTab("preorder"));
 bindClick("dash-go-stocks-btn", () => switchTab("stocks"));
 bindClick("dash-export-btn", () => {
-    setReportDateToToday();
-    exportDailyCSV();
+    if (dashPeriodMode === "day") {
+        if (reportDateInput) reportDateInput.value = dashDateInput?.value || getTodayDateString();
+        exportDailyCSV();
+    } else if (dashPeriodMode === "month") {
+        exportFinanceExcel("month", dashMonthInput?.value || getCurrentMonthString());
+    } else {
+        exportFinanceExcel("year", dashYearSelect?.value || getCurrentYearString());
+    }
 });
 
 /* =========================
@@ -1302,6 +1715,13 @@ function getOrderStatusBadgeHtml(order) {
     return `<span class="status-badge ${getStatusClass(statusVal)}">${getStatusLabel(statusVal)}</span>`;
 }
 
+function getOrderBatchBadgeHtml(order) {
+    const batchNum = order?.poBatchNumber || order?.poPeriodId;
+    if (!batchNum) return "";
+    const titleAttr = order?.poBatchName ? ` title="${escapeHtml(order.poBatchName)}"` : "";
+    return `<span class="batch-pill-inline"${titleAttr}>Batch #${escapeHtml(String(batchNum))}</span>`;
+}
+
 function buildOrderRowHtml(order, isOverviewTable = false) {
     const locLabel = getLocationLabel(order.location);
     const locClass = getLocationClass(order.location);
@@ -1310,12 +1730,16 @@ function buildOrderRowHtml(order, isOverviewTable = false) {
     const pcsCount = getOrderTotalCookies(order);
     const paySub = getPaymentStatusSub(order);
     const itemsText = escapeHtml(getOrderItemsSummary(order));
+    const batchBadge = getOrderBatchBadgeHtml(order);
     const detailBtn = `<button type="button" class="btn-detail" data-order-id="${escapeHtml(order.orderId)}">Detail &rarr;</button>`;
 
     if (isOverviewTable) {
         return `
             <tr>
-                <td><span class="cell-order-id">${escapeHtml(order.orderId || "-")}</span></td>
+                <td>
+                    <span class="cell-order-id">${escapeHtml(order.orderId || "-")}</span>
+                    ${batchBadge ? `<div>${batchBadge}</div>` : ""}
+                </td>
                 <td><span class="customer-name">${escapeHtml(order.customerName || "-")}</span></td>
                 <td><span class="cell-items-text">${itemsText}</span></td>
                 <td><span class="location-badge ${locClass}">${escapeHtml(locLabel)}</span></td>
@@ -1329,7 +1753,10 @@ function buildOrderRowHtml(order, isOverviewTable = false) {
 
     return `
         <tr>
-            <td><span class="cell-order-id">${escapeHtml(order.orderId || "-")}</span></td>
+            <td>
+                <span class="cell-order-id">${escapeHtml(order.orderId || "-")}</span>
+                ${batchBadge ? `<div>${batchBadge}</div>` : ""}
+            </td>
             <td><span class="cell-order-date">${formatDate(order.createdAt)}</span></td>
             <td>
                 <div class="cell-customer">
@@ -1528,8 +1955,9 @@ function renderOrderDetailPage(order) {
                 <div class="page-title-row">
                     <h1 class="page-title">${oid}</h1>
                     ${getOrderStatusBadgeHtml(order)}
+                    ${getOrderBatchBadgeHtml(order)}
                 </div>
-                <p class="page-subtitle">Dibuat ${formatDate(order.createdAt)} WIB · ${pcs} pcs · ${paymentLabel}</p>
+                <p class="page-subtitle">Dibuat ${formatDate(order.createdAt)} WIB · ${pcs} pcs · ${paymentLabel}${order.poBatchName ? ` · ${escapeHtml(order.poBatchName)}` : ""}</p>
             </div>
             <div class="page-header-actions">${actionButtons.join("")}</div>
         </div>
@@ -2884,6 +3312,7 @@ function renderStockHistory(historyItems) {
         order_restored: "Stok kembali (Expired)",
         order_deleted: "Pesanan dihapus",
         bulk_order_deleted: "Hapus massal",
+        po_batch_deleted: "Batch PO dihapus",
         restock: "Restock produksi",
         admin_adjust: "Koreksi admin"
     };
@@ -3142,27 +3571,40 @@ if (stocksRefreshBtn) {
 }
 
 /* =========================
-   FINANCE — LOAD & RENDER
+   FINANCE — SALES REPORT, HPP PER VARIAN & PROFIT
    ========================= */
 
-async function loadFinance() {
-    if (!financeMonthInput) return;
-
-    currentFinanceMonth = financeMonthInput.value || getCurrentMonthString();
-    financeMonthInput.value = currentFinanceMonth;
-
-    await Promise.all([
-        loadFinanceSummary(),
-        loadHppHistory(),
-        loadCashflowHistory(),
-        loadCategories()
-    ]);
+function getSelectedFinancePeriod() {
+    initPeriodFilterControls();
+    if (financePeriodMode === "day") {
+        const val = (financeDateInput && financeDateInput.value) || getTodayDateString();
+        if (financeDateInput) financeDateInput.value = val;
+        return { granularity: "day", value: val };
+    }
+    if (financePeriodMode === "year") {
+        const val = (financeYearSelect && financeYearSelect.value) || getCurrentYearString();
+        if (financeYearSelect) financeYearSelect.value = val;
+        return { granularity: "year", value: val };
+    }
+    const val = (financeMonthInput && financeMonthInput.value) || getCurrentMonthString();
+    if (financeMonthInput) financeMonthInput.value = val;
+    return { granularity: "month", value: val };
 }
 
-async function loadFinanceSummary() {
+function getFinancePeriodDisplayLabel(granularity, value) {
+    if (granularity === "day") return value ? formatDateShort(value) : "Hari ini";
+    if (granularity === "year") return value ? `Tahun ${value}` : `Tahun ${getCurrentYearString()}`;
+    return formatMonthLabelID(value || getCurrentMonthString());
+}
+
+async function loadFinance() {
+    const { granularity, value } = getSelectedFinancePeriod();
+    toggleFinancePeriodInputs();
+
     try {
+        const qs = new URLSearchParams({ granularity, value: value || "" });
         const response = await fetch(
-            `${API_BASE}/api/admin/finance/summary?month=${currentFinanceMonth}`,
+            `${API_BASE}/api/admin/finance/sales-report?${qs.toString()}`,
             { headers: { "Authorization": `Bearer ${getToken()}` } }
         );
 
@@ -3173,581 +3615,214 @@ async function loadFinanceSummary() {
         }
 
         const result = await response.json();
-        if (!response.ok || !result.success) return;
+        if (!response.ok || !result.success || !result.report) return;
 
-        currentFinanceSummary = result.summary;
-        renderFinanceSummary(result.summary);
-
-    } catch (error) {
-        console.error("Load finance summary error:", error);
-    }
-}
-
-async function loadCategories() {
-    if (!cfCategory) return;
-
-    if (cashflowCategories.length > 0) {
-        populateCategorySelect();
-        return;
-    }
-
-    try {
-        const response = await fetch(
-            `${API_BASE}/api/admin/finance/cashflow-categories`,
-            { headers: { "Authorization": `Bearer ${getToken()}` } }
-        );
-
-        const result = await response.json();
-        if (!response.ok || !result.success) return;
-
-        cashflowCategories = result.categories || [];
-        populateCategorySelect();
-
-    } catch (error) {
-        console.error("Load categories error:", error);
-    }
-}
-
-function populateCategorySelect() {
-    if (!cfCategory) return;
-
-    const currentVal = cfCategory.value;
-    let html = '<option value="">— Pilih kategori —</option>';
-
-    cashflowCategories.forEach((c) => {
-        html += `<option value="${c.id}">${escapeHtml(c.name)}</option>`;
-    });
-
-    cfCategory.innerHTML = html;
-    if (currentVal) cfCategory.value = currentVal;
-}
-
-function renderFinanceSummary(s) {
-    if (!s) return;
-
-    finRevenue.innerText = formatRupiah(s.revenue);
-
-    const statusMap = {
-        "open": "Periode masih berjalan",
-        "reviewed": "Periode sedang direview",
-        "closed": "Periode sudah ditutup"
-    };
-    finPeriodStatus.innerText = statusMap[s.periodStatus] || "-";
-
-    const spent = (s.hppSpent || 0) + (s.cashflowSpent || 0);
-    if (finTotalSpent) finTotalSpent.innerText = formatRupiah(spent);
-    if (finNetRemaining) finNetRemaining.innerText = formatRupiah(s.profitFinal);
-    if (financeHistoryTotalFooter) financeHistoryTotalFooter.innerText = formatRupiah(spent);
-
-    const marginPct = s.revenue > 0 ? Math.round((s.profitFinal / s.revenue) * 100) : 0;
-    setText("fin-margin-sub", `Margin bersih ${marginPct}% dari omzet`);
-
-    const monthPrefix = currentFinanceMonth || getCurrentMonthString();
-    const monthOrders = allOrders.filter((o) => getLocalDateString(o.createdAt).startsWith(monthPrefix));
-    const pendingOrders = monthOrders.filter((o) => (o.status || "pending") === "pending");
-    const pendingSum = pendingOrders.reduce((acc, o) => acc + (o.total || 0), 0);
-    setText("fin-pending-funds", formatRupiah(pendingSum));
-    setText("fin-pending-funds-sub", `Dari ${pendingOrders.length} pesanan belum disetujui`);
-
-    const successMonthOrders = monthOrders.filter(isPaidOrder);
-    const qrisSum = successMonthOrders.filter((o) => (o.paymentMethod || "cash") === "qris").reduce((acc, o) => acc + (o.total || 0), 0);
-    const codSum = successMonthOrders.filter((o) => (o.paymentMethod || "cash") !== "qris").reduce((acc, o) => acc + (o.total || 0), 0);
-    setText("fin-recon-qris", formatRupiah(qrisSum));
-    setText("fin-recon-cod", formatRupiah(codSum));
-    setText("fin-recon-out", `- ${formatRupiah(spent)}`);
-    setText("fin-recon-net", formatRupiah((qrisSum + codSum) - spent));
-
-    finHppPct.innerText = s.hppPct + "%";
-    finHppAllocated.innerText = formatRupiah(s.hppAllocated);
-    finHppSpent.innerText = formatRupiah(s.hppSpent);
-    finHppRemaining.innerText = formatRupiah(s.hppRemaining);
-    updateProgressBar(finHppBar, s.hppSpent, s.hppAllocated, finHppUsageLabel);
-
-    finCashflowPct.innerText = s.cashflowPct + "%";
-    finCashflowAllocated.innerText = formatRupiah(s.cashflowAllocated);
-    finCashflowSpent.innerText = formatRupiah(s.cashflowSpent);
-    finCashflowRemaining.innerText = formatRupiah(s.cashflowRemaining);
-    updateProgressBar(finCashflowBar, s.cashflowSpent, s.cashflowAllocated, finCashflowUsageLabel);
-
-    finProfitPct.innerText = s.profitPct + "%";
-    finProfitAllocated.innerText = formatRupiah(s.profitAllocated);
-    finProfitDetail.innerText = `-${formatRupiah(spent)}`;
-    finProfitFinal.innerText = formatRupiah(s.profitFinal);
-}
-
-function updateProgressBar(el, spent, allocated, labelEl) {
-    if (!el) return;
-    if (allocated <= 0) {
-        el.style.width = "0%";
-        el.classList.remove("over");
-        if (labelEl) labelEl.innerText = "0% terpakai";
-        return;
-    }
-    const rawPct = ((spent / allocated) * 100).toFixed(1).replace(".0", "");
-    const pct = Math.min((spent / allocated) * 100, 100);
-    el.style.width = pct + "%";
-    el.classList.toggle("over", spent > allocated);
-    if (labelEl) labelEl.innerText = `${rawPct}% terpakai`;
-}
-
-function renderUnifiedFinanceTable() {
-    const unifiedTbody = document.getElementById("finance-unified-tbody");
-    if (!unifiedTbody) return;
-
-    const filterVal = financeHistoryFilter?.value || "all";
-    const monthPrefix = currentFinanceMonth || getCurrentMonthString();
-    const rows = [];
-
-    if (filterVal === "all" || filterVal === "in") {
-        allOrders.filter((o) => isPaidOrder(o) && getLocalDateString(o.createdAt).startsWith(monthPrefix)).forEach((o) => {
-            rows.push({
-                date: getLocalDateString(o.createdAt),
-                sortTime: parseISOString(o.createdAt)?.getTime() || 0,
-                desc: `Pesanan ${o.orderId} — ${o.customerName || "Pelanggan"}`,
-                sub: getOrderItemsSummary(o),
-                category: (o.paymentMethod || "cash") === "qris" ? "Penjualan QRIS" : "Penjualan COD",
-                type: "in",
-                typeBadge: `<span class="badge-pill badge-green">Masuk</span>`,
-                amount: o.total || 0,
-                actionHtml: `<button type="button" class="btn-detail fin-order-detail-btn" data-order-id="${escapeHtml(o.orderId)}">Detail</button>`
-            });
-        });
-    }
-
-    if (filterVal === "all" || filterVal === "hpp") {
-        financeHppItems.forEach((item) => {
-            const qtyText = item.quantity ? ` (${item.quantity}${item.unit ? " " + item.unit : ""})` : "";
-            rows.push({
-                date: item.purchaseDate,
-                sortTime: new Date((item.purchaseDate || "1970-01-01") + "T12:00:00Z").getTime(),
-                desc: `${item.itemName}${qtyText}`,
-                sub: item.note || "",
-                category: "Bahan Baku (HPP)",
-                type: "out",
-                typeBadge: `<span class="badge-pill badge-gold">Keluar · HPP</span>`,
-                amount: item.amount || 0,
-                actionHtml: isInvestorRole() ? `<span class="text-muted-sm">-</span>` : `<button type="button" class="btn-delete-small" data-hpp-id="${item.id}">Hapus</button>`
-            });
-        });
-    }
-
-    if (filterVal === "all" || filterVal === "cashflow") {
-        financeCfItems.forEach((item) => {
-            rows.push({
-                date: item.transactionDate,
-                sortTime: new Date((item.transactionDate || "1970-01-01") + "T12:00:00Z").getTime(),
-                desc: item.description || "-",
-                sub: item.note || "",
-                category: item.categoryName || "Operasional",
-                type: "out",
-                typeBadge: `<span class="badge-pill badge-neutral">Keluar · Operasional</span>`,
-                amount: item.amount || 0,
-                actionHtml: isInvestorRole() ? `<span class="text-muted-sm">-</span>` : `<button type="button" class="btn-delete-small" data-cf-id="${item.id}">Hapus</button>`
-            });
-        });
-    }
-
-    rows.sort((a, b) => b.sortTime - a.sortTime);
-
-    if (rows.length === 0) {
-        unifiedTbody.innerHTML = `<tr><td colspan="6" class="empty-state-sm">Belum ada transaksi tercatat pada periode ini.</td></tr>`;
-        return;
-    }
-
-    unifiedTbody.innerHTML = rows.map((r) => `
-        <tr>
-            <td>${formatDateShort(r.date)}</td>
-            <td>
-                <strong>${escapeHtml(r.desc)}</strong>
-                ${r.sub ? `<small style="display:block;color:var(--text-muted);">${escapeHtml(r.sub)}</small>` : ""}
-            </td>
-            <td>${escapeHtml(r.category)}</td>
-            <td>${r.typeBadge}</td>
-            <td class="align-right"><strong class="${r.type === "in" ? "text-green" : "text-danger"}">${r.type === "in" ? "+" : "-"}${formatRupiah(r.amount)}</strong></td>
-            <td class="align-right">${r.actionHtml}</td>
-        </tr>
-    `).join("");
-
-    unifiedTbody.querySelectorAll("[data-hpp-id]").forEach((btn) => {
-        btn.addEventListener("click", () => deleteHppPurchase(Number(btn.dataset.hppId)));
-    });
-    unifiedTbody.querySelectorAll("[data-cf-id]").forEach((btn) => {
-        btn.addEventListener("click", () => deleteCashflowTransaction(Number(btn.dataset.cfId)));
-    });
-    unifiedTbody.querySelectorAll(".fin-order-detail-btn").forEach((btn) => {
-        btn.addEventListener("click", () => openOrderDetailPage(btn.dataset.orderId));
-    });
-}
-
-if (financeHistoryFilter) {
-    financeHistoryFilter.addEventListener("change", () => {
-        renderUnifiedFinanceTable();
-    });
-}
-
-bindClick("finance-scroll-form-btn", () => {
-    document.getElementById("finance-form-card")?.scrollIntoView({ behavior: "smooth" });
-});
-bindClick("fin-edit-allocation-link", () => {
-    switchTab("settings");
-    setTimeout(() => document.getElementById("sec-budget-allocation")?.scrollIntoView({ behavior: "smooth" }), 80);
-});
-
-async function loadHppHistory() {
-    if (hppHistoryMonth) hppHistoryMonth.innerText = currentFinanceMonth;
-
-    try {
-        const response = await fetch(
-            `${API_BASE}/api/admin/finance/hpp-purchases?month=${currentFinanceMonth}`,
-            { headers: { "Authorization": `Bearer ${getToken()}` } }
-        );
-
-        const result = await response.json();
-        if (!response.ok || !result.success) return;
-
-        financeHppItems = result.items || [];
-        renderUnifiedFinanceTable();
-
-    } catch (error) {
-        console.error("Load HPP history error:", error);
-    }
-}
-
-async function loadCashflowHistory() {
-    if (cfHistoryMonth) cfHistoryMonth.innerText = currentFinanceMonth;
-
-    try {
-        const response = await fetch(
-            `${API_BASE}/api/admin/finance/cashflow-transactions?month=${currentFinanceMonth}`,
-            { headers: { "Authorization": `Bearer ${getToken()}` } }
-        );
-
-        const result = await response.json();
-        if (!response.ok || !result.success) return;
-
-        financeCfItems = result.items || [];
-        renderUnifiedFinanceTable();
-
-    } catch (error) {
-        console.error("Load cashflow history error:", error);
-    }
-}
-
-if (hppForm) {
-    hppForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        const purchaseDate = hppDate.value;
-        const itemName = hppItem.value.trim();
-        const quantity = hppQty.value ? parseFloat(hppQty.value) : null;
-        const unit = hppUnit.value.trim() || null;
-        const amount = parseInt(hppAmount.value, 10);
-        const note = hppNote.value.trim() || null;
-
-        if (!purchaseDate || !itemName || !amount) {
-            alert("Tanggal, nama item, dan harga wajib diisi.");
-            return;
-        }
-
-        const originalText = hppSubmit.innerText;
-        hppSubmit.disabled = true;
-        hppSubmit.innerText = "Menyimpan...";
-
-        try {
-            const response = await fetch(
-                `${API_BASE}/api/admin/finance/hpp-purchases`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${getToken()}`
-                    },
-                    body: JSON.stringify({
-                        purchaseDate,
-                        itemName,
-                        quantity,
-                        unit,
-                        amount,
-                        note
-                    })
-                }
-            );
-
-            const result = await response.json();
-
-            if (!response.ok || !result.success) {
-                alert(result.message || "Gagal menyimpan.");
-                return;
-            }
-
-            hppForm.reset();
-            hppDate.value = getTodayDateString();
-
-            await Promise.all([
-                loadFinanceSummary(),
-                loadHppHistory()
-            ]);
-
-            hppSubmit.innerText = "Tersimpan";
-            setTimeout(() => {
-                hppSubmit.innerText = originalText;
-            }, 1500);
-
-        } catch (error) {
-            console.error("Save HPP error:", error);
-            alert("Gagal terhubung ke server.");
-        } finally {
-            hppSubmit.disabled = false;
-            if (hppSubmit.innerText === "Menyimpan...") {
-                hppSubmit.innerText = originalText;
+        currentFinanceReport = result.report;
+        if (Array.isArray(result.report.availableYears)) {
+            syncYearSelectOptions(financeYearSelect, result.report.availableYears);
+            if (financePeriodMode === "year" && financeYearSelect && result.report.value) {
+                financeYearSelect.value = String(result.report.value);
             }
         }
-    });
-}
-
-if (cashflowForm) {
-    cashflowForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        const transactionDate = cfDate.value;
-        const categoryId = cfCategory.value ? parseInt(cfCategory.value, 10) : null;
-        const description = cfDesc.value.trim();
-        const amount = parseInt(cfAmount.value, 10);
-        const note = cfNote.value.trim() || null;
-
-        if (!transactionDate || !description || !amount) {
-            alert("Tanggal, deskripsi, dan jumlah wajib diisi.");
-            return;
-        }
-
-        const originalText = cfSubmit.innerText;
-        cfSubmit.disabled = true;
-        cfSubmit.innerText = "Menyimpan...";
-
-        try {
-            const response = await fetch(
-                `${API_BASE}/api/admin/finance/cashflow-transactions`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${getToken()}`
-                    },
-                    body: JSON.stringify({
-                        transactionDate,
-                        categoryId,
-                        description,
-                        amount,
-                        note
-                    })
-                }
-            );
-
-            const result = await response.json();
-
-            if (!response.ok || !result.success) {
-                alert(result.message || "Gagal menyimpan.");
-                return;
-            }
-
-            cashflowForm.reset();
-            cfDate.value = getTodayDateString();
-
-            await Promise.all([
-                loadFinanceSummary(),
-                loadCashflowHistory()
-            ]);
-
-            cfSubmit.innerText = "Tersimpan";
-            setTimeout(() => {
-                cfSubmit.innerText = originalText;
-            }, 1500);
-
-        } catch (error) {
-            console.error("Save cashflow error:", error);
-            alert("Gagal terhubung ke server.");
-        } finally {
-            cfSubmit.disabled = false;
-            if (cfSubmit.innerText === "Menyimpan...") {
-                cfSubmit.innerText = originalText;
-            }
-        }
-    });
-}
-
-async function deleteHppPurchase(id) {
-    if (!confirm("Hapus pembelian ini?")) return;
-
-    try {
-        const response = await fetch(
-            `${API_BASE}/api/admin/finance/hpp-purchases/${id}`,
-            {
-                method: "DELETE",
-                headers: { "Authorization": `Bearer ${getToken()}` }
-            }
-        );
-
-        const result = await response.json();
-        if (!response.ok || !result.success) {
-            alert(result.message || "Gagal menghapus.");
-            return;
-        }
-
-        await Promise.all([
-            loadFinanceSummary(),
-            loadHppHistory()
-        ]);
-
+        renderFinanceSalesReport(result.report);
     } catch (error) {
-        console.error("Delete HPP error:", error);
-        alert("Gagal terhubung ke server.");
+        console.error("Load finance sales report error:", error);
     }
 }
 
-async function deleteCashflowTransaction(id) {
-    if (!confirm("Hapus transaksi ini?")) return;
+function renderFinanceSalesReport(r) {
+    if (!r) return;
+    const gran = r.granularity || financePeriodMode || "month";
+    const val = r.value || "";
+    const nicePeriod = getFinancePeriodDisplayLabel(gran, val);
+    const modeLabelMap = { day: "Per Hari", month: "Per Bulan", year: "Per Tahun", batch: "Per Batch" };
+    const modeLabel = modeLabelMap[gran] || "Per Bulan";
 
-    try {
-        const response = await fetch(
-            `${API_BASE}/api/admin/finance/cashflow-transactions/${id}`,
-            {
-                method: "DELETE",
-                headers: { "Authorization": `Bearer ${getToken()}` }
-            }
-        );
+    const rev = Number(r.generalRevenue || 0);
+    const hpp = Number(r.generalHpp || 0);
+    const profit = Number(r.generalProfit || 0);
+    const marginPct = Number(r.generalMarginPct || 0);
+    const hppRatioPct = rev > 0 ? Math.round((hpp / rev) * 1000) / 10 : 0;
 
-        const result = await response.json();
-        if (!response.ok || !result.success) {
-            alert(result.message || "Gagal menghapus.");
-            return;
+    if (finRevenue) finRevenue.innerText = formatRupiah(rev);
+    if (finPeriodStatus) finPeriodStatus.innerText = `${r.paidOrdersCount || 0} pesanan terbayar · ${r.totalPcs || 0} pcs · ${nicePeriod}`;
+    if (finGeneralHpp) finGeneralHpp.innerText = formatRupiah(hpp);
+    setText("fin-general-hpp-sub", `${hppRatioPct}% dari omzet · dihitung dari HPP per varian`);
+
+    if (finNetRemaining) {
+        finNetRemaining.innerText = formatRupiah(profit);
+        finNetRemaining.classList.toggle("text-green", profit >= 0);
+        finNetRemaining.classList.toggle("text-danger", profit < 0);
+    }
+    setText("fin-margin-sub", `Margin bersih ${marginPct}% dari omzet (${nicePeriod})`);
+
+    setText("fin-pending-funds", formatRupiah(r.pendingFunds || 0));
+    setText("fin-pending-funds-sub", `Dari ${r.pendingOrdersCount || 0} pesanan belum disetujui`);
+
+    setText("fin-highlight-period-pill", `${modeLabel}: ${nicePeriod}`);
+    setText("fin-variant-highlights-subtitle", `Performa penjualan 6 varian periode ${nicePeriod}`);
+    renderVariantHighlightPair("fin", r, `Belum ada penjualan (${nicePeriod})`);
+
+    const qrisRev = Number(r.qrisRevenue || 0);
+    const codRev = Number(r.codRevenue || 0);
+    setText("fin-recon-subtitle", `Posisi dana masuk QRIS vs COD periode ${nicePeriod}`);
+    setText("fin-recon-qris", formatRupiah(qrisRev));
+    setText("fin-recon-cod", formatRupiah(codRev));
+    setText("fin-recon-total", formatRupiah(qrisRev + codRev));
+
+    setText("finance-variant-subtitle", `General Omzet, HPP varian, dan Profit bersih periode ${nicePeriod}.`);
+    setText("finance-variant-summary-badge", `${(r.variants || []).length} Varian · ${r.totalPcs || 0} pcs`);
+
+    if (financeVariantTbody) {
+        const variants = Array.isArray(r.variants) ? r.variants : [];
+        if (variants.length === 0) {
+            financeVariantTbody.innerHTML = `<tr><td colspan="8" class="empty-state-sm">Belum ada data varian.</td></tr>`;
+        } else {
+            financeVariantTbody.innerHTML = variants.map((v) => {
+                const tags = [];
+                if (v.isBestSeller) tags.push(`<span class="badge-pill badge-green ref-pill-inline">Terlaris</span>`);
+                if (v.isLeastSeller) tags.push(`<span class="badge-pill badge-gold ref-pill-inline">Terkecil</span>`);
+                const profitCls = (v.totalProfit || 0) >= 0 ? "text-green" : "text-danger";
+                return `
+                    <tr>
+                        <td>
+                            <strong>${escapeHtml(v.displayName || v.productId)}</strong>
+                            ${tags.join(" ")}
+                        </td>
+                        <td class="align-right"><strong>${v.qty || 0} pcs</strong></td>
+                        <td class="align-right">${formatRupiah(v.sellPrice || 0)}</td>
+                        <td class="align-right"><strong>${formatRupiah(v.totalRevenue || 0)}</strong></td>
+                        <td class="align-right">${formatRupiah(v.hppUnit || 0)}</td>
+                        <td class="align-right text-danger">${formatRupiah(v.totalHpp || 0)}</td>
+                        <td class="align-right">${formatRupiah(v.profitUnit || 0)}</td>
+                        <td class="align-right"><strong class="${profitCls}">${formatRupiah(v.totalProfit || 0)}</strong></td>
+                    </tr>
+                `;
+            }).join("");
         }
+    }
 
-        await Promise.all([
-            loadFinanceSummary(),
-            loadCashflowHistory()
-        ]);
-
-    } catch (error) {
-        console.error("Delete cashflow error:", error);
-        alert("Gagal terhubung ke server.");
+    if (financeVariantTfoot) {
+        const grandCls = profit >= 0 ? "text-green" : "text-danger";
+        financeVariantTfoot.innerHTML = `
+            <tr class="finance-grand-total-row">
+                <td>GRAND TOTAL (GENERAL)</td>
+                <td class="align-right">${r.totalPcs || 0} pcs</td>
+                <td class="align-right">—</td>
+                <td class="align-right">${formatRupiah(rev)}</td>
+                <td class="align-right">—</td>
+                <td class="align-right text-danger">${formatRupiah(hpp)}</td>
+                <td class="align-right">—</td>
+                <td class="align-right"><strong class="${grandCls}">${formatRupiah(profit)}</strong></td>
+            </tr>
+        `;
     }
 }
 
-financeTabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-        const target = tab.dataset.financeTab;
-
-        financeTabs.forEach((t) => t.classList.remove("active"));
-        tab.classList.add("active");
-
-        financeFormPanels.forEach((panel) => {
-            const isActive = panel.dataset.financeContent === target;
-            panel.hidden = !isActive;
-        });
-    });
-});
-
-if (financeMonthInput) {
-    financeMonthInput.value = getCurrentMonthString();
-    financeMonthInput.addEventListener("change", () => {
-        currentFinanceMonth = financeMonthInput.value;
+document.querySelectorAll("#finance-period-tabs [data-fin-period]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+        financePeriodMode = btn.dataset.finPeriod || "month";
+        initPeriodFilterControls();
         loadFinance();
     });
-}
+});
 
+if (financeDateInput) {
+    financeDateInput.addEventListener("change", () => loadFinance());
+}
+if (financeMonthInput) {
+    financeMonthInput.addEventListener("change", () => loadFinance());
+}
+if (financeYearSelect) {
+    financeYearSelect.addEventListener("change", () => loadFinance());
+}
 if (financeRefreshBtn) {
     financeRefreshBtn.addEventListener("click", () => loadFinance());
 }
 
+bindClick("fin-go-sku-hpp-btn", () => {
+    switchTab("settings");
+    document.querySelectorAll(".settings-nav-item[data-settings-section]").forEach((b) => {
+        b.classList.toggle("active", b.dataset.settingsSection === "sec-sku-hpp");
+    });
+    setTimeout(() => document.getElementById("sec-sku-hpp")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+});
+
 /* =========================
-   FINANCE — EXPORT EXCEL (100% FULL STYLING)
+   FINANCE — EXPORT EXCEL (2-SHEET: RINGKASAN + DETAIL VARIAN)
    ========================= */
 
 const financeExportBtn = document.getElementById("finance-export");
 
-async function exportFinanceExcel() {
+async function exportFinanceExcel(overrideGranularity = null, overrideValue = null) {
     if (typeof ExcelJS === "undefined") {
         alert("Library Excel belum ke-load. Coba refresh halaman.");
         return;
     }
 
-    if (!currentFinanceMonth) {
-        alert("Pilih bulan dulu.");
-        return;
+    const basePeriod = getSelectedFinancePeriod();
+    const granularity = overrideGranularity || basePeriod.granularity;
+    const value = overrideValue || basePeriod.value;
+
+    const originalText = financeExportBtn ? financeExportBtn.innerText : "";
+    if (financeExportBtn) {
+        financeExportBtn.disabled = true;
+        financeExportBtn.innerText = "Menyiapkan...";
     }
 
-    const originalText = financeExportBtn.innerText;
-    financeExportBtn.disabled = true;
-    financeExportBtn.innerText = "Menyiapkan...";
-
     try {
-        const [summaryRes, hppRes, cfRes] = await Promise.all([
-            fetch(`${API_BASE}/api/admin/finance/summary?month=${currentFinanceMonth}`, {
-                headers: { "Authorization": `Bearer ${getToken()}` }
-            }),
-            fetch(`${API_BASE}/api/admin/finance/hpp-purchases?month=${currentFinanceMonth}`, {
-                headers: { "Authorization": `Bearer ${getToken()}` }
-            }),
-            fetch(`${API_BASE}/api/admin/finance/cashflow-transactions?month=${currentFinanceMonth}`, {
-                headers: { "Authorization": `Bearer ${getToken()}` }
-            })
-        ]);
+        const qs = new URLSearchParams({ granularity, value: value || "" });
+        const res = await fetch(`${API_BASE}/api/admin/finance/sales-report?${qs.toString()}`, {
+            headers: { "Authorization": `Bearer ${getToken()}` }
+        });
+        const data = await res.json();
 
-        const summaryData = await summaryRes.json();
-        const hppData = await hppRes.json();
-        const cfData = await cfRes.json();
-
-        if (!summaryData.success || !hppData.success || !cfData.success) {
-            alert("Gagal mengambil data finance.");
+        if (!res.ok || !data.success || !data.report) {
+            alert("Gagal mengambil data laporan keuangan.");
             return;
         }
 
-        const summary = summaryData.summary;
-        const hppItems = hppData.items || [];
-        const cfItems = cfData.items || [];
+        const r = data.report;
+        const nicePeriod = getFinancePeriodDisplayLabel(r.granularity || granularity, r.value || value);
 
         const COLOR = {
             maroon: "FF250B0D",
             maroonLight: "FF42191C",
             gold: "FFD8A84E",
-            goldLight: "FFE7C77D",
             cream: "FFF7EFE3",
-            creamSoft: "FFD9CABB",
-            white: "FFFFFAF3",
             green: "FF246B49",
-            greenLight: "FF8BD28B",
             error: "FFE2725B",
             rowAlt: "FFFAF6EF"
         };
 
         const thinBorder = {
-            top:    { style: "thin", color: { argb: COLOR.gold } },
-            left:   { style: "thin", color: { argb: COLOR.gold } },
+            top: { style: "thin", color: { argb: COLOR.gold } },
+            left: { style: "thin", color: { argb: COLOR.gold } },
             bottom: { style: "thin", color: { argb: COLOR.gold } },
-            right:  { style: "thin", color: { argb: COLOR.gold } }
+            right: { style: "thin", color: { argb: COLOR.gold } }
         };
 
         const wb = new ExcelJS.Workbook();
         wb.creator = "Velacookies Admin";
         wb.created = new Date();
 
-        /* SHEET 1: SUMMARY */
-        const ws1 = wb.addWorksheet("Summary", {
+        /* SHEET 1: RINGKASAN PENJUALAN */
+        const ws1 = wb.addWorksheet("Ringkasan Penjualan", {
             properties: { tabColor: { argb: COLOR.maroon } },
             views: [{ showGridLines: false }]
         });
 
-        ws1.mergeCells("A1:E1");
+        ws1.mergeCells("A1:D1");
         const titleCell = ws1.getCell("A1");
-        titleCell.value = "LAPORAN KEUANGAN — VELACOOKIES";
-        titleCell.font = { name: "Calibri", size: 16, bold: true, color: { argb: COLOR.cream } };
+        titleCell.value = "LAPORAN KEUANGAN PENJUALAN — VELACOOKIES";
+        titleCell.font = { name: "Calibri", size: 15, bold: true, color: { argb: COLOR.cream } };
         titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.maroon } };
         titleCell.alignment = { horizontal: "center", vertical: "middle" };
-        ws1.getRow(1).height = 36;
+        ws1.getRow(1).height = 34;
 
-        ws1.mergeCells("A2:E2");
+        ws1.mergeCells("A2:D2");
         const subCell = ws1.getCell("A2");
-        subCell.value = `Periode: ${currentFinanceMonth}   •   Dibuat: ${new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })}`;
+        subCell.value = `Periode: ${nicePeriod}   •   Dibuat: ${new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })}`;
         subCell.font = { size: 11, italic: true, color: { argb: COLOR.maroonLight } };
         subCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.cream } };
         subCell.alignment = { horizontal: "center", vertical: "middle" };
@@ -3755,137 +3830,56 @@ async function exportFinanceExcel() {
 
         ws1.addRow([]);
 
-        ws1.getCell("A4").value = "OMZET BULAN INI";
-        ws1.getCell("A4").font = { size: 11, bold: true, color: { argb: COLOR.maroonLight } };
-        ws1.mergeCells("A4:B4");
-        ws1.getCell("D4").value = summary.revenue;
-        ws1.getCell("D4").numFmt = '"Rp"#,##0';
-        ws1.getCell("D4").font = { size: 14, bold: true, color: { argb: COLOR.green } };
-        ws1.mergeCells("D4:E4");
-        ws1.getCell("D4").alignment = { horizontal: "right", vertical: "middle" };
-        ws1.getRow(4).height = 28;
-
-        ws1.addRow([]);
-
-        const headerRow = ws1.addRow([
-            "BUCKET",
-            "PERSENTASE",
-            "ALOKASI",
-            "TERPAKAI",
-            "SISA"
-        ]);
-        headerRow.eachCell((cell) => {
+        const s1Header = ws1.addRow(["RINGKASAN METRIK", "KETERANGAN", "JUMLAH / QTY", "NILAI (RP)"]);
+        s1Header.eachCell((cell) => {
             cell.font = { bold: true, color: { argb: COLOR.maroon }, size: 11 };
             cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.gold } };
             cell.alignment = { horizontal: "center", vertical: "middle" };
             cell.border = thinBorder;
         });
-        headerRow.height = 26;
+        s1Header.height = 24;
 
-        const buckets = [
-            {
-                name: "HPP (Bahan Baku)",
-                pct: summary.hppPct + "%",
-                alloc: summary.hppAllocated,
-                spent: summary.hppSpent,
-                remain: summary.hppRemaining
-            },
-            {
-                name: "Cash Flow (Operasional)",
-                pct: summary.cashflowPct + "%",
-                alloc: summary.cashflowAllocated,
-                spent: summary.cashflowSpent,
-                remain: summary.cashflowRemaining
-            },
-            {
-                name: "Profit (Laba)",
-                pct: summary.profitPct + "%",
-                alloc: summary.profitAllocated,
-                spent: null,
-                remain: summary.profitFinal,
-                isProfit: true
-            }
+        const summaryRows = [
+            ["General Omzet Penjualan", `${r.paidOrdersCount || 0} pesanan terbayar`, `${r.totalPcs || 0} pcs`, r.generalRevenue || 0],
+            ["General HPP Penjualan", "Total harga pokok varian terjual", `${r.totalPcs || 0} pcs`, r.generalHpp || 0],
+            ["General Profit Penjualan", `Margin bersih ${r.generalMarginPct || 0}%`, `${r.paidOrdersCount || 0} pesanan`, r.generalProfit || 0],
+            ["Rekening QRIS (Terverifikasi)", "Pembayaran non-tunai lunas", "-", r.qrisRevenue || 0],
+            ["Kas Tunai / COD (Terverifikasi)", "Pembayaran tunai lunas", "-", r.codRevenue || 0],
+            ["Menunggu Verifikasi / Bayar", `${r.pendingOrdersCount || 0} pesanan pending`, "-", r.pendingFunds || 0],
+            ["Varian Terlaris", r.bestSeller ? r.bestSeller.displayName : "Belum ada penjualan", r.bestSeller ? `${r.bestSeller.qty} pcs` : "0 pcs", r.bestSeller ? r.bestSeller.totalRevenue : 0],
+            ["Varian Terkecil", r.leastSeller ? r.leastSeller.displayName : "Belum ada penjualan", r.leastSeller ? `${r.leastSeller.qty} pcs` : "0 pcs", r.leastSeller ? r.leastSeller.totalRevenue : 0]
         ];
 
-        buckets.forEach((b, i) => {
-            const row = ws1.addRow([
-                b.name,
-                b.pct,
-                b.alloc,
-                b.spent === null ? "—" : b.spent,
-                b.remain
-            ]);
-
-            row.eachCell((cell, colNumber) => {
+        summaryRows.forEach((sr, idx) => {
+            const row = ws1.addRow(sr);
+            row.eachCell((cell, colNum) => {
                 cell.border = thinBorder;
                 cell.alignment = { vertical: "middle" };
-                if (colNumber >= 3 && colNumber <= 5) {
+                if (colNum === 4) {
                     cell.numFmt = '"Rp"#,##0';
                     cell.alignment = { horizontal: "right", vertical: "middle" };
-                }
-                if (colNumber === 2) {
+                    cell.font = { bold: idx <= 2, color: { argb: idx === 2 ? COLOR.green : COLOR.maroonLight } };
+                } else if (colNum === 3) {
                     cell.alignment = { horizontal: "center", vertical: "middle" };
                 }
-
-                if (i % 2 === 1) {
+                if (idx % 2 === 1) {
                     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.rowAlt } };
                 }
-
-                if (b.isProfit) {
-                    cell.font = { color: { argb: COLOR.green }, bold: true };
-                } else {
-                    cell.font = { color: { argb: COLOR.maroonLight } };
-                }
             });
-
-            const sisaCell = row.getCell(5);
-            if (b.remain < 0) {
-                sisaCell.font = { color: { argb: COLOR.error }, bold: true };
-            }
-
             row.height = 22;
         });
 
-        ws1.addRow([]);
+        ws1.columns = [{ width: 32 }, { width: 38 }, { width: 16 }, { width: 20 }];
 
-        const totalSpent = (summary.hppSpent || 0) + (summary.cashflowSpent || 0);
-        const totalRow = ws1.addRow(["", "", "", "TOTAL PENGELUARAN", totalSpent]);
-        totalRow.getCell(4).font = { bold: true, color: { argb: COLOR.maroon } };
-        totalRow.getCell(4).alignment = { horizontal: "right" };
-        totalRow.getCell(5).numFmt = '"Rp"#,##0';
-        totalRow.getCell(5).font = { bold: true, color: { argb: COLOR.error }, size: 12 };
-        totalRow.getCell(5).alignment = { horizontal: "right" };
-        totalRow.height = 24;
-
-        const finalRow = ws1.addRow(["", "", "", "LABA FINAL", summary.profitFinal]);
-        finalRow.getCell(4).font = { bold: true, color: { argb: COLOR.maroon } };
-        finalRow.getCell(4).alignment = { horizontal: "right" };
-        finalRow.getCell(5).numFmt = '"Rp"#,##0';
-        finalRow.getCell(5).font = {
-            bold: true,
-            size: 14,
-            color: { argb: summary.profitFinal >= 0 ? COLOR.green : COLOR.error }
-        };
-        finalRow.getCell(5).alignment = { horizontal: "right" };
-        finalRow.height = 28;
-
-        ws1.columns = [
-            { width: 28 },
-            { width: 14 },
-            { width: 18 },
-            { width: 18 },
-            { width: 18 }
-        ];
-
-        /* SHEET 2: HPP */
-        const ws2 = wb.addWorksheet("HPP", {
+        /* SHEET 2: DETAIL PER VARIAN (6 SKU) */
+        const ws2 = wb.addWorksheet("Detail per Varian", {
             properties: { tabColor: { argb: COLOR.green } },
             views: [{ showGridLines: false }]
         });
 
-        ws2.mergeCells("A1:F1");
+        ws2.mergeCells("A1:H1");
         const title2 = ws2.getCell("A1");
-        title2.value = `PEMBELIAN HPP — ${currentFinanceMonth}`;
+        title2.value = `DETAIL OMZET, HPP & PROFIT PER VARIAN — ${nicePeriod}`;
         title2.font = { size: 14, bold: true, color: { argb: COLOR.cream } };
         title2.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.maroon } };
         title2.alignment = { horizontal: "center", vertical: "middle" };
@@ -3893,139 +3887,73 @@ async function exportFinanceExcel() {
 
         ws2.addRow([]);
 
-        const hppHeader = ws2.addRow(["TANGGAL", "ITEM", "QTY", "UNIT", "HARGA", "CATATAN"]);
-        hppHeader.eachCell((cell) => {
+        const vHeader = ws2.addRow(["VARIAN PRODUK", "TERJUAL (PCS)", "HARGA JUAL", "TOTAL OMZET", "HPP / PCS", "TOTAL HPP", "PROFIT / PCS", "TOTAL PROFIT"]);
+        vHeader.eachCell((cell) => {
             cell.font = { bold: true, color: { argb: COLOR.maroon }, size: 11 };
             cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.gold } };
             cell.alignment = { horizontal: "center", vertical: "middle" };
             cell.border = thinBorder;
         });
-        hppHeader.height = 26;
+        vHeader.height = 26;
 
-        let totalHpp = 0;
-        hppItems.forEach((item, i) => {
+        (r.variants || []).forEach((v, idx) => {
             const row = ws2.addRow([
-                item.purchaseDate || "-",
-                item.itemName || "-",
-                item.quantity != null ? item.quantity : "-",
-                item.unit || "-",
-                item.amount || 0,
-                item.note || "-"
+                v.displayName || v.productId,
+                v.qty || 0,
+                v.sellPrice || 0,
+                v.totalRevenue || 0,
+                v.hppUnit || 0,
+                v.totalHpp || 0,
+                v.profitUnit || 0,
+                v.totalProfit || 0
             ]);
-
-            row.eachCell((cell, colNumber) => {
+            row.eachCell((cell, colNum) => {
                 cell.border = thinBorder;
                 cell.alignment = { vertical: "middle" };
-                if (colNumber === 5) {
+                if (colNum === 2) {
+                    cell.alignment = { horizontal: "right", vertical: "middle" };
+                } else if (colNum >= 3) {
                     cell.numFmt = '"Rp"#,##0';
                     cell.alignment = { horizontal: "right", vertical: "middle" };
                 }
-                if (colNumber === 3 || colNumber === 4) {
-                    cell.alignment = { horizontal: "center", vertical: "middle" };
-                }
-                if (i % 2 === 1) {
+                if (idx % 2 === 1) {
                     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.rowAlt } };
                 }
-                cell.font = { color: { argb: COLOR.maroonLight } };
+                if (colNum === 8) {
+                    cell.font = { bold: true, color: { argb: (v.totalProfit || 0) >= 0 ? COLOR.green : COLOR.error } };
+                }
             });
-
-            totalHpp += item.amount || 0;
-            row.height = 20;
+            row.height = 21;
         });
 
-        if (hppItems.length > 0) {
-            const tRow = ws2.addRow(["", "", "", "TOTAL", totalHpp, ""]);
-            tRow.getCell(4).font = { bold: true, color: { argb: COLOR.maroon } };
-            tRow.getCell(4).alignment = { horizontal: "right" };
-            tRow.getCell(5).numFmt = '"Rp"#,##0';
-            tRow.getCell(5).font = { bold: true, color: { argb: COLOR.error }, size: 12 };
-            tRow.getCell(5).alignment = { horizontal: "right" };
-            tRow.getCell(5).border = thinBorder;
-            tRow.height = 24;
-        } else {
-            ws2.addRow(["", "", "", "", "Belum ada data", ""]);
-        }
+        const grandRow = ws2.addRow([
+            "GRAND TOTAL (GENERAL)",
+            r.totalPcs || 0,
+            "-",
+            r.generalRevenue || 0,
+            "-",
+            r.generalHpp || 0,
+            "-",
+            r.generalProfit || 0
+        ]);
+        grandRow.eachCell((cell, colNum) => {
+            cell.border = thinBorder;
+            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.cream } };
+            cell.font = { bold: true, color: { argb: colNum === 8 ? COLOR.green : COLOR.maroon }, size: 11 };
+            if (colNum >= 2) cell.alignment = { horizontal: "right", vertical: "middle" };
+            if ([4, 6, 8].includes(colNum)) cell.numFmt = '"Rp"#,##0';
+        });
+        grandRow.height = 25;
 
         ws2.columns = [
-            { width: 14 },
-            { width: 28 },
-            { width: 8 },
-            { width: 10 },
-            { width: 16 },
-            { width: 30 }
-        ];
-
-        /* SHEET 3: CASHFLOW */
-        const ws3 = wb.addWorksheet("Cashflow", {
-            properties: { tabColor: { argb: COLOR.gold } },
-            views: [{ showGridLines: false }]
-        });
-
-        ws3.mergeCells("A1:E1");
-        const title3 = ws3.getCell("A1");
-        title3.value = `CASH FLOW — ${currentFinanceMonth}`;
-        title3.font = { size: 14, bold: true, color: { argb: COLOR.cream } };
-        title3.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.maroon } };
-        title3.alignment = { horizontal: "center", vertical: "middle" };
-        ws3.getRow(1).height = 32;
-
-        ws3.addRow([]);
-
-        const cfHeader = ws3.addRow(["TANGGAL", "KATEGORI", "DESKRIPSI", "JUMLAH", "CATATAN"]);
-        cfHeader.eachCell((cell) => {
-            cell.font = { bold: true, color: { argb: COLOR.maroon }, size: 11 };
-            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.gold } };
-            cell.alignment = { horizontal: "center", vertical: "middle" };
-            cell.border = thinBorder;
-        });
-        cfHeader.height = 26;
-
-        let totalCf = 0;
-        cfItems.forEach((item, i) => {
-            const row = ws3.addRow([
-                item.transactionDate || "-",
-                item.categoryName || "-",
-                item.description || "-",
-                item.amount || 0,
-                item.note || "-"
-            ]);
-
-            row.eachCell((cell, colNumber) => {
-                cell.border = thinBorder;
-                cell.alignment = { vertical: "middle" };
-                if (colNumber === 4) {
-                    cell.numFmt = '"Rp"#,##0';
-                    cell.alignment = { horizontal: "right", vertical: "middle" };
-                }
-                if (i % 2 === 1) {
-                    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.rowAlt } };
-                }
-                cell.font = { color: { argb: COLOR.maroonLight } };
-            });
-
-            totalCf += item.amount || 0;
-            row.height = 20;
-        });
-
-        if (cfItems.length > 0) {
-            const tRow = ws3.addRow(["", "", "TOTAL", totalCf, ""]);
-            tRow.getCell(3).font = { bold: true, color: { argb: COLOR.maroon } };
-            tRow.getCell(3).alignment = { horizontal: "right" };
-            tRow.getCell(4).numFmt = '"Rp"#,##0';
-            tRow.getCell(4).font = { bold: true, color: { argb: COLOR.error }, size: 12 };
-            tRow.getCell(4).alignment = { horizontal: "right" };
-            tRow.getCell(4).border = thinBorder;
-            tRow.height = 24;
-        } else {
-            ws3.addRow(["", "", "", "Belum ada data", ""]);
-        }
-
-        ws3.columns = [
-            { width: 14 },
-            { width: 20 },
-            { width: 32 },
-            { width: 16 },
-            { width: 30 }
+            { width: 42 },
+            { width: 15 },
+            { width: 15 },
+            { width: 18 },
+            { width: 15 },
+            { width: 18 },
+            { width: 15 },
+            { width: 18 }
         ];
 
         const buffer = await wb.xlsx.writeBuffer();
@@ -4036,7 +3964,7 @@ async function exportFinanceExcel() {
 
         const link = document.createElement("a");
         link.href = url;
-        link.download = `velacookies-keuangan-${currentFinanceMonth}.xlsx`;
+        link.download = `velacookies-keuangan-${r.value || value || "laporan"}.xlsx`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -4046,13 +3974,15 @@ async function exportFinanceExcel() {
         console.error("Export Excel error:", error);
         alert("Gagal export Excel.");
     } finally {
-        financeExportBtn.disabled = false;
-        financeExportBtn.innerText = originalText;
+        if (financeExportBtn) {
+            financeExportBtn.disabled = false;
+            financeExportBtn.innerText = originalText;
+        }
     }
 }
 
 if (financeExportBtn) {
-    financeExportBtn.addEventListener("click", exportFinanceExcel);
+    financeExportBtn.addEventListener("click", () => exportFinanceExcel());
 }
 
 
@@ -5385,7 +5315,7 @@ if (waTestForm) {
 
 
 /* =========================
-   SETTINGS & BUDGET ALLOCATION
+   SETTINGS & SKU HPP PER VARIAN
    ========================= */
 
 async function loadSettings() {
@@ -5537,87 +5467,169 @@ if (settingsQrisImage) {
     });
 }
 
-/* Budget Allocation Settings (/api/admin/finance/settings) */
-const budgetSettingsForm = document.getElementById("budget-settings-form");
-const budgetHppInput = document.getElementById("budget-hpp-pct");
-const budgetCfInput = document.getElementById("budget-cf-pct");
-const budgetProfitInput = document.getElementById("budget-profit-pct");
-const budgetTotalBadge = document.getElementById("budget-total-pct-badge");
-const budgetStatusEl = document.getElementById("budget-settings-status");
-const budgetSubmitBtn = document.getElementById("budget-settings-submit");
+/* HPP per Varian 6 SKU (/api/admin/finance/sku-hpp) */
+const skuHppForm = document.getElementById("sku-hpp-form");
+const skuHppTbody = document.getElementById("sku-hpp-tbody");
+const skuHppStatusEl = document.getElementById("sku-hpp-status");
+const skuHppSubmitBtn = document.getElementById("sku-hpp-submit");
 
-function updateBudgetTotalBadge() {
-    if (!budgetTotalBadge) return;
-    const sum = (parseInt(budgetHppInput?.value || "0", 10) || 0)
-        + (parseInt(budgetCfInput?.value || "0", 10) || 0)
-        + (parseInt(budgetProfitInput?.value || "0", 10) || 0);
-    budgetTotalBadge.innerText = `Total: ${sum}%`;
-    budgetTotalBadge.className = `badge-pill ${sum === 100 ? "badge-green" : "badge-danger"}`;
+function renderSkuHppForm() {
+    if (!skuHppTbody) return;
+    const list = Array.isArray(skuHppCatalogCache) && skuHppCatalogCache.length
+        ? skuHppCatalogCache
+        : DEFAULT_SKU_HPP_CATALOG;
+
+    skuHppTbody.innerHTML = list.map((item, idx) => {
+        const sell = Number(item.sellPrice || 0);
+        const hpp = Math.max(0, Number(item.hppUnit || 0));
+        const profit = sell - hpp;
+        const margin = sell > 0 ? Math.round((profit / sell) * 1000) / 10 : 0;
+        const profitCls = profit >= 0 ? "text-green" : "text-danger";
+
+        return `
+            <tr data-sku-row-index="${idx}">
+                <td><strong>${escapeHtml(item.displayName || item.productId)}</strong></td>
+                <td class="align-right">${formatRupiah(sell)}</td>
+                <td class="align-right">
+                    <input
+                        type="number"
+                        class="form-input sku-hpp-input"
+                        data-sku-index="${idx}"
+                        min="0"
+                        max="10000000"
+                        step="100"
+                        value="${hpp}"
+                        required
+                    >
+                </td>
+                <td class="align-right">
+                    <span class="sku-hpp-preview-main ${profitCls}" id="sku-profit-preview-${idx}">${formatRupiah(profit)}</span>
+                    <span class="sku-hpp-preview-sub" id="sku-margin-preview-${idx}">Margin ${margin}%</span>
+                </td>
+            </tr>
+        `;
+    }).join("");
+
+    skuHppTbody.querySelectorAll(".sku-hpp-input").forEach((inp) => {
+        inp.addEventListener("input", () => {
+            const idx = parseInt(inp.dataset.skuIndex || "0", 10);
+            const item = list[idx];
+            if (!item) return;
+            const sell = Number(item.sellPrice || 0);
+            const hpp = Math.max(0, parseInt(inp.value || "0", 10) || 0);
+            const profit = sell - hpp;
+            const margin = sell > 0 ? Math.round((profit / sell) * 1000) / 10 : 0;
+            const pEl = document.getElementById(`sku-profit-preview-${idx}`);
+            const mEl = document.getElementById(`sku-margin-preview-${idx}`);
+            if (pEl) {
+                pEl.innerText = formatRupiah(profit);
+                pEl.className = `sku-hpp-preview-main ${profit >= 0 ? "text-green" : "text-danger"}`;
+            }
+            if (mEl) mEl.innerText = `Margin ${margin}%`;
+        });
+    });
+
+    applyRolePermissionsUI();
 }
 
-[budgetHppInput, budgetCfInput, budgetProfitInput].forEach((inp) => {
-    if (inp) inp.addEventListener("input", updateBudgetTotalBadge);
-});
-
-async function loadBudgetSettings() {
-    if (!budgetSettingsForm) return;
+async function loadSkuHppSettings() {
     try {
-        const res = await fetch(`${API_BASE}/api/admin/finance/settings`, {
+        const res = await fetch(`${API_BASE}/api/admin/finance/sku-hpp`, {
             headers: { "Authorization": `Bearer ${getToken()}` }
         });
+        if (res.status === 401) {
+            clearToken();
+            showLoginView();
+            return;
+        }
         const data = await res.json();
-        if (!res.ok || !data.success || !data.settings) return;
-        if (budgetHppInput) budgetHppInput.value = data.settings.hppPct;
-        if (budgetCfInput) budgetCfInput.value = data.settings.cashflowPct;
-        if (budgetProfitInput) budgetProfitInput.value = data.settings.profitPct;
-        updateBudgetTotalBadge();
+        if (!res.ok || !data.success || !Array.isArray(data.items) || !data.items.length) {
+            renderSkuHppForm();
+            return;
+        }
+        skuHppCatalogCache = data.items;
+        renderSkuHppForm();
+        if (allOrders.length) renderDashboard();
+        if (poStatusCache) renderPOPage();
     } catch (err) {
-        console.error("Load budget settings error:", err);
+        console.error("Load SKU HPP settings error:", err);
+        renderSkuHppForm();
     }
 }
 
-if (budgetSettingsForm) {
-    budgetSettingsForm.addEventListener("submit", async (e) => {
+if (skuHppForm) {
+    skuHppForm.addEventListener("submit", async (e) => {
         e.preventDefault();
-        const hppPct = parseInt(budgetHppInput?.value || "0", 10);
-        const cashflowPct = parseInt(budgetCfInput?.value || "0", 10);
-        const profitPct = parseInt(budgetProfitInput?.value || "0", 10);
+        if (isInvestorRole()) return;
 
-        if (hppPct + cashflowPct + profitPct !== 100) {
-            if (budgetStatusEl) {
-                budgetStatusEl.innerText = "Total persentase wajib tepat 100%.";
-                budgetStatusEl.className = "settings-status error";
+        const baseList = Array.isArray(skuHppCatalogCache) && skuHppCatalogCache.length
+            ? skuHppCatalogCache
+            : DEFAULT_SKU_HPP_CATALOG;
+        const payloadItems = [];
+        let invalidMsg = "";
+
+        skuHppTbody?.querySelectorAll(".sku-hpp-input").forEach((inp) => {
+            const idx = parseInt(inp.dataset.skuIndex || "0", 10);
+            const sku = baseList[idx];
+            if (!sku) return;
+            const val = parseInt(inp.value, 10);
+            if (isNaN(val) || val < 0 || val > 10000000) {
+                invalidMsg = `Nilai HPP untuk ${sku.displayName} tidak valid.`;
+                return;
+            }
+            payloadItems.push({
+                productId: sku.productId,
+                addonName: sku.addonName || "",
+                hppUnit: val
+            });
+        });
+
+        if (invalidMsg || !payloadItems.length) {
+            if (skuHppStatusEl) {
+                skuHppStatusEl.innerText = invalidMsg || "Tidak ada data HPP untuk disimpan.";
+                skuHppStatusEl.className = "settings-status error";
             }
             return;
         }
 
-        if (budgetSubmitBtn) budgetSubmitBtn.disabled = true;
+        if (skuHppSubmitBtn) skuHppSubmitBtn.disabled = true;
         try {
-            const res = await fetch(`${API_BASE}/api/admin/finance/settings`, {
+            const res = await fetch(`${API_BASE}/api/admin/finance/sku-hpp`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${getToken()}`
                 },
-                body: JSON.stringify({ hppPct, cashflowPct, profitPct })
+                body: JSON.stringify({ items: payloadItems })
             });
             const data = await res.json();
             if (!res.ok || !data.success) {
-                if (budgetStatusEl) {
-                    budgetStatusEl.innerText = data.message || "Gagal menyimpan rasio anggaran.";
-                    budgetStatusEl.className = "settings-status error";
+                if (skuHppStatusEl) {
+                    skuHppStatusEl.innerText = data.message || "Gagal menyimpan HPP varian.";
+                    skuHppStatusEl.className = "settings-status error";
                 }
                 return;
             }
-            if (budgetStatusEl) {
-                budgetStatusEl.innerText = "Rasio anggaran berhasil disimpan.";
-                budgetStatusEl.className = "settings-status success";
-                setTimeout(() => { budgetStatusEl.innerText = ""; }, 3000);
+            if (Array.isArray(data.items) && data.items.length) {
+                skuHppCatalogCache = data.items;
+            }
+            renderSkuHppForm();
+            renderDashboard();
+            if (poStatusCache) renderPOPage();
+            if (currentFinanceReport) loadFinance();
+            if (skuHppStatusEl) {
+                skuHppStatusEl.innerText = "HPP per varian berhasil disimpan.";
+                skuHppStatusEl.className = "settings-status success";
+                setTimeout(() => { skuHppStatusEl.innerText = ""; }, 3500);
             }
         } catch (err) {
-            console.error("Save budget settings error:", err);
+            console.error("Save SKU HPP settings error:", err);
+            if (skuHppStatusEl) {
+                skuHppStatusEl.innerText = "Gagal terhubung ke server.";
+                skuHppStatusEl.className = "settings-status error";
+            }
         } finally {
-            if (budgetSubmitBtn) budgetSubmitBtn.disabled = false;
+            if (skuHppSubmitBtn) skuHppSubmitBtn.disabled = isInvestorRole();
         }
     });
 }
@@ -5788,11 +5800,41 @@ async function loadPOSettings() {
     }
 }
 
+function getPOHistoryWithCurrent() {
+    const result = poStatusCache || {};
+    const history = Array.isArray(result.history) ? result.history.slice() : [];
+    if (currentPOData && currentPOData.id && !history.some((h) => String(h.id) === String(currentPOData.id))) {
+        history.unshift(currentPOData);
+    }
+    return history;
+}
+
+function getViewedPOObject() {
+    const history = getPOHistoryWithCurrent();
+    if (selectedViewPoId != null) {
+        const found = history.find((h) => String(h.id) === String(selectedViewPoId));
+        if (found) return found;
+    }
+    const def = currentPOData || history[0] || null;
+    if (def) selectedViewPoId = def.id;
+    return def;
+}
+
+function getViewedPOBatchOrders() {
+    const viewed = getViewedPOObject();
+    return viewed ? getPOBatchOrders(viewed.id) : [];
+}
+
+function getBatchBadgeCode(poObj) {
+    if (!poObj) return "Batch PO";
+    return `Batch #${poObj.batchNumber || poObj.id}`;
+}
+
 function renderPOPage() {
     const result = poStatusCache || {};
-    const po = currentPOData;
+    const activePO = currentPOData;
     const isOpen = result.isOpen === true;
-    const history = Array.isArray(result.history) ? result.history : [];
+    const history = getPOHistoryWithCurrent();
 
     if (headerPoBadge && headerPoText) {
         headerPoBadge.classList.toggle("closed", !isOpen);
@@ -5803,60 +5845,110 @@ function renderPOPage() {
         sidebarPoBadge.innerText = isOpen ? "Buka" : "Tutup";
     }
 
+    const viewedPO = getViewedPOObject();
+    const activeId = activePO?.id || history[0]?.id || null;
+    const isArchiveView = Boolean(viewedPO && activeId && String(viewedPO.id) !== String(activeId));
+    const viewedIsOpen = Boolean(viewedPO && viewedPO.status === "open");
+
+    const viewerSelect = document.getElementById("po-batch-viewer-select");
+    if (viewerSelect) {
+        if (history.length === 0) {
+            viewerSelect.innerHTML = `<option value="">Belum ada batch PO</option>`;
+            viewerSelect.disabled = true;
+        } else {
+            viewerSelect.disabled = false;
+            viewerSelect.innerHTML = history.map((h) => {
+                const stText = h.status === "open" ? "Aktif" : "Tutup";
+                const lbl = `${getBatchBadgeCode(h)} — ${h.batchName || `Batch PO #${h.batchNumber || h.id}`} (${stText})`;
+                return `<option value="${h.id}">${escapeHtml(lbl)}</option>`;
+            }).join("");
+            if (viewedPO) viewerSelect.value = String(viewedPO.id);
+        }
+    }
+
+    const archiveBanner = document.getElementById("po-viewing-archive-banner");
+    if (archiveBanner) {
+        archiveBanner.hidden = !isArchiveView;
+        if (isArchiveView && viewedPO) {
+            setText(
+                "po-viewing-archive-label",
+                `Sedang meninjau arsip ${getBatchBadgeCode(viewedPO)} — ${viewedPO.batchName || "-"}`
+            );
+        }
+    }
+
     if (poCurrentBadge) {
-        poCurrentBadge.className = `badge-pill ${isOpen ? "badge-green" : "badge-neutral"}`;
-        poCurrentBadge.innerText = isOpen ? "PO DIBUKA" : "PO DITUTUP";
+        poCurrentBadge.className = `badge-pill ${viewedIsOpen ? "badge-green" : "badge-neutral"}`;
+        poCurrentBadge.innerText = viewedIsOpen ? "PO DIBUKA" : (isArchiveView ? "ARSIP DITUTUP" : "PO DITUTUP");
     }
 
-    setText("po-hero-id-label", po ? `Periode #${po.id}` : "Belum ada periode");
+    setText("po-hero-id-label", viewedPO ? `${getBatchBadgeCode(viewedPO)} (Periode #${viewedPO.id})` : "Belum ada periode");
     if (poInfoStatus) {
-        poInfoStatus.innerText = po ? (po.batchName || `Batch PO #${po.id}`) : "Belum Ada Batch Pre-Order";
+        poInfoStatus.innerText = viewedPO ? (viewedPO.batchName || `Batch PO #${viewedPO.batchNumber || viewedPO.id}`) : "Belum Ada Batch Pre-Order";
     }
-    setText("po-hero-subtitle", isOpen
+    setText("po-hero-subtitle", viewedIsOpen
         ? "Batch pre-order sedang aktif menerima pesanan dari pelanggan di halaman toko."
-        : "Pre-order sedang ditutup. Buka periode baru di formulir pengaturan batch untuk menerima pesanan.");
+        : (isArchiveView
+            ? "Menampilkan rincian riwayat batch pre-order yang sudah ditutup (pesanan, profit, dan rincian lokasi x varian)."
+            : "Pre-order sedang ditutup. Buka periode baru di formulir pengaturan batch untuk menerima pesanan."));
 
-    const batchOrders = po ? getPOBatchOrders(po.id) : [];
-    const allocatedPcs = batchOrders.reduce((s, o) => s + getOrderTotalCookies(o), 0);
-    const maxQuota = po ? Number(po.maxQuota || 100) : 100;
+    const batchOrders = viewedPO ? getPOBatchOrders(viewedPO.id) : [];
+    const paidOrders = batchOrders.filter(isPaidOrder);
+    const paidAnalytics = computeClientSalesAnalytics(paidOrders, skuHppCatalogCache);
+    const activeAnalytics = computeClientSalesAnalytics(batchOrders, skuHppCatalogCache);
+
+    const allocatedPcs = batchOrders.length > 0
+        ? batchOrders.reduce((s, o) => s + getOrderTotalCookies(o), 0)
+        : Number(viewedPO?.allocatedPcs || 0);
+    const maxQuota = viewedPO ? Number(viewedPO.maxQuota || 100) : 100;
     const quotaPct = maxQuota > 0 ? Math.min(Math.round((allocatedPcs / maxQuota) * 100), 100) : 0;
     const remainingPcs = Math.max(0, maxQuota - allocatedPcs);
+    const totalEnteredCount = batchOrders.length || Number(viewedPO?.orderCount || 0);
 
     setText("po-hero-allocated-pcs", String(allocatedPcs));
     setText("po-hero-max-quota", `/ ${maxQuota} pcs`);
     const heroBar = document.getElementById("po-hero-progress-bar");
     if (heroBar) heroBar.style.width = `${quotaPct}%`;
-    setText("po-hero-orders-count", `${batchOrders.length} pesanan masuk`);
+    setText("po-hero-orders-count", `${totalEnteredCount} pesanan masuk`);
     setText("po-hero-remaining-pcs", `Tersisa ${remainingPcs} pcs`);
 
-    setText("po-info-open", po?.tanggalBuka ? formatDate(po.tanggalBuka) : "-");
-    if (poInfoClose) poInfoClose.innerText = po?.tanggalTutup ? formatDate(po.tanggalTutup) : "-";
-    if (poInfoProduction) poInfoProduction.innerText = po?.tanggalProduksi ? formatDateShort(getLocalDateString(po.tanggalProduksi)) : "-";
+    setText("po-info-open", viewedPO?.tanggalBuka ? formatDate(viewedPO.tanggalBuka) : "-");
+    if (poInfoClose) poInfoClose.innerText = viewedPO?.tanggalTutup ? formatDate(viewedPO.tanggalTutup) : "-";
+    if (poInfoProduction) poInfoProduction.innerText = viewedPO?.tanggalProduksi ? formatDateShort(getLocalDateString(viewedPO.tanggalProduksi)) : "-";
 
     const estRev = batchOrders.reduce((s, o) => s + (o.total || 0), 0);
-    const paidRev = batchOrders.filter(isPaidOrder).reduce((s, o) => s + (o.total || 0), 0);
-    setText("po-hero-est-revenue", formatRupiah(estRev));
-    setText("po-hero-paid-revenue", `${formatRupiah(paidRev)} sudah lunas`);
+    const paidRevDisplay = batchOrders.length > 0 ? paidAnalytics.generalRevenue : Number(viewedPO?.paidRevenue || 0);
+    setText("po-hero-est-revenue", formatRupiah(paidRevDisplay));
+    if (estRev > paidRevDisplay) {
+        setText("po-hero-paid-revenue", `Est. total ${formatRupiah(estRev)} (termasuk pending)`);
+    } else {
+        setText("po-hero-paid-revenue", `${paidOrders.length || Number(viewedPO?.paidOrderCount || 0)} pesanan terbayar · ${paidAnalytics.totalPcs || Number(viewedPO?.paidPcs || 0)} pcs`);
+    }
+    setText("po-hero-profit", formatRupiah(paidAnalytics.generalProfit));
+    setText("po-hero-hpp-profit", `HPP ${formatRupiah(paidAnalytics.generalHpp)} · Margin ${paidAnalytics.generalMarginPct}%`);
+
+    renderVariantHighlightPair("po", paidAnalytics, "Belum ada penjualan lunas");
 
     if (btnClosePo) {
-        btnClosePo.style.display = isOpen ? "inline-flex" : "none";
+        btnClosePo.style.display = isOpen && !isInvestorRole() ? "inline-flex" : "none";
     }
 
     if (poFormTitle && poSubmitBtn) {
-        if (isOpen && po) {
+        if (isOpen && activePO) {
             poFormTitle.innerText = "Perbarui jadwal & kuota batch aktif";
             poSubmitBtn.innerText = "Simpan perubahan jadwal";
-            if (poBatchNameInput) poBatchNameInput.value = po.batchName || "";
-            if (poOpenDateInput) poOpenDateInput.value = toDatetimeLocalValue(po.tanggalBuka);
-            if (poCloseDate) poCloseDate.value = toDatetimeLocalValue(po.tanggalTutup);
-            if (poProductionDate && po.tanggalProduksi) {
-                poProductionDate.value = getLocalDateString(po.tanggalProduksi);
+            if (poBatchNameInput) poBatchNameInput.value = activePO.batchName || "";
+            if (poOpenDateInput) poOpenDateInput.value = toDatetimeLocalValue(activePO.tanggalBuka);
+            if (poCloseDate) poCloseDate.value = toDatetimeLocalValue(activePO.tanggalTutup);
+            if (poProductionDate && activePO.tanggalProduksi) {
+                poProductionDate.value = getLocalDateString(activePO.tanggalProduksi);
             }
-            if (poMaxQuotaInput) poMaxQuotaInput.value = po.maxQuota || 100;
+            if (poMaxQuotaInput) poMaxQuotaInput.value = activePO.maxQuota || 100;
         } else {
             poFormTitle.innerText = "Buka periode pre-order baru";
             poSubmitBtn.innerText = "Buka Pre-Order Sekarang";
-            const nextNum = (po?.id || 0) + 1;
+            const maxBatchNum = history.reduce((mx, h) => Math.max(mx, Number(h.batchNumber || h.id || 0)), Number(activePO?.batchNumber || activePO?.id || 0));
+            const nextNum = maxBatchNum + 1;
             if (poBatchNameInput && !poBatchNameInput.value) {
                 poBatchNameInput.value = `Batch PO #${String(nextNum).padStart(2, "0")}`;
             }
@@ -5868,55 +5960,58 @@ function renderPOPage() {
             if (poOpenDateInput) poOpenDateInput.value = "";
             if (poCloseDate && cParts) poCloseDate.value = `${cParts.year}-${cParts.month}-${cParts.day}T23:59`;
             if (poProductionDate && pParts) poProductionDate.value = `${pParts.year}-${pParts.month}-${pParts.day}`;
-            if (poMaxQuotaInput) poMaxQuotaInput.value = po?.maxQuota || 100;
+            if (poMaxQuotaInput) poMaxQuotaInput.value = activePO?.maxQuota || 100;
         }
     }
 
-    renderPOVariantAllocation(batchOrders, allocatedPcs);
+    const batchTagLabel = viewedPO ? getBatchBadgeCode(viewedPO) : "Batch terpilih";
+    setText("po-variant-table-title", `Alokasi & Profit per varian — ${batchTagLabel}`);
+    setText("po-participants-title", `Peserta ${batchTagLabel}`);
+
+    renderPOVariantAllocation(batchOrders, allocatedPcs, activeAnalytics);
     renderPOLocationCards(batchOrders);
+    renderPOLocationDetailTable(batchOrders);
     renderPOParticipants(batchOrders);
     renderPOHistory(history);
 }
 
-function renderPOVariantAllocation(batchOrders, totalPcs) {
+function renderPOVariantAllocation(batchOrders, totalPcs, precomputedAnalytics = null) {
     const tbody = document.getElementById("po-variant-allocation-tbody");
     setText("po-variant-total-badge", `Total ${totalPcs} pcs`);
     if (!tbody) return;
 
-    const map = {};
-    batchOrders.forEach((o) => {
-        const seenInOrder = new Set();
-        (o.items || []).forEach((it) => {
-            const key = `${it.productId || it.name}||${it.addonName || ""}`;
-            const label = it.addonName ? `${it.name} (+ ${it.addonName})` : it.name;
-            if (!map[key]) map[key] = { label, orders: 0, pcs: 0, rev: 0 };
-            if (!seenInOrder.has(key)) {
-                map[key].orders += 1;
-                seenInOrder.add(key);
-            }
-            map[key].pcs += it.quantity || 0;
-            map[key].rev += it.subtotal || ((it.price || 0) * (it.quantity || 0));
-        });
-    });
-
-    const list = Object.values(map).sort((a, b) => b.pcs - a.pcs);
+    const analytics = precomputedAnalytics || computeClientSalesAnalytics(batchOrders, skuHppCatalogCache);
+    const list = (analytics.variants || []).filter((v) => v.qty > 0);
     if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="empty-state-sm">Belum ada item teralokasi pada batch ini.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="empty-state-sm">Belum ada item teralokasi pada batch ini.</td></tr>`;
         return;
     }
 
     tbody.innerHTML = list.map((v) => {
-        const pct = totalPcs > 0 ? Math.round((v.pcs / totalPcs) * 100) : 0;
+        const pct = totalPcs > 0 ? Math.round((v.qty / totalPcs) * 100) : 0;
+        const profitCls = (v.totalProfit || 0) >= 0 ? "text-green" : "text-danger";
         return `
             <tr>
-                <td><strong>${escapeHtml(v.label)}</strong></td>
-                <td class="align-right">${v.orders} pesanan</td>
-                <td class="align-right"><strong>${v.pcs} pcs</strong></td>
+                <td><strong>${escapeHtml(v.displayName)}</strong></td>
+                <td class="align-right">${v.orderCount || 0} pesanan</td>
+                <td class="align-right"><strong>${v.qty} pcs</strong></td>
                 <td>${pct}% dari batch</td>
-                <td class="align-right">${formatRupiah(v.rev)}</td>
+                <td class="align-right">${formatRupiah(v.totalRevenue || 0)}</td>
+                <td class="align-right text-danger">${formatRupiah(v.totalHpp || 0)}</td>
+                <td class="align-right"><strong class="${profitCls}">${formatRupiah(v.totalProfit || 0)}</strong></td>
             </tr>
         `;
-    }).join("");
+    }).join("") + `
+        <tr class="finance-grand-total-row">
+            <td>TOTAL BATCH TERALOKASI</td>
+            <td class="align-right">${batchOrders.length} pesanan</td>
+            <td class="align-right">${analytics.totalPcs} pcs</td>
+            <td>100%</td>
+            <td class="align-right">${formatRupiah(analytics.generalRevenue)}</td>
+            <td class="align-right text-danger">${formatRupiah(analytics.generalHpp)}</td>
+            <td class="align-right text-green">${formatRupiah(analytics.generalProfit)}</td>
+        </tr>
+    `;
 }
 
 function renderPOLocationCards(batchOrders) {
@@ -5942,6 +6037,89 @@ function renderPOLocationCards(batchOrders) {
             }
         }
     });
+}
+
+function renderPOLocationDetailTable(batchOrders) {
+    const tbody = document.getElementById("po-location-detail-tbody");
+    const emptyEl = document.getElementById("po-location-detail-empty");
+    const modeSelect = document.getElementById("po-loc-status-mode");
+    if (!tbody) return;
+
+    const mode = modeSelect?.value || "active";
+    const sourceOrders = mode === "paid" ? (batchOrders || []).filter(isPaidOrder) : (batchOrders || []);
+
+    if (!sourceOrders.length) {
+        tbody.innerHTML = "";
+        if (emptyEl) {
+            emptyEl.hidden = false;
+            emptyEl.innerText = mode === "paid"
+                ? "Belum ada pesanan terbayar/finish di batch ini."
+                : "Belum ada pesanan aktif pada batch ini.";
+        }
+        return;
+    }
+
+    if (emptyEl) emptyEl.hidden = true;
+
+    const locationMap = {};
+    sourceOrders.forEach((order) => {
+        const locKey = ["sman1", "sman5"].includes(order.location) ? order.location : "others";
+        if (!locationMap[locKey]) {
+            locationMap[locKey] = {
+                key: locKey,
+                label: locKey === "others" ? "Pengiriman Luar / Lainnya" : getLocationLabel(locKey),
+                count: 0,
+                pcs: 0,
+                subtotal: 0,
+                variants: {}
+            };
+        }
+        locationMap[locKey].count += 1;
+        locationMap[locKey].subtotal += Number(order.total || 0);
+
+        (order.items || []).forEach((it) => {
+            const qty = Number(it.quantity || 0);
+            if (qty <= 0) return;
+            const key = `${it.productId || it.name}||${it.addonName || ""}`;
+            const displayName = it.addonName ? `${it.name} (+ ${it.addonName})` : it.name;
+            const sub = it.subtotal != null ? Number(it.subtotal) : (Number(it.price || 0) + Number(it.addonPrice || 0)) * qty;
+
+            locationMap[locKey].pcs += qty;
+            if (!locationMap[locKey].variants[key]) {
+                locationMap[locKey].variants[key] = { name: displayName, qty: 0, subtotal: 0 };
+            }
+            locationMap[locKey].variants[key].qty += qty;
+            locationMap[locKey].variants[key].subtotal += sub;
+        });
+    });
+
+    const locOrder = { sman1: 1, sman5: 2, others: 3 };
+    const locations = Object.values(locationMap).sort((a, b) => (locOrder[a.key] || 50) - (locOrder[b.key] || 50));
+
+    let html = "";
+    locations.forEach((loc) => {
+        html += `
+            <tr class="report-location-parent">
+                <td><strong>${escapeHtml(loc.label)}</strong></td>
+                <td class="align-right">${loc.count} pesanan</td>
+                <td class="align-right"><strong>${loc.pcs} pcs</strong></td>
+                <td class="align-right"><strong>${formatRupiah(loc.subtotal)}</strong></td>
+            </tr>
+        `;
+        const vars = Object.values(loc.variants).sort((a, b) => (b.qty - a.qty) || a.name.localeCompare(b.name));
+        vars.forEach((v) => {
+            html += `
+                <tr class="report-location-child">
+                    <td>${escapeHtml(v.name)}</td>
+                    <td class="align-right">—</td>
+                    <td class="align-right">${v.qty} pcs</td>
+                    <td class="align-right">${formatRupiah(v.subtotal)}</td>
+                </tr>
+            `;
+        });
+    });
+
+    tbody.innerHTML = html;
 }
 
 function renderPOParticipants(batchOrders) {
@@ -5994,31 +6172,267 @@ function renderPOParticipants(batchOrders) {
     });
 }
 
-if (poParticipantSearch) poParticipantSearch.addEventListener("input", () => renderPOParticipants(currentPOData ? getPOBatchOrders(currentPOData.id) : []));
-if (poParticipantFilter) poParticipantFilter.addEventListener("change", () => renderPOParticipants(currentPOData ? getPOBatchOrders(currentPOData.id) : []));
+if (poParticipantSearch) poParticipantSearch.addEventListener("input", () => renderPOParticipants(getViewedPOBatchOrders()));
+if (poParticipantFilter) poParticipantFilter.addEventListener("change", () => renderPOParticipants(getViewedPOBatchOrders()));
+
+const poBatchViewerSelect = document.getElementById("po-batch-viewer-select");
+if (poBatchViewerSelect) {
+    poBatchViewerSelect.addEventListener("change", () => {
+        const val = poBatchViewerSelect.value ? Number(poBatchViewerSelect.value) : null;
+        selectedViewPoId = Number.isFinite(val) ? val : null;
+        renderPOPage();
+    });
+}
+bindClick("po-back-active-btn", () => {
+    selectedViewPoId = currentPOData?.id || null;
+    renderPOPage();
+});
+const poLocStatusModeSelect = document.getElementById("po-loc-status-mode");
+if (poLocStatusModeSelect) {
+    poLocStatusModeSelect.addEventListener("change", () => {
+        renderPOLocationDetailTable(getViewedPOBatchOrders());
+    });
+}
 
 function renderPOHistory(history) {
     const tbody = document.getElementById("po-history-tbody");
     if (!tbody) return;
     if (!history || history.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="empty-state-sm">Belum ada riwayat periode pre-order.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="empty-state-sm">Belum ada riwayat periode pre-order.</td></tr>`;
         return;
     }
 
+    const canDelete = !isInvestorRole();
+    const viewed = getViewedPOObject();
+
     tbody.innerHTML = history.map((h) => {
         const isOpen = h.status === "open";
+        const isViewing = viewed && String(viewed.id) === String(h.id);
+        const batchNum = h.batchNumber || h.id;
+        const ordersForPo = allOrders.filter((o) => String(o.poPeriodId) === String(h.id));
+        const paidCount = ordersForPo.length ? ordersForPo.filter(isPaidOrder).length : (h.paidOrderCount || 0);
+        const totalAllCount = ordersForPo.length || Number(h.totalOrderCount || h.orderCount || 0);
+        const paidRev = ordersForPo.length
+            ? ordersForPo.filter(isPaidOrder).reduce((s, o) => s + Number(o.total || 0), 0)
+            : Number(h.paidRevenue || 0);
+
         return `
-            <tr>
-                <td><strong>#${h.id}</strong></td>
-                <td>${escapeHtml(h.batchName || `Batch PO #${h.id}`)}</td>
+            <tr${isViewing ? ' class="row-selected"' : ""}>
+                <td>
+                    <strong>Batch #${batchNum}</strong>
+                    <span class="location-subtext">ID #${h.id}</span>
+                </td>
+                <td>${escapeHtml(h.batchName || `Batch PO #${batchNum}`)}</td>
                 <td>${formatDate(h.tanggalBuka)} - ${formatDate(h.tanggalTutup)}</td>
                 <td>${h.tanggalProduksi ? formatDateShort(getLocalDateString(h.tanggalProduksi)) : "-"}</td>
-                <td class="align-right">${h.orderCount || 0} pesanan</td>
+                <td class="align-right">
+                    <strong>${h.orderCount || 0} aktif</strong>
+                    <span class="location-subtext">${paidCount} lunas · ${totalAllCount} total</span>
+                </td>
                 <td class="align-right"><strong>${h.allocatedPcs || 0} / ${h.maxQuota || 100} pcs</strong></td>
+                <td class="align-right"><strong>${formatRupiah(paidRev)}</strong></td>
                 <td><span class="badge-pill ${isOpen ? "badge-green" : "badge-neutral"}">${isOpen ? "Aktif" : "Ditutup"}</span></td>
+                <td class="align-right">
+                    <div class="po-history-actions-cell">
+                        <button type="button" class="btn-outline-sm po-view-detail-btn" data-po-id="${h.id}">Lihat Detail</button>
+                        ${!isOpen && canDelete ? `<button type="button" class="btn-danger-sm po-delete-batch-btn" data-po-id="${h.id}">Hapus</button>` : ""}
+                    </div>
+                </td>
             </tr>
         `;
     }).join("");
+
+    tbody.querySelectorAll(".po-view-detail-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            selectedViewPoId = Number(btn.dataset.poId);
+            renderPOPage();
+            document.getElementById("po-hero-banner")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+    });
+
+    tbody.querySelectorAll(".po-delete-batch-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const poId = Number(btn.dataset.poId);
+            const target = history.find((item) => Number(item.id) === poId);
+            if (target) openPODeleteModal(target);
+        });
+    });
+}
+
+/* =========================
+   PRE-ORDER — 2-STEP DELETE BATCH MODAL
+   ========================= */
+
+const poDeleteModal = document.getElementById("po-delete-modal");
+const poDeleteStep1 = document.getElementById("po-delete-step-1");
+const poDeleteStep2 = document.getElementById("po-delete-step-2");
+const poDeleteConfirmInput = document.getElementById("po-delete-confirm-input");
+const poDeleteFinalBtn = document.getElementById("po-delete-final-btn");
+const poDeleteError = document.getElementById("po-delete-error");
+
+function closePODeleteModal() {
+    poDeleteTarget = null;
+    if (poDeleteModal) poDeleteModal.hidden = true;
+    if (poDeleteConfirmInput) poDeleteConfirmInput.value = "";
+    if (poDeleteFinalBtn) poDeleteFinalBtn.disabled = true;
+    if (poDeleteError) {
+        poDeleteError.hidden = true;
+        poDeleteError.innerText = "";
+    }
+}
+
+function openPODeleteModal(batchObj) {
+    if (!poDeleteModal || !batchObj || isInvestorRole()) return;
+    if (batchObj.status === "open") {
+        alert("Tutup batch pre-order ini terlebih dahulu sebelum menghapus.");
+        return;
+    }
+
+    const ordersInBatch = allOrders.filter((o) => String(o.poPeriodId) === String(batchObj.id));
+    const totalCount = ordersInBatch.length || Number(batchObj.totalOrderCount || batchObj.orderCount || 0);
+    const paidCount = ordersInBatch.length ? ordersInBatch.filter(isPaidOrder).length : Number(batchObj.paidOrderCount || 0);
+    const pendingCount = ordersInBatch.length ? ordersInBatch.filter((o) => (o.status || "pending") === "pending").length : 0;
+    const finishedCount = ordersInBatch.length ? ordersInBatch.filter((o) => (o.status || "") === "finished").length : Number(batchObj.finishedOrderCount || 0);
+
+    poDeleteTarget = {
+        ...batchObj,
+        _totalCount: totalCount,
+        _paidCount: paidCount,
+        _pendingCount: pendingCount,
+        _finishedCount: finishedCount
+    };
+
+    const batchTitle = `${getBatchBadgeCode(batchObj)} — ${batchObj.batchName || `Batch PO #${batchObj.batchNumber || batchObj.id}`}`;
+    setText("po-del-batch-name", batchTitle);
+    setText("po-del-batch-dates", `${formatDate(batchObj.tanggalBuka)} - ${formatDate(batchObj.tanggalTutup)}`);
+    setText("po-del-total-orders", `${totalCount} pesanan`);
+    setText("po-del-paid-orders", `${paidCount} pesanan`);
+    setText("po-del-pending-orders", `${pendingCount} pesanan`);
+    setText("po-del-finished-orders", `${finishedCount} pesanan`);
+    setText("po-del-step2-batch-label", batchTitle);
+
+    const finishedWarn = document.getElementById("po-del-finished-warning");
+    if (finishedWarn) finishedWarn.hidden = finishedCount === 0;
+
+    if (poDeleteStep1) poDeleteStep1.hidden = false;
+    if (poDeleteStep2) poDeleteStep2.hidden = true;
+    if (poDeleteConfirmInput) poDeleteConfirmInput.value = "";
+    if (poDeleteFinalBtn) poDeleteFinalBtn.disabled = true;
+    if (poDeleteError) {
+        poDeleteError.hidden = true;
+        poDeleteError.innerText = "";
+    }
+
+    poDeleteModal.hidden = false;
+}
+
+bindClick("po-delete-close", closePODeleteModal);
+bindClick("po-delete-cancel-1", closePODeleteModal);
+bindClick("po-delete-cancel-2", closePODeleteModal);
+
+bindClick("po-delete-next-btn", () => {
+    if (!poDeleteTarget) return;
+    if (poDeleteStep1) poDeleteStep1.hidden = true;
+    if (poDeleteStep2) poDeleteStep2.hidden = false;
+    if (poDeleteConfirmInput) {
+        poDeleteConfirmInput.value = "";
+        poDeleteConfirmInput.focus();
+    }
+    if (poDeleteFinalBtn) poDeleteFinalBtn.disabled = true;
+    if (poDeleteError) {
+        poDeleteError.hidden = true;
+        poDeleteError.innerText = "";
+    }
+});
+
+bindClick("po-delete-back-btn", () => {
+    if (poDeleteStep1) poDeleteStep1.hidden = false;
+    if (poDeleteStep2) poDeleteStep2.hidden = true;
+    if (poDeleteError) {
+        poDeleteError.hidden = true;
+        poDeleteError.innerText = "";
+    }
+});
+
+if (poDeleteConfirmInput) {
+    poDeleteConfirmInput.addEventListener("input", () => {
+        const matched = poDeleteConfirmInput.value.trim() === "HAPUS";
+        if (poDeleteFinalBtn) poDeleteFinalBtn.disabled = !matched;
+        if (poDeleteError && matched) {
+            poDeleteError.hidden = true;
+            poDeleteError.innerText = "";
+        }
+    });
+}
+
+if (poDeleteFinalBtn) {
+    poDeleteFinalBtn.addEventListener("click", async () => {
+        if (!poDeleteTarget || isInvestorRole()) return;
+        const typed = (poDeleteConfirmInput?.value || "").trim();
+        if (typed !== "HAPUS") {
+            if (poDeleteError) {
+                poDeleteError.hidden = false;
+                poDeleteError.innerText = "Ketik HAPUS secara persis untuk melanjutkan.";
+            }
+            return;
+        }
+
+        const deletedId = poDeleteTarget.id;
+        const origText = poDeleteFinalBtn.innerText;
+        poDeleteFinalBtn.disabled = true;
+        poDeleteFinalBtn.innerText = "Menghapus...";
+        if (poDeleteError) {
+            poDeleteError.hidden = true;
+            poDeleteError.innerText = "";
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/api/admin/po/${deletedId}`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${getToken()}`
+                },
+                body: JSON.stringify({
+                    confirmStep2: true,
+                    confirmText: "HAPUS",
+                    forceDeleteFinished: true
+                })
+            });
+
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                if (poDeleteError) {
+                    poDeleteError.hidden = false;
+                    poDeleteError.innerText = result.message || "Gagal menghapus riwayat Batch PO.";
+                }
+                poDeleteFinalBtn.disabled = false;
+                poDeleteFinalBtn.innerText = origText;
+                return;
+            }
+
+            if (String(selectedViewPoId) === String(deletedId)) {
+                selectedViewPoId = null;
+            }
+            closePODeleteModal();
+            await Promise.all([
+                loadOrders(),
+                loadStocks(),
+                loadPOSettings()
+            ]);
+            if (currentFinanceReport) await loadFinance();
+            alert(result.message || "Riwayat Batch Pre-Order berhasil dihapus.");
+        } catch (err) {
+            console.error("Delete PO batch error:", err);
+            if (poDeleteError) {
+                poDeleteError.hidden = false;
+                poDeleteError.innerText = "Gagal terhubung ke server.";
+            }
+            poDeleteFinalBtn.disabled = false;
+        } finally {
+            poDeleteFinalBtn.innerText = origText;
+        }
+    });
 }
 
 function showPOStatusMsg(msg, type) {
@@ -6090,6 +6504,7 @@ async function handlePOSubmit(e) {
         if (!isOpen) {
             userPickedReferralBatch = false;
             selectedReferralPoId = null;
+            selectedViewPoId = result.po?.id || null;
         }
         await loadPOSettings();
 
@@ -6127,6 +6542,7 @@ async function handleClosePO() {
             return;
         }
 
+        if (poBatchNameInput) poBatchNameInput.value = "";
         alert("Pre-Order berhasil ditutup.");
         await loadPOSettings();
 
@@ -6480,8 +6896,7 @@ if (poReferralAddForm) {
    ========================= */
 
 (async function init() {
-    if (hppDate) hppDate.value = getTodayDateString();
-    if (cfDate) cfDate.value = getTodayDateString();
+    initPeriodFilterControls();
 
     const token = getToken();
     if (!token) {
